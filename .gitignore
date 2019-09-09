@@ -1,0 +1,19 @@
+# System files
+**/.DS_Store
+.idea/*
+.mypy_cache/*
+
+# Byte-compiled / optimized / DLL files
+**/__pycache__/
+
+# Distribution / packaging
+**/eggs/
+**/.eggs/
+*.egg-info/
+*.egg
+
+# Jupyter Notebook
+**/.ipynb_checkpoints
+
+# venv
+/venv
