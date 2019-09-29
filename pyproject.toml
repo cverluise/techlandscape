@@ -16,13 +16,13 @@ scipy = "^1.3"
 scikit-learn = "^0.21.3"
 jupyter = "^1.0"
 pre-commit = "^1.18"
+click = "^7.0"
+wasabi = "^0.2.2"
+pyarrow = "^0.14.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
-
-[build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+pre-commit = "^1.18"
 
 [tool.black]
 line-length = 79
@@ -40,3 +40,7 @@ exclude = '''
   | dist
 )/
 '''
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
