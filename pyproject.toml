@@ -19,6 +19,9 @@ pre-commit = "^1.18"
 click = "^7.0"
 wasabi = "^0.2.2"
 pyarrow = "^0.14.1"
+tqdm = "^4.36"
+keras = "^2.3"
+matplotlib = "^3.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
