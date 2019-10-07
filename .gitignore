@@ -1,5 +1,9 @@
+# secret
+config.json
+
 #dev
 dev*.py 
+bin/ExtractCPCCounts.py
 
 # Data
 data/
