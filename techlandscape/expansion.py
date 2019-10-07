@@ -11,11 +11,12 @@ from techlandscape.utils import (
 )
 
 
-# TODO: control queries with publication_number=publication_number to check that inner join
+# TODO control queries with publication_number=publication_number to check that inner join
 #   rather than RIGHT/LEFT inner join is not detrimental
-# TODO: work on reproducibility when calling random draw
+# TODO work on reproducibility when calling random draw
 #   Could find some inspiration here
-#   https://www.oreilly.com/learning/repeatable-sampling-of-data-sets-in-bigquery-for-machine-learning
+#   https://www.oreilly.com/learning/repeatable-sampling-of-data-sets-in-bigquery-for-machine
+#   -learning
 
 
 @monitor
@@ -42,98 +43,148 @@ def load_seed_to_bq(f, client, table_ref, job_config):
     ).result()
 
 
-def _get_seed_cpc_freq(client, table_ref):
+def _get_seed_pc_freq(flavor, client, table_ref):
     """
-
+    :param flavor:
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
     :return:
     """
-    query = """
-    SELECT
-      tmp.publication_number,
-      STRING_AGG(cpc.code) AS cpc
-      FROM
-        `patents-public-data.patents.publications` AS p,
-        {} AS tmp,
-        UNNEST(cpc) AS cpc
-      WHERE
-        p.publication_number=tmp.publication_number
-    GROUP BY
-      publication_number
-    """.format(
-        format_table_ref_for_bq(table_ref)
-    )
-    seed_cpc = client.query(query=query).to_dataframe()["cpc"].to_list()
-    seed_nb_pat = len(seed_cpc)
-    # seed_cpc is a list of comma separated strings. E.g. "A45D20/12,A45D20/122"
-    seed_cpc_list = flatten(list(map(lambda x: x.split(","), seed_cpc)))
+    assert flavor in ["ipc", "cpc"]
+    query = f"""
+      SELECT
+        tmp.publication_number,
+        STRING_AGG({flavor}.code) AS {flavor}
+        FROM
+          `patents-public-data.patents.publications` AS p,
+          {format_table_ref_for_bq(table_ref)} AS tmp,
+          UNNEST({flavor}) AS {flavor}
+        WHERE
+          p.publication_number=tmp.publication_number
+      GROUP BY
+        publication_number
+    """
+    seed_pc = client.query(query=query).to_dataframe()[flavor].to_list()
+    seed_nb_pat = len(seed_pc)
+    # seed_pc is a list of comma separated strings. E.g. "A45D20/12,A45D20/122"
+    seed_pc_list = flatten(list(map(lambda x: x.split(","), seed_pc)))
     # split strings into lists [['','',...],['','',...],..]
     # flatten the output ['','',...]
-    seed_cpc_count = Counter(seed_cpc_list)
+    seed_pc_count = Counter(seed_pc_list)
     # count the number of occurences of each code {'A':1, 'B':3, ...}
-    # seed_cpc_freq = seed_cpc_count / seed_nb_pat
+    # seed_pc_freq = seed_pc_count / seed_nb_pat
     return pd.DataFrame(
-        index=seed_cpc_count.keys(),
-        data=list(map(lambda x: x / seed_nb_pat, seed_cpc_count.values())),
+        index=seed_pc_count.keys(),
+        data=list(map(lambda x: x / seed_nb_pat, seed_pc_count.values())),
         columns=["freq"],
     )
 
 
-def _get_universe_cpc_freq():
-    assert os.path.exists("data/persist/cpc_counts.csv.gz")
-    universe_cpc = pd.read_csv(
-        "data/persist/cpc_counts.csv.gz", index_col=0, compression="gzip"
-    )
-    universe_cpc["freq"] = universe_cpc / universe_cpc.loc["nb_patents"].values
-    return universe_cpc["freq"].to_frame()
+def _get_universe_pc_freq(flavor, client, table_ref):
+    """
+    Return the frequency of patent classes for patents with publication_year between p25 and p75
+    of the publication_year of patents in the seed.
+    :param flavor: str
+    :param client: google.cloud.bigquery.client.Client
+    :param table_ref: google.cloud.bigquery.table.TableReference
+    :return:
+    """
+    assert flavor in ["ipc", "cpc"]
+    query = f"""
+    WITH
+      tmp AS (
+      SELECT
+        tmp.publication_number,
+        ROUND(p.publication_date/10000, 0) AS publication_year
+      FROM
+        {format_table_ref_for_bq(table_ref)} AS tmp,
+        `patents-public-data.patents.publications` AS p
+      WHERE
+        p.publication_number=tmp.publication_number
+        AND tmp.expansion_level="SEED"),
+      stats AS (
+      SELECT
+        percentiles[OFFSET(25)] AS p25,
+        percentiles[OFFSET(75)] AS p75
+      FROM (
+        SELECT
+          APPROX_QUANTILES(publication_year, 100) AS percentiles
+        FROM
+          tmp)),
+          total as (SELECT
+          count(publication_number) as count
+      FROM
+      `patents-public-data.patents.publications` AS p,
+      stats
+    WHERE
+      publication_date BETWEEN stats.p25*10000
+      AND stats.p75*10000)
+    SELECT
+      {flavor}.code AS {flavor},
+      COUNT({flavor}.code) as count,
+      total.count AS total
+    FROM
+      `patents-public-data.patents.publications` AS p,
+      UNNEST({flavor}) AS {flavor},
+      stats,
+      total
+    WHERE
+      publication_date BETWEEN stats.p25*10000
+      AND stats.p75*10000
+    GROUP BY
+      {flavor}, total
+    """
+
+    df = client.query(query).to_dataframe()
+    df = df.set_index(flavor)
+    return (df["count"] / df["total"]).rename("freq").to_frame()
 
 
 @monitor
-def get_important_cpc(threshold, client, table_ref):
+def get_important_cpc(flavor, threshold, client, table_ref):
     """
-
-    :param threshold: float, threshold above which a cpc is considered over-represented in the
+    :param flavor: str
+    :param threshold: float, threshold above which a pc is considered over-represented in the
     seed wrt the universe
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
     :return:
     """
-    seed_cpc_freq = _get_seed_cpc_freq(client, table_ref)
-    universe_cpc_freq = _get_universe_cpc_freq()
-    cpc_odds = seed_cpc_freq.merge(
-        universe_cpc_freq,
+    assert flavor in ["ipc", "cpc"]
+    seed_pc_freq = _get_seed_pc_freq(flavor, client, table_ref)
+    universe_pc_freq = _get_universe_pc_freq(flavor, client, table_ref)
+    pc_odds = seed_pc_freq.merge(
+        universe_pc_freq,
         right_index=True,
         left_index=True,
         suffixes=["_seed", "_universe"],
     )
-    cpc_odds["odds"] = cpc_odds["freq_seed"] / cpc_odds["freq_universe"]
-    return list(cpc_odds.query("odds>@threshold").index)
+    pc_odds["odds"] = pc_odds["freq_seed"] / pc_odds["freq_universe"]
+    return pc_odds["odds"]  # list(cpc_odds.query("odds>@threshold").index)
 
 
 @monitor
-def cpc_expansion(cpc_list, client, job_config):
+def pc_expansion(flavor, pc_list, client, job_config):
     """
-
-    :param cpc_list: list
+    :param flavor: str
+    :param pc_list: list
     :param client: google.cloud.bigquery.client.Client
     :param job_config: google.cloud.bigquery.job.QueryJobConfig
     :return:
     """
-    assert isinstance(cpc_list, list)
-    cpc_string = ",".join(list(map(lambda x: '"' + x + '"', cpc_list)))
-    query = """
+    assert isinstance(pc_list, list)
+    assert flavor in ["ipc", "cpc"]
+    pc_string = ",".join(list(map(lambda x: '"' + x + '"', pc_list)))
+    query = f"""
     SELECT
       DISTINCT(publication_number),
-      "CPC" as expansion_level
+      "PC" as expansion_level
     FROM
       `patents-public-data.patents.publications`,
-      UNNEST(cpc) AS cpc
+      UNNEST({flavor}) AS {flavor}
     WHERE
-      cpc.code IN ( {} )
-    """.format(
-        cpc_string
-    )
+      {flavor}.code IN ( {pc_string} )
+    """
     client.query(query, job_config=job_config)
 
 
@@ -189,7 +240,7 @@ SELECT
       "ANTISEED-AF" AS expansion_level
     FROM
       `patents-public-data.patents.publications` AS p,
-      unnest(abstract_localized) as abstract
+      UNNEST(abstract_localized) as abstract
     LEFT OUTER JOIN
       {} AS tmp
     ON
@@ -210,53 +261,51 @@ SELECT
 
 
 @monitor
-def draw_aug_antiseed(size, cpc_list, client, table_ref, job_config):
+def draw_aug_antiseed(size, flavor, pc_list, client, table_ref, job_config):
     """
 
     :param size: int
-    :param cpc_list: list
+    :param flavor: str
+    :param pc_list: list
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
     :param job_config: google.cloud.bigquery.job.QueryJobConfig
     :return:
     """
-    cpc_like_clause = " OR ".join(
+    assert flavor in ["ipc", "cpc"]
+    pc_like_clause = " OR ".join(
         set(
             list(
                 map(
-                    lambda x: 'cpc.code LIKE "' + x.split("/")[0] + '%"',
-                    cpc_list,
+                    lambda x: f'{flavor}.code LIKE "' + x.split("/")[0] + '%"',
+                    pc_list,
                 )
             )
         )
     )
-    query = """
+    query = f"""
     SELECT
       DISTINCT(p.publication_number) AS publication_number,
       "ANTISEED-AUG" AS expansion_level
     FROM
       `patents-public-data.patents.publications` AS p,
-      UNNEST(cpc) AS cpc
+      UNNEST({flavor}) AS {flavor},
+      UNNEST(abstract_localized) AS abstract
     LEFT OUTER JOIN
-      {} AS tmp
+      {format_table_ref_for_bq(table_ref)} AS tmp
     ON
       p.publication_number = tmp.publication_number
     WHERE
-      {}
-      AND p.country_code in ({})
+      {pc_like_clause}
+      AND p.country_code in ({country_clause_for_bq()})
       AND abstract.text is not NULL
       AND abstract.text!=''
       AND abstract.language="en"
     ORDER BY
       RAND()
     LIMIT
-      {}
-    """.format(
-        format_table_ref_for_bq(table_ref),
-        cpc_like_clause,
-        country_clause_for_bq(),
-        size,
-    )
+      {size}
+    """
     client.query(query, job_config=job_config)
 
 
@@ -269,26 +318,24 @@ def get_expansion_result(client, table_ref):
     :param table_ref: google.cloud.bigquery.table.TableReference
     :return: pandas.core.frame.DataFrame
     """
-    query = """
+    query = f"""
     SELECT
       tmp.publication_number,
       tmp.expansion_level,
       abstract.text as abstract
     FROM
       `patents-public-data.patents.publications` as p,
-      {} as tmp,
+      {format_table_ref_for_bq(table_ref)} as tmp,
       UNNEST(abstract_localized) as abstract
     WHERE
       p.publication_number=tmp.publication_number
-      AND p.country_code in ({})
+      AND p.country_code in ({country_clause_for_bq()})
       AND abstract.text is not NULL
       AND abstract.text!=''
       AND abstract.language="en"
     GROUP BY
       publication_number, expansion_level, abstract  
-    """.format(
-        format_table_ref_for_bq(table_ref), country_clause_for_bq()
-    )
+    """
     # nb: we could start by only loading the seed and anti seed to start the classification exercise
     # asap and load the rest of the dataset in the meantime
     # TODO add attributes country_code, assignee.name, assignee.country_code, inventor.name,
