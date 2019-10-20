@@ -1,5 +1,8 @@
 import json
-from google.cloud import bigquery as bq
+
+from wasabi import Printer
+
+from techlandscape.decorators import timer
 
 english_speaking_offices = [
     "AP",
@@ -18,6 +21,29 @@ english_speaking_offices = [
 ]
 
 
+def iso2cnt(ent_list, flavor):
+    """
+    Return the list of the full country names (resp the iso2) matching the list of countries (
+    resp iso2) in <ent_list>. The <flavor> param refers to the flavor of entities in <ent_list>.
+    :param ent_list: iter
+    :param flavor: str, ["iso", "cnt"]
+    :return:
+    """
+    assert flavor in ["iso", "cnt"]
+    tmp = json.load(open("data/lib/iso2cnt.json", "r"))
+    if flavor == "iso":
+        res = [v for k, v in tmp.items() if k in ent_list]
+    else:
+        res = [k for k, v in tmp.items() if v in ent_list]
+    nb_missing = len(ent_list) - len(res)
+    if nb_missing > 0:
+        msg = Printer()
+        msg.warn(f"{nb_missing} entity.ies could not be found.")
+        if nb_missing == len(ent_list):
+            msg.info(f"You might be using the wrong 'flavor'.")
+    return res
+
+
 def format_table_ref_for_bq(table_ref):
     """
     Return the table_ref as string formated for bq queries. E.g `brv-patent.tech_landscape.tmp`
@@ -27,16 +53,21 @@ def format_table_ref_for_bq(table_ref):
     return f"`{table_ref.project}.{table_ref.dataset_id}.{table_ref.table_id}`"
 
 
-def country_clause_for_bq():
+def country_clause_for_bq(iso_list, to_cnt=True):
     """
     Return the list of countries of interest in a bq understandable way
     Resource: https://worldwide.espacenet.com/help?locale=en_EP&method=handleHelpTopic&topic
     =countrycodes
+    :param iso_list: list, list of iso2 countries
+    :param to_cnt: bool, True if conversion to cnt needes (E.g. if applied to
+    google_patents_research dataset)
     :return: str '"AP","AU","CA",...'
     """
-    return ",".join(
-        list(map(lambda x: '"' + str(x) + '"', english_speaking_offices))
-    )
+    if to_cnt:
+        ent_list = iso2cnt(iso_list, "iso")
+    else:
+        ent_list = iso_list
+    return ",".join(list(map(lambda x: '"' + str(x) + '"', ent_list)))
 
 
 def flatten(l):
@@ -48,26 +79,6 @@ def flatten(l):
     return [item for sublist in l for item in sublist if item]
 
 
-class Config:
-    def __init__(self):
-        self.config_dict = json.load(open("config.json", "rb"))
-        self.project_id = self.config_dict["project_id"]
-        self.dataset_id = self.config_dict["dataset_id"]
-
-    def client(self):
-        """
-        :return:
-        """
-        return bq.Client(project=self.project_id)
-
-    def table_ref(self, table_id, client=None):
-        """
-        :param client: bq.Client or None, if None, populated with config.json attr
-        :param table_id: str
-        :return: table_ref
-        """
-        if not client:
-            client = self.client()
-        return client.dataset(dataset_id=self.dataset_id).table(
-            table_id=table_id
-        )
+@timer
+def breathe():
+    pass
