@@ -6,7 +6,9 @@ dev*.py
 bin/ExtractCPCCounts.py
 
 # Data
-data/
+data/persist.nosync
+data/seed/
+model/persist.nosync
 
 # System files
 **/.DS_Store
