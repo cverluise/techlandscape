@@ -1,0 +1,2 @@
+class SmallSeed(Exception):
+    pass
