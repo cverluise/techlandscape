@@ -54,17 +54,20 @@ def get_ngram(texts_train, y_train, texts_test):
     return x_train, x_test
 
 
-def get_sequence(texts_train, texts_test):
+def get_sequence(texts_train, texts_test, tokenizer=None):
     """
     Return the padded sequence of texts with indices mapping to vocabulary (0 reserved for empty).
     :param texts_train: List[str], list of training set texts.
     :param texts_test: List[str], list of test set texts.
+    :param tokenizer: keras.preprocessing.text.tokenizer
     :return: Vectorized training and test texts + word-index mapping.
     """
-
-    # Create vocabulary with training texts.
-    tokenizer = text.Tokenizer(num_words=TOP_K)
-    tokenizer.fit_on_texts(texts_train)
+    if tokenizer:
+        pass
+    else:
+        # Create vocabulary with training texts.
+        tokenizer = text.Tokenizer(num_words=TOP_K)
+        tokenizer.fit_on_texts(texts_train)
 
     # Vectorize training and test texts.
     x_train = tokenizer.texts_to_sequences(texts_train)
@@ -81,4 +84,4 @@ def get_sequence(texts_train, texts_test):
     # at the beginning.
     x_train = sequence.pad_sequences(x_train, maxlen=max_length)
     x_test = sequence.pad_sequences(x_test, maxlen=max_length)
-    return x_train, x_test, tokenizer.word_index
+    return x_train, x_test, tokenizer
