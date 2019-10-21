@@ -11,26 +11,14 @@ from techlandscape.config import Config
     Warning, current data might not be up to date
     2. Load data from storage to bq
         $python bin/LoadGeocToBQ.py --flavor "app_geo" --uris 
-        "gs://tech_landscape/geocoding/pf_app_external_users.csv"                                                                                             ~/Documents/GitHub/TechLandscape
+        "gs://tech_landscape/geocoding/pf_app_external_users.csv"
         $python bin/LoadGeocToBQ.py --flavor "inv_geo" --uris 
-        "gs://tech_landscape/geocoding/pf_inv_external_users.csv"                                                                                             ~/Documents/GitHub/TechLandscape
+        "gs://tech_landscape/geocoding/pf_inv_external_users.csv"
         $python bin/LoadGeocToBQ.py --flavor "tls211" --uris 
         "gs://tech_landscape/geocoding/tls211*.txt"
     3. Create appln_nbr to publn_nbr table
-    "SELECT
-      REPLACE(CONCAT(publn_auth, "-", publn_nr, "-", publn_kind), " ", "") AS publication_number,
-      appln_id
-    FROM
-      `brv-patent.external.tls211`
-    WHERE
-      publn_nr IS NOT NULL
-      AND publn_nr != ""
-  "
 """
 # TODO update geoc data
-
-config = Config(dataset_id="external")
-client = config.client()
 
 INT = "INTEGER"
 STR = "STRING"
@@ -99,6 +87,12 @@ class Schema:
         ]
 
 
+config = Config(dataset_id="external")
+client = config.client()
+# TODO add check that dataset exists
+#  improve config handling
+
+
 def load_gs_to_bq(flavor, uris):
     """
 
@@ -139,20 +133,3 @@ if __name__ == "__main__":
         load_gs_to_bq(flavor=flavor, uris=uris)
 
     main()
-
-# flavor = "tls211"
-# table_ref = config.table_ref(flavor, client=client)
-# job_config = config.load_job_config()
-# job_config.write_disposition = "WRITE_TRUNCATE"
-# job_config.skip_leading_rows = 1
-# job_config.max_bad_records = 10
-# job_config.source_format = bq.SourceFormat.CSV
-# job_config.schema = Schema().tls211
-# uri = 'gs://tech_landscape/geocoding/tls211_part*.txt'
-#
-# load_job = client.load_table_from_uri(
-#     source_uris=uri,
-#     destination=table_ref,
-#     job_config=job_config)
-# load_job.result()
-# assert load_job.state == 'DONE'
