@@ -4,10 +4,14 @@ from google.cloud import bigquery as bq
 
 
 class Config:
-    def __init__(self):
+    def __init__(self, project_id=None, dataset_id=None):
         self.config_dict = json.load(open("config.json", "rb"))
-        self.project_id = self.config_dict["project_id"]
-        self.dataset_id = self.config_dict["dataset_id"]
+        self.project_id = (
+            project_id if project_id else self.config_dict["project_id"]
+        )
+        self.dataset_id = (
+            dataset_id if dataset_id else self.config_dict["dataset_id"]
+        )
 
     def client(self):
         """
