@@ -1,4 +1,6 @@
+from techlandscape.decorators import monitor
 from techlandscape.utils import format_table_ref_for_bq
+
 
 # TODO: add location data from Gaëtan
 # snippet to get the application_id
@@ -11,10 +13,18 @@ from techlandscape.utils import format_table_ref_for_bq
 # TODO: make proper functions
 
 
+@monitor
 def get_patent_country_date(client, table_ref):
+    """
+
+    :param client:
+    :param table_ref:
+    :return:
+    """
     query = f"""
     SELECT
       h.publication_number,
+      h.expansion_level,
       p.country_code as country_code,
       p.publication_date
     FROM
@@ -23,12 +33,19 @@ def get_patent_country_date(client, table_ref):
     WHERE
       p.publication_number=h.publication_number
     GROUP BY
-      publication_number, p.publication_date, p.country_code 
+      publication_number, p.publication_date, p.country_code, h.expansion_level 
     """
     return client.query(query).to_dataframe()
 
 
+@monitor
 def get_patent_inventor(client, table_ref):
+    """
+
+    :param client:
+    :param table_ref:
+    :return:
+    """
     query = f"""
     SELECT
       h.publication_number,
@@ -46,7 +63,14 @@ def get_patent_inventor(client, table_ref):
     return client.query(query).to_dataframe()
 
 
-def get_patent_inventor(client, table_ref):
+@monitor
+def get_patent_assignee(client, table_ref):
+    """
+
+    :param client:
+    :param table_ref:
+    :return:
+    """
     query = f"""
     SELECT
       h.publication_number,
