@@ -23,13 +23,17 @@ def load_to_bq(f, client, table_ref, job_config):
     assert isinstance(f, (str, pd.DataFrame))
     if isinstance(f, str):
         assert os.path.exists(f)
-        seed_df = pd.read_csv(f)
+        df = pd.read_csv(f)
     else:
-        assert "publication_number" in f.columns
-        seed_df = f
-
-    seed_df["expansion_level"] = "SEED"
-    client.load_table_from_dataframe(seed_df, table_ref, job_config=job_config)
+        assert ("publication_number" in f.columns) or (
+            f.index.name == "publication_number"
+        )
+        df = f
+    if "expansion_level" in df.columns:
+        pass
+    else:
+        df["expansion_level"] = "SEED"
+    client.load_table_from_dataframe(df, table_ref, job_config=job_config)
 
 
 @timer
