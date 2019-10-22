@@ -29,9 +29,9 @@ def create_app2pub(dataset_dest="external"):
 
 def add_pubnum_geoc(flavor, dataset_dest="external"):
     """
-
-    :param flavor:
-    :param dataset_dest:
+    Add a publication_number field in the geo table à la de Rassenfosse, Kozak and Seliger
+    :param flavor: str, in ["app_geo", "inv_geo"]
+    :param dataset_dest: str, name of the destination dataset
     :return:
     """
     config = Config(dataset_id=dataset_dest)
@@ -41,7 +41,7 @@ def add_pubnum_geoc(flavor, dataset_dest="external"):
     # TODO assert app2pub
     table_ref = config.table_ref(flavor, client)
     job_config = config.query_job_config(table_id=flavor, client=client)
-    job_config.write_disposition = "WRITE_TRUNCATE"
+    job_config.write_disposition = "WRITE_EMPTY"
     query = f"""
         SELECT
           {flavor}.appln_id,
