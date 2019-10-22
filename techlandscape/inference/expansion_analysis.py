@@ -5,10 +5,10 @@ from techlandscape.decorators import monitor
 @monitor
 def count_expansion_level(client, table_ref):
     """
-
-    :param client:
-    :param table_ref:
-    :return:
+    Return the number of patents in each expansion_level (e.g: SEED, ANTISEED-XX, L1-XX, etc)
+    :param client: google.cloud.bigquery.client.Client
+    :param table_ref: google.cloud.bigquery.table.TableReference
+    :return: pd.DataFrame
     """
 
     query = f"""
