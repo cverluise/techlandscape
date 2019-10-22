@@ -12,6 +12,7 @@ class Config:
         self.dataset_id = (
             dataset_id if dataset_id else self.config_dict["dataset_id"]
         )
+        self.mapbox_token = self.config_dict["mapbox_token"]
 
     def client(self):
         """
