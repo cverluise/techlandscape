@@ -2,17 +2,6 @@ from techlandscape.decorators import monitor
 from techlandscape.utils import format_table_ref_for_bq
 
 
-# TODO: add location data from Gaëtan
-# snippet to get the application_id
-# SELECT
-#   SPLIT(publication_number, '-')[
-# OFFSET
-#   (1)] as application_id
-# FROM
-#   `brv-patent.tech_landscape.hair_dryer_segment`
-# TODO: make proper functions
-
-
 @monitor
 def get_patent_country_date(client, table_ref):
     """
@@ -88,21 +77,28 @@ def get_patent_assignee(client, table_ref):
     return client.query(query).to_dataframe()
 
 
-# WITH
-#   tmp AS (
-#   SELECT
-#     SPLIT(publication_number, '-')[
-#   OFFSET
-#     (1)] AS application_id
-#   FROM
-#     `brv-patent.tech_landscape.hair_dryer_segment`)
-# SELECT
-#   lat,
-#   lng,
-#   appln_id
-# FROM
-#   `patstat2016a.raw.app_geo` AS app_geo
-# JOIN
-#   tmp
-# WHERE
-#   app_geo.appln_id=tmp.application_id
+def get_patent_geoloc(flavor, client, table_ref):
+    """
+    Return the geolocation of patent applicants/inventors (<flavor>) of patents in <table_ref>
+    :param flavor: str, in ["app", "inv"]
+    :param client: google.cloud.bigquery.client.Client
+    :param table_ref: google.cloud.bigquery.table.TableReference
+    :return: pd.DataFrame
+    """
+    assert flavor in ["app", "inv"]
+    query = f"""
+    SELECT
+      seg.publication_number,
+      expansion_level,
+      appln_id,
+      patent_office,
+      city,
+      lat,
+      lng
+    from 
+      {format_table_ref_for_bq(table_ref)} as seg,
+      `brv-patent.external.{flavor}_geo_pubnum` as geo
+    WHERE
+      geo.publication_number=seg.publication_number
+    """
+    return client.query(query).to_dataframe()
