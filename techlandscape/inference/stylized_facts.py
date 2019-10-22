@@ -5,10 +5,10 @@ from techlandscape.utils import format_table_ref_for_bq
 @monitor
 def get_patent_country_date(client, table_ref):
     """
-
-    :param client:
-    :param table_ref:
-    :return:
+    Return the patent office and publication_date of patents in <table_ref>
+    :param client: google.cloud.bigquery.client.Client
+    :param table_ref: google.cloud.bigquery.table.TableReference
+    :return: pd.DataFrame
     """
     query = f"""
     SELECT
@@ -30,7 +30,7 @@ def get_patent_country_date(client, table_ref):
 @monitor
 def get_patent_entity(flavor, client, table_ref):
     """
-    Return the "harmonized name" and country of <entity> for patents in <table_ref>
+    Return the "harmonized name" and country of <entity> of patents in <table_ref>
     :param flavor: str, ["inventor", "assignee"]
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
