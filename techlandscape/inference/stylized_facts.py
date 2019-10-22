@@ -28,51 +28,27 @@ def get_patent_country_date(client, table_ref):
 
 
 @monitor
-def get_patent_inventor(client, table_ref):
+def get_patent_entity(flavor, client, table_ref):
     """
-
-    :param client:
-    :param table_ref:
-    :return:
-    """
-    query = f"""
-    SELECT
-      h.publication_number,
-      inventor.name AS inventor_name,
-      inventor.country_code AS inventor_country
-    FROM
-      `patents-public-data.patents.publications` AS p,
-      {format_table_ref_for_bq(table_ref)} AS h,
-      UNNEST(inventor_harmonized) AS inventor
-    WHERE
-      p.publication_number=h.publication_number
-    GROUP BY
-      publication_number, inventor_name, inventor_country
-    """
-    return client.query(query).to_dataframe()
-
-
-@monitor
-def get_patent_assignee(client, table_ref):
-    """
-
-    :param client:
-    :param table_ref:
-    :return:
+    Return the "harmonized name" and country of <entity> for patents in <table_ref>
+    :param flavor: str, ["inventor", "assignee"]
+    :param client: google.cloud.bigquery.client.Client
+    :param table_ref: google.cloud.bigquery.table.TableReference
+    :return: pd.DataFrame
     """
     query = f"""
     SELECT
       h.publication_number,
-      assignee.name AS assignee_name,
-      assignee.country_code AS assignee_country
+      {flavor}.name AS {flavor}_name,
+      {flavor}.country_code AS {flavor}_country
     FROM
       `patents-public-data.patents.publications` AS p,
       {format_table_ref_for_bq(table_ref)} AS h,
-      UNNEST(assignee_harmonized) AS assignee
+      UNNEST({flavor}_harmonized) AS {flavor}
     WHERE
       p.publication_number=h.publication_number
     GROUP BY
-      publication_number, assignee_name, assignee_country
+      publication_number, {flavor}_name, {flavor}_country
     """
     return client.query(query).to_dataframe()
 
