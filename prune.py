@@ -104,7 +104,7 @@ async def full_pruning(
     else:
         config = bq_config if bq_config else Config()
         client = config.client()
-        table_ref = config.table_ref()
+        table_ref = config.table_ref(table_name)
 
         model_task = asyncio.create_task(
             get_pruning_model(
