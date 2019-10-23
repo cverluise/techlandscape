@@ -1,6 +1,7 @@
 import json
 
 from google.cloud import bigquery as bq
+import plotly.express as px
 
 
 class Config:
@@ -13,6 +14,8 @@ class Config:
             dataset_id if dataset_id else self.config_dict["dataset_id"]
         )
         self.mapbox_token = self.config_dict["mapbox_token"]
+        self.color_single = [px.colors.sequential.Blues[-3]]
+        self.color_sequence = px.colors.diverging.Spectral
 
     def client(self):
         """
