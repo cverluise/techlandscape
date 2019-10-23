@@ -53,6 +53,7 @@ def get_patent_entity(flavor, client, table_ref):
     return client.query(query).to_dataframe()
 
 
+@monitor
 def get_patent_geoloc(flavor, client, table_ref):
     """
     Return the geolocation of patent applicants/inventors (<flavor>) of patents in <table_ref>
