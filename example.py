@@ -1,17 +1,21 @@
+import asyncio
+
 import pandas as pd
 
 from expand import full_expansion
 from prune import full_pruning
+from infer import full_inference
+from techlandscape.config import Config
+from techlandscape.expansion.io import load_to_bq
 from techlandscape.pruning.prepare_data import get_train_test
 from techlandscape.pruning.utils import cnn_params_grid
-from techlandscape.expansion.io import load_to_bq
-from techlandscape.config import Config
 
 config = Config()
 client = config.client()
 table_name = "hair_dryer"
 data_path = "data/persist.nosync/"
-model_path = "model/persist.nosync/"
+models_path = "models/persist.nosync/"
+plots_path = "plots/persist.nosync/"
 
 #############
 # Expansion #
@@ -42,33 +46,43 @@ texts_train, texts_test, y_train, y_test = get_train_test(classif_df)
 #  iteration
 #  2. Save data vectors, check that the random_state actually does the work
 
-segment_df = full_pruning(
-    table_name="hair_dryer",
-    model_type="cnn",
-    params_grid=cnn_params_grid,
-    texts_train=texts_train,
-    texts_test=texts_test,
-    y_train=y_train,
-    y_test=y_test,
-    data_path=data_path,
-    model_path=model_path,
+segment_df = asyncio.run(
+    full_pruning(
+        table_name="hair_dryer",
+        model_type="cnn",
+        params_grid=cnn_params_grid,
+        texts_train=texts_train,
+        texts_test=texts_test,
+        y_train=y_train,
+        y_test=y_test,
+        data_path=data_path,
+        model_path=models_path,
+    )
 )
-
 
 # TODO report on nb of occurences by expansion_level
 # TODO error analysis (error_analysis.error_report(model, texts_test, x_test, y_test, .5))
 # TODO check distribution of prediction proba!
 
-tmp = (
-    segment_df.reset_index()
-    .drop_duplicates(["publication_number"])[
-        ["publication_number", "expansion_level"]
-    ]
-    .set_index("publication_number")
+tmp = classif_df.query("expansion_level=='SEED'")[
+    ["publication_number", "expansion_level"]
+]
+tmp = tmp.append(
+    segment_df.reset_index()[["publication_number", "expansion_level"]]
 )
-load_to_bq(tmp, config.table_ref(f"{table_name}_segment", client))
+tmp = tmp.drop_duplicates(["publication_number"]).set_index(
+    "publication_number"
+)
+load_to_bq(
+    tmp,
+    client=client,
+    table_ref=config.table_ref(f"{table_name}_segment", client),
+    job_config=config.load_job_config(),
+)
 # TODO? extend the pruned patents to family (single or expanded), call it backprop
 
 #############
 # Inference #
 #############
+
+full_inference(f"{table_name}_segment", data_path, plots_path)
