@@ -18,7 +18,7 @@ def monitor(f, *args, **kwargs):
             toc = time.time()
             msg.good(f"Done! (Took {round(toc - tic)}s)")
         except Exception as e:
-            raise (e)
+            raise e
     return value
 
 
@@ -31,7 +31,7 @@ def timer(f, wait=wait_time, *args, **kwargs):
     try:
         value = f(*args, **kwargs)
     except Exception as e:
-        raise (e)
+        raise e
     return value
 
 
@@ -42,7 +42,10 @@ def load_or_persist(f, fio=None, *args, **kwargs):
         result = pd.read_csv(fio, index_col=0)
         msg.info(f"Already persisted. Loaded from file {fio}")
     else:
-        result = f(*args, **kwargs)
+        try:
+            result = f(*args, **kwargs)
+        except Exception as e:
+            raise e
         result.to_csv(fio)
         msg.info(f"Loaded from the cloud. Persisted in {fio}")
     return result
