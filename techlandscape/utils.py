@@ -1,4 +1,6 @@
 import json
+import string
+import random
 
 from wasabi import Printer
 
@@ -82,3 +84,13 @@ def flatten(l):
 @timer
 def breathe():
     pass
+
+
+def get_uid(n=6):
+    """
+    Generate a random string of letters and digits
+    :param n: int, uid length
+    :return: str
+    """
+    seq = string.ascii_letters.lower() + string.digits
+    return "".join(random.choice(seq) for i in range(n))
