@@ -22,7 +22,7 @@ country_groups = {
         "US",
         "ZA",
     ],
-    "g7": ["CA", "FR", "DE", "IT", "JP", "UK", "US"],
+    "g7": ["CA", "FR", "DE", "IT", "JP", "GB", "US"],
     "brics": ["BR", "RU", "IN", "CN", "ZA"],
 }
 
