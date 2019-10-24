@@ -1,26 +1,30 @@
 import json
-import string
 import random
+import string
 
 from wasabi import Printer
 
 from techlandscape.decorators import timer
 
-english_speaking_offices = [
-    "AP",
-    "AU",
-    "CA",
-    "EA",
-    "EP",
-    "GB",
-    "HK",
-    "IE",
-    "IN",
-    "NZ",
-    "SG",
-    "US",
-    "ZA",
-]
+country_groups = {
+    "english_speaking": [
+        "AP",
+        "AU",
+        "CA",
+        "EA",
+        "EP",
+        "GB",
+        "HK",
+        "IE",
+        "IN",
+        "NZ",
+        "SG",
+        "US",
+        "ZA",
+    ],
+    "g7": ["CA", "FR", "DE", "IT", "JP", "UK", "US"],
+    "brics": ["BR", "RU", "IN", "CN", "ZA"],
+}
 
 
 def iso2cnt(ent_list, flavor):

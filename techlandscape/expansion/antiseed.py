@@ -2,7 +2,7 @@ from techlandscape.decorators import monitor, timer
 from techlandscape.utils import (
     format_table_ref_for_bq,
     country_clause_for_bq,
-    english_speaking_offices,
+    country_groups,
 )
 
 # TODO work on reproducibility when calling random draw
@@ -33,7 +33,7 @@ def draw_af_antiseed(size, client, table_ref, job_config):
     ON
       r.publication_number = tmp.publication_number
     WHERE
-      r.country in ({country_clause_for_bq(english_speaking_offices)})
+      r.country in ({country_clause_for_bq(country_groups["g7"]+country_groups["brics"])})
       AND r.abstract is not NULL
       AND r.abstract!=''
     ORDER BY
@@ -87,7 +87,7 @@ def draw_aug_antiseed(size, flavor, pc_list, client, table_ref, job_config):
       r.publication_number = tmp.publication_number
     WHERE
       {pc_like_clause}
-      AND r.country in ({country_clause_for_bq(english_speaking_offices)})
+      AND r.country in ({country_clause_for_bq(country_groups["g7"]+country_groups["brics"])})
       AND r.abstract is not NULL
       AND r.abstract!=''
     ORDER BY

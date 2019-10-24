@@ -6,7 +6,7 @@ from techlandscape.decorators import monitor, timer
 from techlandscape.utils import (
     format_table_ref_for_bq,
     country_clause_for_bq,
-    english_speaking_offices,
+    country_groups,
 )
 
 
@@ -62,7 +62,7 @@ def get_expansion_result(flavor, client, table_ref):
       {format_table_ref_for_bq(table_ref)} as tmp
     WHERE
       r.publication_number=tmp.publication_number
-      AND r.country in ({country_clause_for_bq(english_speaking_offices)})
+      AND r.country in ({country_clause_for_bq(country_groups["g7"]+country_groups["brics"])})
       AND abstract is not NULL
       AND abstract!=''
       AND expansion_level {expansion_level_clause} LIKE "%SEED%"
