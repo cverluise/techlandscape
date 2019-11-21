@@ -1,12 +1,15 @@
 import json
+import os
 
+from google.oauth2 import service_account
 from google.cloud import bigquery as bq
 import plotly.express as px
 
 
 class Config:
-    def __init__(self, project_id=None, dataset_id=None):
+    def __init__(self, credentials_f=None, project_id=None, dataset_id=None):
         self.config_dict = json.load(open("config.json", "rb"))
+        self.credentials_f = (credentials_f if credentials_f else self.config_dict["credentials"])
         self.project_id = (
             project_id if project_id else self.config_dict["project_id"]
         )
@@ -17,11 +20,18 @@ class Config:
         self.color_single = [px.colors.sequential.Blues[-3]]
         self.color_sequence = px.colors.diverging.Spectral
 
+    def credentials(self):
+        assert os.path.isfile(self.credentials_f)
+        return service_account.Credentials.from_service_account_file(
+            self.credentials_f,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+
     def client(self):
         """
         :return: bq.Client
         """
-        return bq.Client(project=self.project_id)
+        return bq.Client(project=self.project_id, credentials=self.credentials())
 
     def table_ref(self, table_id, client=None):
         """
