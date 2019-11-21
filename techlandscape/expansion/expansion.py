@@ -158,7 +158,7 @@ def pc_expansion(flavor, pc_list, client, job_config):
     WHERE
       {flavor}.code IN ( {pc_string} )
     """
-    client.query(query, job_config=job_config)
+    client.query(query, job_config=job_config).result()
 
 
 @monitor
@@ -199,4 +199,4 @@ def citation_expansion(flavor, expansion_level, client, table_ref, job_config):
       AND {flavor}.publication_number!=""
       {expansion_level_clause}
     """
-    client.query(query, job_config=job_config)
+    client.query(query, job_config=job_config).result()

@@ -5,7 +5,7 @@ import pandas as pd
 
 from wasabi import Printer
 
-wait_time = 20
+wait_time = 0
 
 
 @decorator

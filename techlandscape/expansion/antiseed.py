@@ -41,7 +41,7 @@ def draw_af_antiseed(size, client, table_ref, job_config):
     LIMIT
       {size}
     """
-    client.query(query, job_config=job_config)
+    client.query(query, job_config=job_config).result()
 
 
 @timer
@@ -95,4 +95,4 @@ def draw_aug_antiseed(size, flavor, pc_list, client, table_ref, job_config):
     LIMIT
       {size}
     """
-    client.query(query, job_config=job_config)
+    client.query(query, job_config=job_config).result()

@@ -33,7 +33,7 @@ def load_to_bq(f, client, table_ref, job_config):
         pass
     else:
         df["expansion_level"] = "SEED"
-    client.load_table_from_dataframe(df, table_ref, job_config=job_config)
+    client.load_table_from_dataframe(df, table_ref, job_config=job_config).result()
 
 
 @timer
