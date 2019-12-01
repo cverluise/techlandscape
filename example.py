@@ -6,26 +6,29 @@ from expand import full_expansion
 from prune import full_pruning
 from infer import full_inference
 from techlandscape.config import Config
+from techlandscape.utils import get_uid
 from techlandscape.expansion.io import load_to_bq
 from techlandscape.pruning.prepare_data import get_train_test
 from techlandscape.pruning.utils import cnn_params_grid
 
 config = Config()
 client = config.client()
-table_name = "hair_dryer"
-data_path = "data/persist.nosync/"
-models_path = "models/persist.nosync/"
-plots_path = "plots/persist.nosync/"
+table_name = get_uid(6)
+data_path = "data/tmp/"
+# models_path = "models/persist.nosync/"
+# plots_path = "plots/persist.nosync/"
 
 #############
 # Expansion #
 #############
 
 full_expansion(
-    seed_file="data/seed/hair_dryer.csv",
+    seed_file="data/seed/generalplasticsurgery_unique.csv",
     table_name=table_name,
     data_path=data_path,
     pc_flavor="cpc",
+    pc_counterfactual_f="data/pc/cpc_freq_cntyr.csv.gz",
+    countries=["US"],
 )
 
 # WARNING: rows are unique at the ["publication_number", "expansion_level", "abstract"] level
