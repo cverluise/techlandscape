@@ -1,6 +1,8 @@
 from collections import Counter
 
 import pandas as pd
+import os
+from wasabi import Printer
 
 from techlandscape.decorators import monitor, timer
 from techlandscape.utils import format_table_ref_for_bq, flatten
@@ -8,21 +10,23 @@ from techlandscape.utils import format_table_ref_for_bq, flatten
 
 # TODO control queries with publication_number=publication_number to check that inner join
 #   rather than RIGHT/LEFT inner join is not detrimental
+msg = Printer()
 
 
 def _get_seed_pc_freq(flavor, client, table_ref):
     """
-    Return a dataframe with the frequency of technological classes in the seed
+    Return a dataframe with the frequency of technological classes in the seed and their time range
     :param flavor: str, in ["ipc", "cpc"]
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
-    :return: pd.DataFrame
+    :return: (pd.DataFrame, list), freq df, [yr_lo, yr_up]
     """
     assert flavor in ["ipc", "cpc"]
     query = f"""
       SELECT
         tmp.publication_number,
-        STRING_AGG({flavor}.code) AS {flavor}
+        STRING_AGG({flavor}.code) AS {flavor},
+        CAST(ROUND(p.publication_date/10000, 0) AS INT64) AS publication_year
         FROM
           `patents-public-data.patents.publications` AS p,
           {format_table_ref_for_bq(table_ref)} AS tmp,
@@ -30,9 +34,17 @@ def _get_seed_pc_freq(flavor, client, table_ref):
         WHERE
           p.publication_number=tmp.publication_number
       GROUP BY
-        publication_number
+        publication_number, publication_year
     """
-    seed_pc = client.query(query=query).to_dataframe()[flavor].to_list()
+    tmp = client.query(query=query).to_dataframe()
+    time_range = list(
+        map(
+            lambda x: int(x),
+            tmp["publication_year"].quantile([0.1, 0.9]).values,
+        )
+    )
+    seed_pc = tmp[flavor].to_list()
+
     seed_nb_pat = len(seed_pc)
     # seed_pc is a list of comma separated strings. E.g. "A45D20/12,A45D20/122"
     seed_pc_list = flatten(list(map(lambda x: x.split(","), seed_pc)))
@@ -41,10 +53,13 @@ def _get_seed_pc_freq(flavor, client, table_ref):
     seed_pc_count = Counter(seed_pc_list)
     # count the number of occurences of each code {'A':1, 'B':3, ...}
     # seed_pc_freq = seed_pc_count / seed_nb_pat
-    return pd.DataFrame(
-        index=seed_pc_count.keys(),
-        data=list(map(lambda x: x / seed_nb_pat, seed_pc_count.values())),
-        columns=["freq"],
+    return (
+        pd.DataFrame(
+            index=seed_pc_count.keys(),
+            data=list(map(lambda x: x / seed_nb_pat, seed_pc_count.values())),
+            columns=["freq"],
+        ),
+        time_range,
     )
 
 
@@ -57,6 +72,7 @@ def _get_universe_pc_freq(flavor, client, table_ref):
     :param table_ref: google.cloud.bigquery.table.TableReference
     :return:
     """
+    # TODO harmonize to use yr_lo and yr_up returned by _get_seed_pc_freq
     assert flavor in ["ipc", "cpc"]
     query = f"""
     WITH
@@ -108,30 +124,68 @@ def _get_universe_pc_freq(flavor, client, table_ref):
     return (df["count"] / df["total"]).rename("freq").to_frame()
 
 
+def _get_universe_pc_freq_from_file(f, flavor, time_range, countries=None):
+    """
+    Return the frequency of patent classes for patents with publication_year in <time_range>
+    and country_code in <countries> if not None (no restriction if None)
+    :param f: str, csv.gz file with universe pc freq (country_code|year|pc|freq)
+    :param flavor: str, in ["cpc", "ipc"]
+    :param time_range: List[int], [yr_lo, yr_up]
+    :param countries: List[str], ISO2 countries we are interested in
+    :return: pd.DataFrame
+    """
+    # TODO check that countries are ISO2, should be done earlier actually
+    assert os.path.isfile(f)
+    assert flavor in ["cpc", "ipc"]
+    universe_pc_freq = pd.read_csv(f, index_col=0, compression="gzip")
+    query = "@time_range[0]<=publication_year<=@time_range[1]"
+    query = query + "  and country_code in @countries" if countries else query
+    universe_pc_freq = universe_pc_freq.query(query)
+    return universe_pc_freq.groupby(flavor).mean()["freq"]
+
+
 @timer
 @monitor
-def get_important_pc(flavor, threshold, client, table_ref):
+def get_important_pc(
+    flavor, threshold, client, table_ref, counterfactual_f=None, countries=None
+):
     """
+    Return a dataframe with pc which are <threshold>-folds more represented in the seed than in the "universe"
+    of patents (restr to <time_range> and <countries> if not None
     :param flavor: str
     :param threshold: float, threshold above which a pc is considered over-represented in the
     seed wrt the universe
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
-    :return:
+    :param counterfactual_f: str, csv.gz file with universe pc freq (country_code|year|pc|freq)
+    :param countries: list, iso2 country list
+    :return: pd.DataFrame
     """
     assert flavor in ["ipc", "cpc"]
-    seed_pc_freq = _get_seed_pc_freq(flavor, client, table_ref)
-    universe_pc_freq = _get_universe_pc_freq(flavor, client, table_ref)
+    seed_pc_freq, time_range = _get_seed_pc_freq(flavor, client, table_ref)
+    if counterfactual_f:
+        universe_pc_freq = _get_universe_pc_freq_from_file(
+            counterfactual_f, flavor, time_range, countries
+        )
+        # Nb: all countries and years are equally weighted. Could be more sophisticated
+    else:
+        msg.info(
+            "Local counterfactual file might considerably increase efficiency. "
+            "Have a look at bin/ExtractCntYrPC.py"
+        )
+        universe_pc_freq = _get_universe_pc_freq(flavor, client, table_ref)
     pc_odds = seed_pc_freq.merge(
         universe_pc_freq,
+        how="left",
         right_index=True,
         left_index=True,
         suffixes=["_seed", "_universe"],
     )
     pc_odds["odds"] = pc_odds["freq_seed"] / pc_odds["freq_universe"]
-    return pc_odds.query(
-        "odds>@threshold"
-    )  # list(cpc_odds.query("odds>@threshold").index)
+    pc_odds.loc[pc_odds["freq_universe"].isna(), "odds"] = threshold + 1
+    # We keep cpcs with too few occurences to be kept in the local counterfactual file (below lower_bound)
+    return pc_odds.query("odds>@threshold")
+    # list(cpc_odds.query("odds>@threshold").index)
 
 
 @timer
