@@ -3,11 +3,7 @@ import os
 import pandas as pd
 
 from techlandscape.decorators import monitor, timer
-from techlandscape.utils import (
-    format_table_ref_for_bq,
-    country_clause_for_bq,
-    country_groups,
-)
+from techlandscape.utils import format_table_ref_for_bq, country_clause_for_bq
 
 
 @monitor
@@ -33,12 +29,14 @@ def load_to_bq(f, client, table_ref, job_config):
         pass
     else:
         df["expansion_level"] = "SEED"
-    client.load_table_from_dataframe(df, table_ref, job_config=job_config).result()
+    client.load_table_from_dataframe(
+        df, table_ref, job_config=job_config
+    ).result()
 
 
 @timer
 @monitor
-def get_expansion_result(flavor, client, table_ref):
+def get_expansion_result(flavor, client, table_ref, countries=None):
     """
     Return the result of the expansion.
     E.g: publication_number | expansion_level | abstract
@@ -54,8 +52,9 @@ def get_expansion_result(flavor, client, table_ref):
     else:
         expansion_level_clause = "NOT"
         country_clause = (
-            f"AND r.country in "
-            f"({country_clause_for_bq(country_groups['g7']+country_groups['brics'])})"
+            f"AND r.country in ({country_clause_for_bq(countries)})"
+            if countries
+            else ""
         )
     query = f"""
     SELECT

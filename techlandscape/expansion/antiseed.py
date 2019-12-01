@@ -1,9 +1,6 @@
 from techlandscape.decorators import monitor, timer
-from techlandscape.utils import (
-    format_table_ref_for_bq,
-    country_clause_for_bq,
-    country_groups,
-)
+from techlandscape.utils import format_table_ref_for_bq, country_clause_for_bq
+
 
 # TODO work on reproducibility when calling random draw
 #   Could find some inspiration here
@@ -13,7 +10,7 @@ from techlandscape.utils import (
 
 @timer
 @monitor
-def draw_af_antiseed(size, client, table_ref, job_config):
+def draw_af_antiseed(size, client, table_ref, job_config, countries=None):
     """
 
     :param size: int
@@ -22,6 +19,11 @@ def draw_af_antiseed(size, client, table_ref, job_config):
     :param job_config: google.cloud.bigquery.job.QueryJobConfig
     :return:
     """
+    country_clause = (
+        f"AND r.country in ({country_clause_for_bq(countries)})"
+        if countries
+        else ""
+    )
     query = f"""
     SELECT
       DISTINCT(r.publication_number) AS publication_number,
@@ -33,9 +35,9 @@ def draw_af_antiseed(size, client, table_ref, job_config):
     ON
       r.publication_number = tmp.publication_number
     WHERE
-      r.country in ({country_clause_for_bq(country_groups["g7"]+country_groups["brics"])})
-      AND r.abstract is not NULL
+      r.abstract is not NULL
       AND r.abstract!=''
+      {country_clause}
     ORDER BY
       RAND()
     LIMIT
@@ -46,7 +48,9 @@ def draw_af_antiseed(size, client, table_ref, job_config):
 
 @timer
 @monitor
-def draw_aug_antiseed(size, flavor, pc_list, client, table_ref, job_config):
+def draw_aug_antiseed(
+    size, flavor, pc_list, client, table_ref, job_config, countries=None
+):
     """
 
     :param size: int
@@ -74,6 +78,11 @@ def draw_aug_antiseed(size, flavor, pc_list, client, table_ref, job_config):
         )
         + ")"
     )
+    country_clause = (
+        f"AND r.country in ({country_clause_for_bq(countries)})"
+        if countries
+        else ""
+    )
     query = f"""
     SELECT
       DISTINCT(r.publication_number) AS publication_number,
@@ -87,7 +96,7 @@ def draw_aug_antiseed(size, flavor, pc_list, client, table_ref, job_config):
       r.publication_number = tmp.publication_number
     WHERE
       {pc_like_clause}
-      AND r.country in ({country_clause_for_bq(country_groups["g7"]+country_groups["brics"])})
+      {country_clause}
       AND r.abstract is not NULL
       AND r.abstract!=''
     ORDER BY
