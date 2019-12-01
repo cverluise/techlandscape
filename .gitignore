@@ -1,5 +1,6 @@
 # secret
 config.json
+credentials.json
 
 #dev
 dev*.py 
@@ -7,6 +8,7 @@ bin/ExtractCPCCounts.py
 
 # Data
 data/persist.nosync
+data/pc/
 data/seed/
 model/persist.nosync
 
