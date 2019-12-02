@@ -10,6 +10,7 @@ bin/ExtractCPCCounts.py
 data/persist.nosync
 data/pc/
 data/seed/
+data/tmp/
 model/persist.nosync
 
 # System files
