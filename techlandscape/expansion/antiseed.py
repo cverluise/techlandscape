@@ -1,5 +1,6 @@
 from techlandscape.decorators import monitor, timer
 from techlandscape.utils import format_table_ref_for_bq, country_clause_for_bq
+import asyncio
 
 
 # TODO work on reproducibility when calling random draw
@@ -9,8 +10,10 @@ from techlandscape.utils import format_table_ref_for_bq, country_clause_for_bq
 
 
 @timer
-@monitor
-def draw_af_antiseed(size, client, table_ref, job_config, countries=None):
+# @monitor
+async def draw_af_antiseed(
+    size, client, table_ref, job_config, countries=None
+):
     """
 
     :param size: int
@@ -47,8 +50,8 @@ def draw_af_antiseed(size, client, table_ref, job_config, countries=None):
 
 
 @timer
-@monitor
-def draw_aug_antiseed(
+# @monitor
+async def draw_aug_antiseed(
     size, flavor, pc_list, client, table_ref, job_config, countries=None
 ):
     """
@@ -105,3 +108,24 @@ def draw_aug_antiseed(
       {size}
     """
     client.query(query, job_config=job_config).result()
+
+
+async def draw_antiseed(
+    size, flavor, pc_list, client, table_ref, job_config, countries=None
+):
+    af_antiseed_task = asyncio.create_task(
+        draw_af_antiseed(size, client, table_ref, job_config, countries)
+    )
+    aug_antiseed_task = asyncio.create_task(
+        draw_aug_antiseed(
+            size,
+            flavor,
+            pc_list,  # we exclude _all_ important pcs
+            client,
+            table_ref,
+            job_config,
+            countries,
+        )
+    )
+    await af_antiseed_task
+    await aug_antiseed_task

@@ -3,10 +3,10 @@ from collections import Counter
 import pandas as pd
 import os
 from wasabi import Printer
+import asyncio
 
 from techlandscape.decorators import monitor, timer
 from techlandscape.utils import format_table_ref_for_bq, flatten
-
 
 # TODO control queries with publication_number=publication_number to check that inner join
 #   rather than RIGHT/LEFT inner join is not detrimental
@@ -215,8 +215,10 @@ def pc_expansion(flavor, pc_list, client, job_config):
     client.query(query, job_config=job_config).result()
 
 
-@monitor
-def citation_expansion(flavor, expansion_level, client, table_ref, job_config):
+# @monitor
+async def _citation_expansion(
+    flavor, expansion_level, client, table_ref, job_config
+):
     """
     Expands "along" the citation dimension, either backward (flavor=="citation") or forward (
     citation=="cited_by")
@@ -254,3 +256,19 @@ def citation_expansion(flavor, expansion_level, client, table_ref, job_config):
       {expansion_level_clause}
     """
     client.query(query, job_config=job_config).result()
+
+
+# @monitor
+async def citation_expansion(expansion_level, client, table_ref, job_config):
+    back_task = asyncio.create_task(
+        _citation_expansion(
+            "citation", expansion_level, client, table_ref, job_config
+        )
+    )
+    for_task = asyncio.create_task(
+        _citation_expansion(
+            "cited_by", expansion_level, client, table_ref, job_config
+        )
+    )
+    await back_task
+    await for_task

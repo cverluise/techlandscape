@@ -2,12 +2,12 @@ import click
 import numpy as np
 import pandas as pd
 import os
+import asyncio
+import time
+from wasabi import Printer
 
 from techlandscape.config import Config
-from techlandscape.expansion.antiseed import (
-    draw_af_antiseed,
-    draw_aug_antiseed,
-)
+from techlandscape.expansion.antiseed import draw_antiseed
 from techlandscape.expansion.expansion import (
     get_important_pc,
     pc_expansion,
@@ -17,7 +17,12 @@ from techlandscape.expansion.io import load_to_bq, get_expansion_result
 from techlandscape.expansion.utils import get_antiseed_size
 
 
-def full_expansion(
+# TODO make async
+#  - citation expansions
+#  - draw antiseed
+
+
+async def full_expansion(
     seed_file,
     table_name,
     data_path,
@@ -51,6 +56,7 @@ def full_expansion(
         table_ref = config.table_ref(table_name, client=client)
         load_job_config = config.load_job_config()
         query_job_config = config.query_job_config(table_name, client=client)
+        msg = Printer()
 
         load_to_bq(seed_file, client, table_ref, load_job_config)
 
@@ -67,34 +73,46 @@ def full_expansion(
             pc_flavor, important_pc_sub[:50], client, query_job_config
         )
         # we restrict to the top 50
-        citation_expansion(
-            "citation", "L1", client, table_ref, query_job_config
-        )
-        citation_expansion(
-            "cited_by", "L1", client, table_ref, query_job_config
-        )
 
-        citation_expansion(
-            "citation", "L2", client, table_ref, query_job_config
-        )
-        citation_expansion(
-            "cited_by", "L2", client, table_ref, query_job_config
-        )
+        tic = time.time()
+        with msg.loading(
+            "Working hard..."
+        ):  # cannot use @monitor on async func
+            l1_task = asyncio.create_task(
+                citation_expansion("L1", client, table_ref, query_job_config)
+            )
+            await l1_task
+            toc = time.time()
+            msg.good(f"Done! (Took {round(toc - tic)}s)")
+
+        tic = time.time()
+        with msg.loading("Working hard..."):
+            l2_task = asyncio.create_task(
+                citation_expansion("L2", client, table_ref, query_job_config)
+            )
+            await l2_task
+            toc = time.time()
+            msg.good(f"Done! (Took {round(toc - tic)}s)")
 
         seed_size = len(np.loadtxt(seed_file, dtype="str")) - 1
         antiseed_size = int(get_antiseed_size(seed_size) / 2)
-        draw_af_antiseed(
-            antiseed_size, client, table_ref, query_job_config, countries
-        )
-        draw_aug_antiseed(
-            antiseed_size,
-            pc_flavor,
-            important_pc_sub,  # we exclude _all_ important pcs
-            client,
-            table_ref,
-            query_job_config,
-            countries,
-        )
+
+        tic = time.time()
+        with msg.loading("Working hard..."):
+            antiseed_task = asyncio.create_task(
+                draw_antiseed(
+                    antiseed_size,
+                    pc_flavor,
+                    important_pc_sub,  # we exclude *all* important pcs
+                    client,
+                    table_ref,
+                    query_job_config,
+                    countries,
+                )
+            )
+            await antiseed_task
+            toc = time.time()
+            msg.good(f"Done! (Took {round(toc - tic)}s)")
 
         classif_df = get_expansion_result("*seed", client, table_ref)
         classif_df.to_csv(
