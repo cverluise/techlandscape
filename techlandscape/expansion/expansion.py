@@ -3,9 +3,8 @@ from collections import Counter
 import pandas as pd
 import os
 from wasabi import Printer
-import asyncio
 
-from techlandscape.decorators import monitor, timer
+from techlandscape.decorators import monitor
 from techlandscape.utils import format_table_ref_for_bq, flatten
 
 # TODO control queries with publication_number=publication_number to check that inner join
@@ -144,7 +143,6 @@ def _get_universe_pc_freq_from_file(f, flavor, time_range, countries=None):
     return universe_pc_freq.groupby(flavor).mean()["freq"]
 
 
-@timer
 @monitor
 def get_important_pc(
     flavor, threshold, client, table_ref, counterfactual_f=None, countries=None
@@ -188,7 +186,6 @@ def get_important_pc(
     # list(cpc_odds.query("odds>@threshold").index)
 
 
-@timer
 @monitor
 def pc_expansion(flavor, pc_list, client, job_config):
     """
@@ -215,8 +212,7 @@ def pc_expansion(flavor, pc_list, client, job_config):
     client.query(query, job_config=job_config).result()
 
 
-# @monitor
-async def _citation_expansion(
+def _citation_expansion(
     flavor, expansion_level, client, table_ref, job_config
 ):
     """
@@ -227,7 +223,7 @@ async def _citation_expansion(
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
     :param job_config: google.cloud.bigquery.job.QueryJobConfig
-    :return:
+    :return: bq.Job
     """
     assert expansion_level in ["L1", "L2"]
     assert flavor in ["citation", "cited_by"]
@@ -255,20 +251,17 @@ async def _citation_expansion(
       AND {flavor}.publication_number!=""
       {expansion_level_clause}
     """
-    client.query(query, job_config=job_config).result()
+    return client.query(query, job_config=job_config)
 
 
-# @monitor
-async def citation_expansion(expansion_level, client, table_ref, job_config):
-    back_task = asyncio.create_task(
-        _citation_expansion(
-            "citation", expansion_level, client, table_ref, job_config
-        )
+@monitor
+def citation_expansion(expansion_level, client, table_ref, job_config):
+    back_job = _citation_expansion(
+        "citation", expansion_level, client, table_ref, job_config
     )
-    for_task = asyncio.create_task(
-        _citation_expansion(
-            "cited_by", expansion_level, client, table_ref, job_config
-        )
+    for_job = _citation_expansion(
+        "cited_by", expansion_level, client, table_ref, job_config
     )
-    await back_task
-    await for_task
+
+    for_job.result()
+    back_job.result()

@@ -22,15 +22,13 @@ data_path = "data/tmp/"
 # Expansion #
 #############
 
-asyncio.run(
-    full_expansion(
-        seed_file="data/seed/generalplasticsurgery_unique.csv",
-        table_name=table_name,
-        data_path=data_path,
-        pc_flavor="cpc",
-        pc_counterfactual_f="data/pc/cpc_freq_cntyr.csv.gz",
-        countries=["US"],
-    )
+full_expansion(
+    seed_file="data/seed/generalplasticsurgery_unique.csv",
+    table_name=table_name,
+    data_path=data_path,
+    pc_flavor="cpc",
+    pc_counterfactual_f="data/pc/cpc_freq_cntyr.csv.gz",
+    countries=["US"],
 )
 
 # WARNING: rows are unique at the ["publication_number", "expansion_level", "abstract"] level

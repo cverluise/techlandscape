@@ -1,7 +1,5 @@
-from techlandscape.decorators import monitor, timer
+from techlandscape.decorators import monitor
 from techlandscape.utils import format_table_ref_for_bq, country_clause_for_bq
-import asyncio
-
 
 # TODO work on reproducibility when calling random draw
 #   Could find some inspiration here
@@ -9,18 +7,14 @@ import asyncio
 #   -learning
 
 
-@timer
-# @monitor
-async def draw_af_antiseed(
-    size, client, table_ref, job_config, countries=None
-):
+def _draw_af_antiseed(size, client, table_ref, job_config, countries=None):
     """
 
     :param size: int
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
     :param job_config: google.cloud.bigquery.job.QueryJobConfig
-    :return:
+    :return: bq.Job
     """
     country_clause = (
         f"AND r.country in ({country_clause_for_bq(countries)})"
@@ -46,12 +40,10 @@ async def draw_af_antiseed(
     LIMIT
       {size}
     """
-    client.query(query, job_config=job_config).result()
+    return client.query(query, job_config=job_config)
 
 
-@timer
-# @monitor
-async def draw_aug_antiseed(
+def _draw_aug_antiseed(
     size, flavor, pc_list, client, table_ref, job_config, countries=None
 ):
     """
@@ -62,7 +54,7 @@ async def draw_aug_antiseed(
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
     :param job_config: google.cloud.bigquery.job.QueryJobConfig
-    :return:
+    :return: bq.Job
     """
     assert flavor in ["ipc", "cpc"]
     pc_like_clause = (
@@ -107,25 +99,18 @@ async def draw_aug_antiseed(
     LIMIT
       {size}
     """
-    client.query(query, job_config=job_config).result()
+    return client.query(query, job_config=job_config)
 
 
-async def draw_antiseed(
+@monitor
+def draw_antiseed(
     size, flavor, pc_list, client, table_ref, job_config, countries=None
 ):
-    af_antiseed_task = asyncio.create_task(
-        draw_af_antiseed(size, client, table_ref, job_config, countries)
+    af_antiseed_job = _draw_af_antiseed(
+        size, client, table_ref, job_config, countries
     )
-    aug_antiseed_task = asyncio.create_task(
-        draw_aug_antiseed(
-            size,
-            flavor,
-            pc_list,  # we exclude _all_ important pcs
-            client,
-            table_ref,
-            job_config,
-            countries,
-        )
+    aug_antiseed_job = _draw_aug_antiseed(
+        size, flavor, pc_list, client, table_ref, job_config, countries
     )
-    await af_antiseed_task
-    await aug_antiseed_task
+    af_antiseed_job.result()
+    aug_antiseed_job.result()
