@@ -49,8 +49,11 @@ def grid_search(
     """
     assert isinstance(params_grid, dict)
     assert model_type in ["cnn", "mlp"]
+
     performance = {}
-    _, x_test, _ = vectorize_text.get_sequence(texts_train, texts_test)
+    _, x_test, _ = vectorize_text.get_vectors(
+        texts_train, texts_test, model_type
+    )
 
     for params_ in list(itertools.product(*list(params_grid.values()))):
         params = dict(zip(params_grid.keys(), params_))
@@ -93,7 +96,6 @@ def grid_search(
         model.save(f"{log_root}-{model_type}-{model_name}.h5")
 
     performance_df = pd.DataFrame().from_dict(performance).T
-    performance_df.to_csv(f"{log_root}-{model_type}-performance.csv")
     return performance_df
 
 
