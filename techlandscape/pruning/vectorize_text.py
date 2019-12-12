@@ -18,13 +18,13 @@ MAX_SEQUENCE_LENGTH = 250
 # TODO: enrich with transformers in output
 
 
-def get_ngram(texts_train, y_train, texts_test):
+def get_ngram(texts_train, texts_test, y_train):
     """
     Return sparse matrices where 1 row corresponds to the tf-idf representation of a document with
     the number of columns corresponding to the card of the (ngram) vocabulary.
     :param texts_train: List[str], list of training set texts.
-    :param y_train: arr, training set labels.
     :param texts_test: List[str], list of test set texts.
+    :param y_train: arr, training set labels.
     :return: Vectorized training and test texts.
     """
     # Create keyword arguments to pass to the 'tf-idf' vectorizer.
@@ -51,7 +51,7 @@ def get_ngram(texts_train, y_train, texts_test):
     x_train = selector.transform(x_train).astype("float32")
     x_test = selector.transform(x_test).astype("float32")
 
-    return x_train, x_test
+    return x_train, x_test, (vectorizer, selector)
 
 
 def get_sequence(texts_train, texts_test, tokenizer=None):
@@ -85,3 +85,21 @@ def get_sequence(texts_train, texts_test, tokenizer=None):
     x_train = sequence.pad_sequences(x_train, maxlen=max_length)
     x_test = sequence.pad_sequences(x_test, maxlen=max_length)
     return x_train, x_test, tokenizer
+
+
+def get_vectors(
+    texts_train, texts_test, model_type, y_train=None, tokenizer=None
+):
+    """"""
+    assert model_type in ["cnn", "mlp"]
+
+    if model_type == "cnn":
+        x_train, x_test, transformers = get_sequence(
+            texts_train, texts_test, tokenizer
+        )
+    else:
+        assert y_train
+        x_train, x_test, transformers = get_ngram(
+            texts_train, texts_test, y_train
+        )
+    return x_train, x_test, transformers
