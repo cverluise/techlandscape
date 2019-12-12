@@ -40,7 +40,7 @@ async def get_pruning_model(
             texts_test,
             y_train,
             y_test,
-            f"{model_path}hair_dryer",
+            f"{model_path}{table_name}",
         )
     model = get_best_model(
         performance_df, model_type, f"{model_path}{table_name}"
