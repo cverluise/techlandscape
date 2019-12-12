@@ -81,11 +81,14 @@ async def get_pruning_data(client, table_ref, table_name, data_path):
 def get_segment(
     model, model_type, texts_train, expansion_df, data_path, table_name
 ):
-    """"""
-    fio = f"{data_path}{table_name}_segment.csv"
-    if os.path.isfile(fio):
-        segment_df = pd.read_csv(fio, index_col=0)
-    else:
+    """
+    Return the set of patents classified in the 0 class
+    :return:
+    """
+    fio = os.path.join(data_path, f"{table_name}_segment.csv")
+
+    @load_or_persist(fio=fio)
+    def main():
         texts_expansion = expansion_df["abstract"].to_list()
         _, x_expansion, _ = vectorize_text.get_vectors(
             texts_train, texts_expansion, model_type
@@ -96,8 +99,9 @@ def get_segment(
         #  1. train val test rather than train test
         #  2. think twice about the selection criteria
         segment_df = expansion_df.query("pred_score<.5")
-        del expansion_df
-        segment_df.to_csv(fio)
+        return segment_df
+
+    segment_df = main()
     return segment_df
 
 
