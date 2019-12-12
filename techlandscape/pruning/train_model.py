@@ -4,7 +4,6 @@ from keras.optimizers import Adam
 from techlandscape.pruning import vectorize_text, build_model
 
 
-# TODO? save the model
 # TODO? 'f_score' in metrics (model.compile). See custom metrics https://keras.io/metrics/
 # TODO? implement EarlyStopping on f_score
 
@@ -28,7 +27,7 @@ def train_mlp(texts_train, texts_test, y_train, y_test, params):
 
     # Vectorize texts.
     x_train, x_test = vectorize_text.get_ngram(
-        texts_train, y_train, texts_test
+        texts_train, texts_test, y_train
     )
 
     # Create model instance.
@@ -112,7 +111,6 @@ def train_cnn(texts_train, texts_test, y_train, y_test, params):
     model.compile(
         optimizer=optimizer, loss="binary_crossentropy", metrics=["accuracy"]
     )
-    # TODO implement grid search from good practices reported in Zhang and Wallace
     # Create callback for early stopping on validation loss. If the loss does
     # not decrease in two consecutive tries, stop training.
     callbacks = [EarlyStopping(monitor="val_loss", patience=2)]

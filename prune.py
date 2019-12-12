@@ -6,7 +6,8 @@ from techlandscape.pruning import vectorize_text
 from techlandscape.pruning.tune_model import get_best_model, grid_search
 from techlandscape.expansion.io import get_expansion_result
 from techlandscape.config import Config
-from techlandscape.decorators import monitor
+from techlandscape.decorators import monitor, load_or_persist
+
 
 # TODO add "loading persisted file" message
 
@@ -23,16 +24,35 @@ async def get_pruning_model(
     data_path,
     model_path,
 ):
-    """"""
-    assert model_type in ["cnn"]
-    assert os.path.isfile(f"{data_path}{table_name}_classif.csv.gz")
+    """
+    Return the best model given the <model_type> and the <params_grid>
+    :param table_name: str
+    :param model_type: str, in ['cnn', 'mlp']
+    :param params_grid: dict
+    :param texts_train: List[str]
+    :param texts_test: List[str]
+    :param y_train: List[int]
+    :param y_test: List[int]
+    :param data_path: str
+    :param model_path: str
+    :return: (keras.model, List[str]), (model, texts_train)
+    """
+    assert model_type in ["cnn", "mlp"]
+    assert os.path.isfile(
+        os.path.join(data_path, f"{table_name}_classif.csv.gz")
+    )
     assert os.path.exists(model_path)
     assert os.path.exists(data_path)
 
-    fio = f"{model_path}{table_name}-{model_type}-performance.csv"
-    if os.path.isfile(fio):
-        performance_df = pd.read_csv(fio, index_col=0)
-    else:
+    log_root = os.path.join(model_path, table_name)
+    #  f"{model_path}{table_name}"
+    fio = os.path.join(
+        model_path, f"{table_name}-{model_type}-performance.csv"
+    )
+    #  f"{model_path}{table_name}-{model_type}-performance.csv"
+
+    @load_or_persist(fio=fio)
+    def main():
         performance_df = grid_search(
             params_grid,
             model_type,
@@ -40,11 +60,12 @@ async def get_pruning_model(
             texts_test,
             y_train,
             y_test,
-            f"{model_path}{table_name}",
+            log_root,
         )
-    model = get_best_model(
-        performance_df, model_type, f"{model_path}{table_name}"
-    )
+        return performance_df
+
+    performance_df = main()
+    model = get_best_model(performance_df, model_type, log_root)
     return model, texts_train
 
 
@@ -63,15 +84,17 @@ async def get_pruning_data(client, table_ref, table_name, data_path):
 
 
 @monitor
-def get_segment(model, texts_train, expansion_df, data_path, table_name):
+def get_segment(
+    model, model_type, texts_train, expansion_df, data_path, table_name
+):
     """"""
     fio = f"{data_path}{table_name}_segment.csv"
     if os.path.isfile(fio):
         segment_df = pd.read_csv(fio, index_col=0)
     else:
         texts_expansion = expansion_df["abstract"].to_list()
-        _, x_expansion, _ = vectorize_text.get_sequence(
-            texts_train, texts_expansion
+        _, x_expansion, _ = vectorize_text.get_vectors(
+            texts_train, texts_expansion, model_type
         )
         expansion_df["pred_score"] = model.predict_proba(x_expansion)
         # TODO: thresholding (tune_model.get_threshold)
@@ -132,6 +155,6 @@ async def full_pruning(
         )
 
         segment_df = get_segment(
-            model, texts_train, expansion_df, data_path, table_name
+            model, model_type, texts_train, expansion_df, data_path, table_name
         )
     return segment_df
