@@ -61,17 +61,20 @@ async def get_pruning_model(
 
 
 async def get_pruning_data(client, table_ref, table_name, data_path):
-    """"""
+    """
+    Load expansion data
+    """
     assert os.path.exists(data_path)
     assert table_ref.table_id == table_name
 
-    fio = f"{data_path}{table_name}_expansion.csv.gz"
-    if os.path.isfile(fio):
-        pass
-    else:
+    fio = os.path.join(data_path, f"{table_name}_expansion.csv.gz")
+
+    @load_or_persist(fio=fio)
+    def main():
         expansion_df = get_expansion_result("*expansion", client, table_ref)
-        expansion_df.to_csv(fio, compression="gzip")
-        del expansion_df  # we don't want to keep it in memory
+        return expansion_df
+
+    main()
 
 
 @monitor
