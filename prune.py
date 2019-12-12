@@ -9,7 +9,7 @@ from techlandscape.config import Config
 from techlandscape.decorators import monitor, load_or_persist
 
 
-# TODO add "loading persisted file" message
+# TODO add
 
 
 @monitor
@@ -26,15 +26,6 @@ async def get_pruning_model(
 ):
     """
     Return the best model given the <model_type> and the <params_grid>
-    :param table_name: str
-    :param model_type: str, in ['cnn', 'mlp']
-    :param params_grid: dict
-    :param texts_train: List[str]
-    :param texts_test: List[str]
-    :param y_train: List[int]
-    :param y_test: List[int]
-    :param data_path: str
-    :param model_path: str
     :return: (keras.model, List[str]), (model, texts_train)
     """
     assert model_type in ["cnn", "mlp"]
