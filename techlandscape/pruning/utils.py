@@ -6,10 +6,31 @@ cnn_params_grid = {
     "batch_size": [64],
     "blocks": [1, 2, 3],
     "filters": [64, 128],
-    "dropout_rate": [0.2],
+    "dropout_rate": [0, 0.2],
     "embedding_dim": [100],
     "kernel_size": [3, 5, 7],
     "pool_size": [3],
+}
+
+cnn_params_grid_sm = {
+    "learning_rate": [1e-3],
+    "epochs": [100],
+    "batch_size": [64],
+    "blocks": [1],
+    "filters": [64, 128],
+    "dropout_rate": [0],
+    "embedding_dim": [100],
+    "kernel_size": [3, 5],
+    "pool_size": [3],
+}
+
+mlp_params_grid_sm = {
+    "learning_rate": [1e-3],
+    "epochs": [100],
+    "batch_size": [64],
+    "layers": [1, 2],  # when 1, no hidden layer -> standard logistic
+    "units": [64],
+    "dropout_rate": [0, 0.2],
 }
 
 
