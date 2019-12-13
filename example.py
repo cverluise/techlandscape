@@ -9,14 +9,17 @@ from techlandscape.config import Config
 from techlandscape.utils import get_uid
 from techlandscape.expansion.io import load_to_bq
 from techlandscape.pruning.prepare_data import get_train_test
-from techlandscape.pruning.utils import cnn_params_grid
+from techlandscape.pruning.utils import cnn_params_grid_sm, mlp_params_grid_sm
 
 config = Config()
 client = config.client()
-table_name = get_uid(6)
+table_name = get_uid(6)  # "odrw4r"
 data_path = "data/tmp/"
-# models_path = "models/persist.nosync/"
-# plots_path = "plots/persist.nosync/"
+models_path = "models/tmp/"
+plots_path = "plots/tmp/"
+countries = ["US"]
+model_type = "mlp"
+params_grid = cnn_params_grid_sm if model_type == "cnn" else mlp_params_grid_sm
 
 #############
 # Expansion #
@@ -28,18 +31,18 @@ full_expansion(
     data_path=data_path,
     pc_flavor="cpc",
     pc_counterfactual_f="data/pc/cpc_freq_cntyr.csv.gz",
-    countries=["US"],
+    countries=countries,
 )
 
 # WARNING: rows are unique at the ["publication_number", "expansion_level", "abstract"] level
 # This is not the case at the "publication_number" level for example, this is almost the case at
 # the ["publication_number", "expansion_level"] level
 # TODO? drop duplicates L1-L2, keep only L1
+#   better, upgrade to family level expansion
 
 ###########
 # Pruning #
 ###########
-
 classif_df = pd.read_csv(
     f"{data_path}{table_name}_classif.csv.gz", index_col=0, compression="gzip"
 )
@@ -51,15 +54,16 @@ texts_train, texts_test, y_train, y_test = get_train_test(classif_df)
 
 segment_df = asyncio.run(
     full_pruning(
-        table_name="hair_dryer",
-        model_type="cnn",
-        params_grid=cnn_params_grid,
+        table_name=table_name,
+        model_type=model_type,
+        params_grid=params_grid,
         texts_train=texts_train,
         texts_test=texts_test,
         y_train=y_train,
         y_test=y_test,
         data_path=data_path,
         model_path=models_path,
+        countries=countries,
     )
 )
 
@@ -76,16 +80,16 @@ tmp = tmp.append(
 tmp = tmp.drop_duplicates(["publication_number"]).set_index(
     "publication_number"
 )
-load_to_bq(
-    tmp,
-    client=client,
-    table_ref=config.table_ref(f"{table_name}_segment", client),
-    job_config=config.load_job_config(),
-)
+# load_to_bq(
+#     tmp,
+#     client=client,
+#     table_ref=config.table_ref(f"{table_name}_segment", client),
+#     job_config=config.load_job_config(),
+# )
 # TODO? extend the pruned patents to family (single or expanded), call it backprop
 
 #############
 # Inference #
 #############
 
-full_inference(f"{table_name}_segment", data_path, plots_path)
+# full_inference(f"{table_name}_segment", data_path, plots_path)
