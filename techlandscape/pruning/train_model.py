@@ -26,7 +26,7 @@ def train_mlp(texts_train, texts_test, y_train, y_test, params):
     """
 
     # Vectorize texts.
-    x_train, x_test = vectorize_text.get_ngram(
+    x_train, x_test, _ = vectorize_text.get_ngram(
         texts_train, texts_test, y_train
     )
 
