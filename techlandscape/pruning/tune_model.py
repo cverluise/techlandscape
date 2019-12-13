@@ -52,7 +52,7 @@ def grid_search(
 
     performance = {}
     _, x_test, _ = vectorize_text.get_vectors(
-        texts_train, texts_test, model_type
+        texts_train, texts_test, model_type, y_train
     )
 
     for params_ in list(itertools.product(*list(params_grid.values()))):
