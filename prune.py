@@ -8,8 +8,8 @@ from techlandscape.expansion.io import get_expansion_result
 from techlandscape.config import Config
 from techlandscape.decorators import monitor, load_or_persist
 
-
-# TODO add
+# TODO refactor? Only full_pruning here
+CHUNK_SIZE = 2e5
 
 
 @monitor
@@ -36,11 +36,9 @@ async def get_pruning_model(
     assert os.path.exists(data_path)
 
     log_root = os.path.join(model_path, table_name)
-    #  f"{model_path}{table_name}"
     fio = os.path.join(
         model_path, f"{table_name}-{model_type}-performance.csv"
     )
-    #  f"{model_path}{table_name}-{model_type}-performance.csv"
 
     @load_or_persist(fio=fio)
     def main():
@@ -60,7 +58,9 @@ async def get_pruning_model(
     return model, texts_train
 
 
-async def get_pruning_data(client, table_ref, table_name, data_path):
+async def get_pruning_data(
+    client, table_ref, table_name, data_path, countries=None
+):
     """
     Load expansion data
     """
@@ -71,37 +71,32 @@ async def get_pruning_data(client, table_ref, table_name, data_path):
 
     @load_or_persist(fio=fio)
     def main():
-        expansion_df = get_expansion_result("*expansion", client, table_ref)
+        expansion_df = get_expansion_result(
+            "*expansion", client, table_ref, countries
+        )
         return expansion_df
 
     main()
 
 
 @monitor
-def get_segment(
-    model, model_type, texts_train, expansion_df, data_path, table_name
-):
+def get_segment(model, model_type, texts_train, expansion_df, y_train=None):
     """
     Return the set of patents classified in the 0 class
-    :return:
+    :return: pd.DataFrame
     """
-    fio = os.path.join(data_path, f"{table_name}_segment.csv")
+    # fio = os.path.join(data_path, f"{table_name}_segment.csv")
 
-    @load_or_persist(fio=fio)
-    def main():
-        texts_expansion = expansion_df["abstract"].to_list()
-        _, x_expansion, _ = vectorize_text.get_vectors(
-            texts_train, texts_expansion, model_type
-        )
-        expansion_df["pred_score"] = model.predict_proba(x_expansion)
-        # TODO: thresholding (tune_model.get_threshold)
-        #  voraussetzungen
-        #  1. train val test rather than train test
-        #  2. think twice about the selection criteria
-        segment_df = expansion_df.query("pred_score<.5")
-        return segment_df
-
-    segment_df = main()
+    texts_expansion = expansion_df["abstract"].to_list()
+    _, x_expansion, _ = vectorize_text.get_vectors(
+        texts_train, texts_expansion, model_type, y_train
+    )
+    expansion_df["pred_score"] = model.predict_proba(x_expansion)
+    # TODO: thresholding (tune_model.get_threshold)
+    #  voraussetzungen
+    #  1. train val test rather than train test
+    #  2. think twice about the selection criteria
+    segment_df = expansion_df.query("pred_score<.5")
     return segment_df
 
 
@@ -115,13 +110,19 @@ async def full_pruning(
     y_test,
     data_path,
     model_path,
+    countries=None,
     bq_config=None,
 ):
-    """"""
-    if os.path.isfile(f"{data_path}{table_name}_segment.csv"):
-        segment_df = pd.read_csv(
-            f"{data_path}{table_name}_segment.csv", index_col=0
-        )
+    """
+    Implement the full pruning process. Return the segment (patents classified in the seed group)
+    :return: pd.DataFrame
+    """
+    fio = os.path.join(data_path, f"{table_name}_segment.csv")
+
+    if os.path.isfile(
+        fio
+    ):  # @load_or_persist cannot be applied to a coroutine
+        segment_df = pd.read_csv(fio, index_col=0)
     else:
         config = bq_config if bq_config else Config()
         client = config.client()
@@ -141,18 +142,30 @@ async def full_pruning(
             )
         )
         data_task = asyncio.create_task(
-            get_pruning_data(client, table_ref, table_name, data_path)
+            get_pruning_data(
+                client, table_ref, table_name, data_path, countries
+            )
         )
 
         await model_task
         await data_task
 
-        model, texts_train = model_task.result()
-        expansion_df = pd.read_csv(
-            f"{data_path}{table_name}_expansion.csv.gz", compression="gzip"
-        )
+        model, _ = model_task.result()  # texts_train
 
-        segment_df = get_segment(
-            model, model_type, texts_train, expansion_df, data_path, table_name
+        chunks = pd.read_csv(
+            f"{data_path}{table_name}_expansion.csv.gz",
+            compression="gzip",
+            index_col=0,
+            chunksize=CHUNK_SIZE,
         )
+        segment_df = pd.DataFrame(
+            columns=["publication_number", "expansion_level", "abstract"]
+        )
+        for chunk in chunks:
+            segment_df = segment_df.append(
+                get_segment(model, model_type, texts_train, chunk, y_train),
+                ignore_index=True,
+                sort=False,
+            )
+        segment_df.to_csv(fio)
     return segment_df
