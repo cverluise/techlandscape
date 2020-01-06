@@ -55,8 +55,8 @@ def query_meta_patents(config):
       family_id,
       MIN(publication_date) AS publication_date,
       SPLIT(STRING_AGG(DISTINCT(country_code))) AS country_code,
-      [STRUCT(SPLIT(STRING_AGG(DISTINCT(cpc.code))) AS code)] AS cpc,
-      [STRUCT(SPLIT(STRING_AGG(DISTINCT(ipc.code))) AS code)] AS ipc
+      [STRUCT(STRING_AGG(DISTINCT(cpc.code)) AS code)] AS cpc,
+      [STRUCT(STRING_AGG(DISTINCT(ipc.code)) AS code)] AS ipc
     FROM
       `patents-public-data.patents.publications`,
       UNNEST(cpc) AS cpc,
@@ -140,6 +140,7 @@ def query_patents_publications(config):
     return f"""
     SELECT
       family_id,
+      publication_date, 
       citation,
       cpc,
       ipc,
@@ -149,6 +150,7 @@ def query_patents_publications(config):
     FULL OUTER JOIN (
       SELECT
         family_id AS fam_id_mp,
+        publication_date,
         cpc,
         ipc,
         country_code
@@ -192,13 +194,22 @@ def query_google_patents_research_publications(config):
     """
 
 
-intermediary_tables = [
-    "country",
-    "abstract",
-    "meta_patents",
-    "citation",
-    "cited_by",
-]
+def intermediary_tables(target_table=None):
+    assert target_table in [None, "google_patents_research", "patents"]
+    if not target_table:
+        intermediary_tables = [
+            "country",
+            "abstract",
+            "meta_patents",
+            "citation",
+            "cited_by",
+        ]
+    elif target_table == "google_patents_research":
+        intermediary_tables = ["country", "abstract", "cited_by"]
+    else:
+        intermediary_tables = ["meta_patents", "citation"]
+    return intermediary_tables
+
 
 table_id2query = {
     "pubfam": query_pubfam,
@@ -235,7 +246,7 @@ def _create_table(
         "WRITE_APPEND",
     ]
     if not destination_ref:
-        config.table_ref(table_id)
+        destination_ref = config.table_ref(table_id)
 
     job_config = bq.QueryJobConfig()
     job_config.write_disposition = write_disposition
@@ -257,8 +268,19 @@ def create_pubfam(config):
     job.result()
 
 
-def delete_intermediary_tables(config):
-    for table_id in intermediary_tables:
+@monitor
+def create_intermediary_tables(config, target_table=None):
+    jobs = []
+    for table_id in intermediary_tables(target_table):
+        job = _create_table(
+            table_id, table_id2query[table_id], config, "WRITE_TRUNCATE"
+        )
+        jobs += [job]
+    jobs_done = list(map(lambda x: x.result(), jobs))
+
+
+def delete_intermediary_tables(config, target_table=None):
+    for table_id in intermediary_tables(target_table):
         table = bq.Table(f"{config.project_id}.{config.dataset_id}.{table_id}")
         config.client().delete_table(table, not_found_ok=True)
         msg.info(f"{table_id} has been deleted.")
@@ -270,21 +292,15 @@ def delete_intermediary_tables(config):
 
 
 @monitor
-def create_intermediary_tables(config):
-    jobs = []
-    for table_id in intermediary_tables:
-        job = _create_table(
-            table_id, table_id2query[table_id], config, "WRITE_TRUNCATE"
-        )
-        jobs += [job]
-    jobs_done = list(map(lambda x: x.result(), jobs))
-
-
-@monitor
-def create_publications_tables(config):
+def create_publications_tables(config, target_table=None):
     jobs = []
     table_id = "publications"
-    for dataset_id in ["google_patents_research", "patents"]:
+    target_table = (
+        [target_table]
+        if target_table
+        else ["google_patents_research", "patents"]
+    )
+    for dataset_id in target_table:
         _create_dataset(dataset_id, config)
         job = _create_table(
             table_id,
@@ -301,6 +317,11 @@ def create_publications_tables(config):
 
 @click.command(help="Creates the data setting for family level expansion")
 @click.option(
+    "--target_table",
+    default=None,
+    help="None for all (default), 'patents' or 'google_patents_research' for a specific target_table",
+)
+@click.option(
     "--tmp_config",
     default=None,
     help="Dataset where intermediary tables are created. E.g. my_project.my_dataset",
@@ -310,7 +331,7 @@ def create_publications_tables(config):
     default=True,
     help="Bool. True if you want to discard intermediary tables at the end of the process (recommended).",
 )
-def main(tmp_config, clean):
+def main(target_table, tmp_config, clean):
     if tmp_config:
         project_id, dataset_id = tmp_config.split(".")
         config = Config(project_id=project_id, dataset_id=dataset_id)
@@ -321,10 +342,10 @@ def main(tmp_config, clean):
             f"Intermediary tables will be stored in {config.project_id}.{config.dataset_id}"
         )
     create_pubfam(config)
-    create_intermediary_tables(config)
-    create_publications_tables(config)
+    create_intermediary_tables(config, target_table=target_table)
+    create_publications_tables(config, target_table=target_table)
     if clean:
-        delete_intermediary_tables(config)
+        delete_intermediary_tables(config, target_table=target_table)
         msg.info(f"Intermediary tables removed")
 
 
