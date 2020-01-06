@@ -7,28 +7,35 @@ from techlandscape.utils import format_table_ref_for_bq, country_clause_for_bq
 
 
 @monitor
-def load_to_bq(f, client, table_ref, job_config):
+def load_to_bq(f, client, table_ref, job_config, key="publication_number"):
     """
 
     :param f: str or pandas.core.frame.DataFrame
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
     :param job_config: google.cloud.bigquery.job.LoadJobConfig
+    :param key: str, in ["publication_number", "family_id"]
     :return:
     """
     assert isinstance(f, (str, pd.DataFrame))
+    assert key in ["publication_number", "family_id"]
     if isinstance(f, str):
         assert os.path.exists(f)
         df = pd.read_csv(f)
     else:
-        assert ("publication_number" in f.columns) or (
-            f.index.name == "publication_number"
-        )
+        assert (key in f.columns) or (f.index.name == key)
         df = f
     if "expansion_level" in df.columns:
         pass
     else:
         df["expansion_level"] = "SEED"
+
+    # make sure that the key is a string
+    df = df.reset_index()
+    df[key] = df[key].astype(str)
+    df = df.set_index(key)
+    df = df.drop("index", axis=1)
+
     client.load_table_from_dataframe(
         df, table_ref, job_config=job_config
     ).result()
