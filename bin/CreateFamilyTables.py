@@ -4,8 +4,6 @@ from techlandscape.decorators import monitor
 from wasabi import Printer
 import click
 
-# config = Config()
-# client = config.client()
 msg = Printer()
 
 
