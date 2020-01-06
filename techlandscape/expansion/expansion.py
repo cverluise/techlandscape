@@ -12,7 +12,7 @@ from techlandscape.utils import format_table_ref_for_bq, flatten
 msg = Printer()
 
 
-def _get_seed_pc_freq(flavor, client, table_ref):
+def _get_seed_pc_freq(flavor, client, table_ref, key="publication_number"):
     """
     Return a dataframe with the frequency of technological classes in the seed and their time range
     :param flavor: str, in ["ipc", "cpc"]
@@ -21,19 +21,27 @@ def _get_seed_pc_freq(flavor, client, table_ref):
     :return: (pd.DataFrame, list), freq df, [yr_lo, yr_up]
     """
     assert flavor in ["ipc", "cpc"]
+    assert key in ["publication_number", "family_id"]
+
+    project_id = (
+        "patents-public-data"
+        if key == "publication_number"
+        else client.project
+    )
+
     query = f"""
       SELECT
-        tmp.publication_number,
+        tmp.{key},
         STRING_AGG({flavor}.code) AS {flavor},
         CAST(ROUND(p.publication_date/10000, 0) AS INT64) AS publication_year
         FROM
-          `patents-public-data.patents.publications` AS p,
+          `{project_id}.patents.publications` AS p,
           {format_table_ref_for_bq(table_ref)} AS tmp,
           UNNEST({flavor}) AS {flavor}
         WHERE
-          p.publication_number=tmp.publication_number
+          p.{key}=tmp.{key}
       GROUP BY
-        publication_number, publication_year
+        {key}, publication_year
     """
     tmp = client.query(query=query).to_dataframe()
     time_range = list(
@@ -145,7 +153,13 @@ def _get_universe_pc_freq_from_file(f, flavor, time_range, countries=None):
 
 @monitor
 def get_important_pc(
-    flavor, threshold, client, table_ref, counterfactual_f=None, countries=None
+    flavor,
+    threshold,
+    client,
+    table_ref,
+    key="publication_number",
+    counterfactual_f=None,
+    countries=None,
 ):
     """
     Return a dataframe with pc which are <threshold>-folds more represented in the seed than in the "universe"
@@ -155,23 +169,32 @@ def get_important_pc(
     seed wrt the universe
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
+    :param key: str, in ["publication_number", "family_id"]
     :param counterfactual_f: str, csv.gz file with universe pc freq (country_code|year|pc|freq)
     :param countries: list, iso2 country list
     :return: pd.DataFrame
     """
     assert flavor in ["ipc", "cpc"]
-    seed_pc_freq, time_range = _get_seed_pc_freq(flavor, client, table_ref)
+    assert key in ["publication_number", "family_id"]
+    seed_pc_freq, time_range = _get_seed_pc_freq(
+        flavor, client, table_ref, key=key
+    )
     if counterfactual_f:
         universe_pc_freq = _get_universe_pc_freq_from_file(
             counterfactual_f, flavor, time_range, countries
         )
         # Nb: all countries and years are equally weighted. Could be more sophisticated
     else:
-        msg.info(
-            "Local counterfactual file might considerably increase efficiency. "
-            "Have a look at bin/ExtractCntYrPC.py"
-        )
-        universe_pc_freq = _get_universe_pc_freq(flavor, client, table_ref)
+        if key == "family_id":
+            raise AttributeError(
+                f"{key} mode requires a local counterfactual file. See bin/ExtractCntYrPC.py"
+            )
+        else:
+            msg.info(
+                "Local counterfactual file might considerably increase efficiency. "
+                "Have a look at bin/ExtractCntYrPC.py"
+            )
+            universe_pc_freq = _get_universe_pc_freq(flavor, client, table_ref)
     pc_odds = seed_pc_freq.merge(
         universe_pc_freq,
         how="left",
@@ -187,27 +210,40 @@ def get_important_pc(
 
 
 @monitor
-def pc_expansion(flavor, pc_list, client, job_config):
+def pc_expansion(
+    flavor, pc_list, client, job_config, key="publication_number"
+):
     """
     Expands the seed "along" the pc dimension for patent classes in <pc_list>
     :param flavor: str, in ["ipc", "cpc"]
     :param pc_list: list
     :param client: google.cloud.bigquery.client.Client
     :param job_config: google.cloud.bigquery.job.QueryJobConfig
+    :param key: str, in ["publication_number", "family_id"]
     :return:
     """
     assert isinstance(pc_list, list)
     assert flavor in ["ipc", "cpc"]
-    pc_string = ",".join(list(map(lambda x: '"' + x + '"', pc_list)))
+    assert key in ["publication_number", "family_id"]
+
+    project_id = (
+        "patents-public-data"
+        if key == "publication_number"
+        else client.project
+    )
+    pc_string = " OR ".join(
+        list(map(lambda x: f'{flavor}.code LIKE "%' + x + '%"', pc_list))
+    )
+
     query = f"""
     SELECT
-      DISTINCT(publication_number),
+      DISTINCT({key}),
       "PC" as expansion_level
     FROM
-      `patents-public-data.patents.publications`,
+      `{project_id}.patents.publications`,
       UNNEST({flavor}) AS {flavor}
     WHERE
-      {flavor}.code IN ( {pc_string} )
+      {pc_string}
     """
     client.query(query, job_config=job_config).result()
 
