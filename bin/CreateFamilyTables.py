@@ -167,31 +167,42 @@ def query_google_patents_research_publications(config):
     return f"""
     SELECT
       family_id,
+      country,
       abstract,
-      cited_by,
-      country
+      cpc,
+      cited_by
     FROM
       `{config.project_id}.{config.dataset_id}.abstract` AS abs
     FULL OUTER JOIN (
       SELECT
         family_id AS fam_id_cit,
         cited_by,
-        country
+        country,
+        cpc
       FROM
         `{config.project_id}.{config.dataset_id}.cited_by` AS cit
       FULL OUTER JOIN (
         SELECT
           family_id AS fam_id_ctr,
-          country
+          country,
+          cpc
         FROM
-          `{config.project_id}.{config.dataset_id}.country` ) AS ctr
+          `{config.project_id}.{config.dataset_id}.country` AS ctr
+        FULL OUTER JOIN (
+          SELECT
+            family_id AS fam_id_meta,
+            cpc
+          FROM
+            `{config.project_id}.{config.dataset_id}.meta_patents`) AS meta
+        ON
+          ctr.family_id=meta.fam_id_meta) AS tmp
       ON
-        cit.family_id=ctr.fam_id_ctr) AS tmp
+        cit.family_id = tmp.fam_id_ctr) AS tmp_prime
     ON
-      abs.family_id = tmp.fam_id_cit
+      abs.family_id = tmp_prime.fam_id_cit
     WHERE
       family_id IS NOT NULL
-    """
+  """
 
 
 def intermediary_tables(target_table=None):
@@ -205,7 +216,12 @@ def intermediary_tables(target_table=None):
             "cited_by",
         ]
     elif target_table == "google_patents_research":
-        intermediary_tables = ["country", "abstract", "cited_by"]
+        intermediary_tables = [
+            "country",
+            "abstract",
+            "cited_by",
+            "meta_patents",
+        ]
     else:
         intermediary_tables = ["meta_patents", "citation"]
     return intermediary_tables
