@@ -59,7 +59,7 @@ def format_table_ref_for_bq(table_ref):
     return f"`{table_ref.project}.{table_ref.dataset_id}.{table_ref.table_id}`"
 
 
-def country_clause_for_bq(iso_list, to_cnt=True):
+def country_string_for_bq(iso_list, to_cnt=True):
     """
     Return the list of countries of interest in a bq understandable way
     Resource: https://worldwide.espacenet.com/help?locale=en_EP&method=handleHelpTopic&topic
