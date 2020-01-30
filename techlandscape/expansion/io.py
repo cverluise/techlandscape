@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 from techlandscape.decorators import monitor, timer
-from techlandscape.utils import format_table_ref_for_bq, country_clause_for_bq
+from techlandscape.utils import format_table_ref_for_bq, country_string_for_bq
 
 
 @monitor
@@ -59,7 +59,7 @@ def get_expansion_result(flavor, client, table_ref, countries=None):
     else:
         expansion_level_clause = "NOT"
         country_clause = (
-            f"AND r.country in ({country_clause_for_bq(countries)})"
+            f"AND r.country in ({country_string_for_bq(countries)})"
             if countries
             else ""
         )

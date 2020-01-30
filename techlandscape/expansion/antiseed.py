@@ -1,5 +1,12 @@
 from techlandscape.decorators import monitor
-from techlandscape.utils import format_table_ref_for_bq, country_clause_for_bq
+from techlandscape.utils import format_table_ref_for_bq
+from techlandscape.expansion.utils import (
+    country_clause,
+    pc_like_clause,
+    country_prefix,
+    project_id,
+)
+
 
 # TODO work on reproducibility when calling random draw
 #   Could find some inspiration here
@@ -7,34 +14,40 @@ from techlandscape.utils import format_table_ref_for_bq, country_clause_for_bq
 #   -learning
 
 
-def _draw_af_antiseed(size, client, table_ref, job_config, countries=None):
+def _draw_af_antiseed(
+    size,
+    client,
+    table_ref,
+    job_config,
+    key="publication_number",
+    countries=None,
+):
     """
-
+    Return the anti-seed a la AF
     :param size: int
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
     :param job_config: google.cloud.bigquery.job.QueryJobConfig
+    :param key: str, in ["publication_number", "family_id"]
+    :param countries: List[str], ISO2 countries we are interested in
     :return: bq.Job
     """
-    country_clause = (
-        f"AND r.country in ({country_clause_for_bq(countries)})"
-        if countries
-        else ""
-    )
-    query = f"""
-    SELECT
-      DISTINCT(r.publication_number) AS publication_number,
+    project_id_ = project_id(key, client)
+    country_prefix_ = country_prefix(key)
+    country_clause_ = country_clause(countries)
+    query = f"""SELECT
+      DISTINCT(r.{key}) AS {key},
       "ANTISEED-AF" AS expansion_level
     FROM
-      `patents-public-data.google_patents_research.publications` AS r
+      `{project_id_}.google_patents_research.publications` AS r {country_prefix_}
     LEFT OUTER JOIN
       {format_table_ref_for_bq(table_ref)} AS tmp
     ON
-      r.publication_number = tmp.publication_number
+      r.{key} = tmp.{key}
     WHERE
       r.abstract is not NULL
       AND r.abstract!=''
-      {country_clause}
+      {country_clause_}
     ORDER BY
       RAND()
     LIMIT
@@ -44,10 +57,17 @@ def _draw_af_antiseed(size, client, table_ref, job_config, countries=None):
 
 
 def _draw_aug_antiseed(
-    size, flavor, pc_list, client, table_ref, job_config, countries=None
+    size,
+    flavor,
+    pc_list,
+    client,
+    table_ref,
+    job_config,
+    key="publication_number",
+    countries=None,
 ):
     """
-
+    Return the augmented anti-seed
     :param size: int
     :param flavor: str
     :param pc_list: list
@@ -57,41 +77,24 @@ def _draw_aug_antiseed(
     :return: bq.Job
     """
     assert flavor in ["ipc", "cpc"]
-    pc_like_clause = (
-        "("
-        + " OR ".join(
-            set(
-                list(
-                    map(
-                        lambda x: f'{flavor}.code LIKE "'
-                        + x.split("/")[0]
-                        + '%"',
-                        pc_list,
-                    )
-                )
-            )
-        )
-        + ")"
-    )
-    country_clause = (
-        f"AND r.country in ({country_clause_for_bq(countries)})"
-        if countries
-        else ""
-    )
+    project_id_ = project_id(key, client)
+    pc_like_clause_ = pc_like_clause(flavor, pc_list, sub_group=True)
+    country_prefix_ = country_prefix(key)
+    country_clause_ = country_clause(countries)
     query = f"""
     SELECT
-      DISTINCT(r.publication_number) AS publication_number,
+      DISTINCT(r.{key}) AS {key},
       "ANTISEED-AUG" AS expansion_level
     FROM
-      `patents-public-data.google_patents_research.publications` AS r,
-      UNNEST({flavor}) AS {flavor}
+      `{project_id_}.google_patents_research.publications` AS r,
+      UNNEST({flavor}) AS {flavor} {country_prefix_}
     LEFT OUTER JOIN
       {format_table_ref_for_bq(table_ref)} AS tmp
     ON
-      r.publication_number = tmp.publication_number
+      r.{key} = tmp.{key}
     WHERE
-      {pc_like_clause}
-      {country_clause}
+      {pc_like_clause_}
+      {country_clause_}
       AND r.abstract is not NULL
       AND r.abstract!=''
     ORDER BY
@@ -104,13 +107,27 @@ def _draw_aug_antiseed(
 
 @monitor
 def draw_antiseed(
-    size, flavor, pc_list, client, table_ref, job_config, countries=None
+    size,
+    flavor,
+    pc_list,
+    client,
+    table_ref,
+    job_config,
+    key="publication_number",
+    countries=None,
 ):
     af_antiseed_job = _draw_af_antiseed(
-        size, client, table_ref, job_config, countries
+        size, client, table_ref, job_config, key=key, countries=countries
     )
     aug_antiseed_job = _draw_aug_antiseed(
-        size, flavor, pc_list, client, table_ref, job_config, countries
+        size,
+        flavor,
+        pc_list,
+        client,
+        table_ref,
+        job_config,
+        key=key,
+        countries=countries,
     )
     af_antiseed_job.result()
     aug_antiseed_job.result()

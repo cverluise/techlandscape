@@ -6,6 +6,7 @@ from wasabi import Printer
 
 from techlandscape.decorators import monitor
 from techlandscape.utils import format_table_ref_for_bq, flatten
+from techlandscape.expansion.utils import pc_like_clause, project_id
 
 # TODO control queries with publication_number=publication_number to check that inner join
 #   rather than RIGHT/LEFT inner join is not detrimental
@@ -18,16 +19,13 @@ def _get_seed_pc_freq(flavor, client, table_ref, key="publication_number"):
     :param flavor: str, in ["ipc", "cpc"]
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
+    :param key: str, in ["publication_number", "family_id"]
     :return: (pd.DataFrame, list), freq df, [yr_lo, yr_up]
     """
     assert flavor in ["ipc", "cpc"]
     assert key in ["publication_number", "family_id"]
 
-    project_id = (
-        "patents-public-data"
-        if key == "publication_number"
-        else client.project
-    )
+    project_id_ = project_id(key, client)
 
     query = f"""
       SELECT
@@ -35,7 +33,7 @@ def _get_seed_pc_freq(flavor, client, table_ref, key="publication_number"):
         STRING_AGG({flavor}.code) AS {flavor},
         CAST(ROUND(p.publication_date/10000, 0) AS INT64) AS publication_year
         FROM
-          `{project_id}.patents.publications` AS p,
+          `{project_id_}.patents.publications` AS p,
           {format_table_ref_for_bq(table_ref)} AS tmp,
           UNNEST({flavor}) AS {flavor}
         WHERE
@@ -226,30 +224,29 @@ def pc_expansion(
     assert flavor in ["ipc", "cpc"]
     assert key in ["publication_number", "family_id"]
 
-    project_id = (
-        "patents-public-data"
-        if key == "publication_number"
-        else client.project
-    )
-    pc_string = " OR ".join(
-        list(map(lambda x: f'{flavor}.code LIKE "%' + x + '%"', pc_list))
-    )
+    project_id_ = project_id(key, client)
+    pc_like_clause_ = pc_like_clause(flavor, pc_list, sub_group=False)
 
     query = f"""
     SELECT
       DISTINCT({key}),
       "PC" as expansion_level
     FROM
-      `{project_id}.patents.publications`,
+      `{project_id_}.patents.publications`,
       UNNEST({flavor}) AS {flavor}
     WHERE
-      {pc_string}
+      {pc_like_clause_}
     """
     client.query(query, job_config=job_config).result()
 
 
 def _citation_expansion(
-    flavor, expansion_level, client, table_ref, job_config
+    flavor,
+    expansion_level,
+    client,
+    table_ref,
+    job_config,
+    key="publication_number",
 ):
     """
     Expands "along" the citation dimension, either backward (flavor=="citation") or forward (
@@ -259,6 +256,7 @@ def _citation_expansion(
     :param client: google.cloud.bigquery.client.Client
     :param table_ref: google.cloud.bigquery.table.TableReference
     :param job_config: google.cloud.bigquery.job.QueryJobConfig
+    :param key: str, in ["publication_number", "family_id"]
     :return: bq.Job
     """
     assert expansion_level in ["L1", "L2"]
@@ -273,30 +271,41 @@ def _citation_expansion(
         expansion_level_clause = 'AND expansion_level in ("SEED", "PC")'
     else:
         expansion_level_clause = 'AND expansion_level LIKE "L1%"'
+    project_id_ = project_id(key, client)
+    query_suffix = (
+        "" if key == "publication_number" else f""", UNNEST({key}) as {key}"""
+    )
     query = f"""
+    WITH expansion AS(
     SELECT
-      DISTINCT(SPLIT({flavor}.publication_number)[OFFSET(0)]) AS publication_number,
+      cit.{key}
+    FROM
+      `{project_id_}.{dataset}.publications` AS p,
+      {format_table_ref_for_bq(table_ref)} AS tmp,
+      UNNEST({flavor}) AS cit
+    WHERE
+      p.{key}=tmp.{key}
+      AND cit.{key} IS NOT NULL
+      {expansion_level_clause}
+    )
+    SELECT 
+      DISTINCT({key}),
       "{expansion_level + suffix}" AS expansion_level
     FROM
-      `patents-public-data.{dataset}.publications` AS p,
-      {format_table_ref_for_bq(table_ref)} AS tmp,
-      UNNEST({flavor}) AS {flavor}
-    WHERE
-      p.publication_number=tmp.publication_number
-      AND {flavor}.publication_number IS NOT NULL
-      AND {flavor}.publication_number!=""
-      {expansion_level_clause}
+      expansion{query_suffix}      
     """
     return client.query(query, job_config=job_config)
 
 
 @monitor
-def citation_expansion(expansion_level, client, table_ref, job_config):
+def citation_expansion(
+    expansion_level, client, table_ref, job_config, key="publication_number"
+):
     back_job = _citation_expansion(
-        "citation", expansion_level, client, table_ref, job_config
+        "citation", expansion_level, client, table_ref, job_config, key
     )
     for_job = _citation_expansion(
-        "cited_by", expansion_level, client, table_ref, job_config
+        "cited_by", expansion_level, client, table_ref, job_config, key
     )
 
     for_job.result()
