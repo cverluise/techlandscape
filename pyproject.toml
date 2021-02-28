@@ -5,29 +5,19 @@ description = ""
 authors = ["Cyril Verluise <cyril.verluise@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 google-cloud = "^0.34.0"
-google-cloud-storage = "^1.19"
-google-cloud-bigquery = "^1.19"
-numpy = "^1.17"
-pandas = "^0.25.1"
-scipy = "^1.3"
-scikit-learn = "^0.21.3"
-jupyter = "^1.0"
-pre-commit = "^1.18"
-click = "^7.0"
-wasabi = "^0.2.2"
-pyarrow = "^0.14.1"
-tqdm = "^4.36"
-keras = "^2.3"
-matplotlib = "^3.1"
-plotly = "^4.2"
-psutil = "^5.6"
-decorator = "^4.4"
-google-auth = "^1.7"
-tensorflow = "2.0.0b1"
-modin = "^0.6.3"
-ray = "^0.7.6"
+google-cloud-bigquery = "^1.27.2"
+pandas = "^1.2.2"
+scipy = "^1.6.1"
+scikit-learn = "^0.24.1"
+click = "^7.1.2"
+pyarrow = "^3.0.0"
+keras = "^2.4.3"
+decorator = "^4.4.2"
+numpy = ">=1.19.2,<1.20.0"
+tensorflow = "^2.4.1"
+spacy = "^3.0.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
@@ -49,6 +39,7 @@ exclude = '''
   | dist
 )/
 '''
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
