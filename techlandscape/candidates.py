@@ -77,7 +77,7 @@ class QueryCandidates:
         """
         return query
 
-    def get_query(self):
+    def get_query(self) -> str:
         """Return candidates query (all)"""
         query_patents = self.get_query_patents(self.patents)
         query_cpcs = self.get_query_cpcs(self.cpcs)
