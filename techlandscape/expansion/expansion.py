@@ -1,31 +1,36 @@
 from collections import Counter
+from typing import List
+from pathlib import Path
 
 import pandas as pd
 import os
 from wasabi import Printer
 
 from techlandscape.decorators import monitor
-from techlandscape.utils import format_table_ref_for_bq, flatten
-from techlandscape.expansion.utils import pc_like_clause, project_id
+from techlandscape.utils import (
+    format_table_ref_for_bq,
+    flatten,
+    get_bq_job_done,
+)
+from techlandscape.query import get_pc_like_clause, get_project_id
 
 # TODO control queries with publication_number=publication_number to check that inner join
 #   rather than RIGHT/LEFT inner join is not detrimental
 msg = Printer()
 
 
-def _get_seed_pc_freq(flavor, client, table_ref, key="publication_number"):
+def _get_seed_pc_freq(
+    flavor: str, client, table_ref: str, key: str = "publication_number"
+):
     """
     Return a dataframe with the frequency of technological classes in the seed and their time range
-    :param flavor: str, in ["ipc", "cpc"]
     :param client: google.cloud.bigquery.client.Client
-    :param table_ref: google.cloud.bigquery.table.TableReference
-    :param key: str, in ["publication_number", "family_id"]
     :return: (pd.DataFrame, list), freq df, [yr_lo, yr_up]
     """
     assert flavor in ["ipc", "cpc"]
     assert key in ["publication_number", "family_id"]
 
-    project_id_ = project_id(key, client)
+    project_id_ = get_project_id(key, client)
 
     query = f"""
       SELECT
@@ -68,16 +73,15 @@ def _get_seed_pc_freq(flavor, client, table_ref, key="publication_number"):
     )
 
 
-def _get_universe_pc_freq(flavor, client, table_ref):
+def get_universe_pc_freq(
+    flavor: str, table_ref: str, destination_table: str, credentials: Path
+):
     """
-    Return the frequency of patent classes for patents with publication_year between p25 and p75
-    of the publication_year of patents in the seed.
-    :param flavor: str
-    :param client: google.cloud.bigquery.client.Client
-    :param table_ref: google.cloud.bigquery.table.TableReference
-    :return:
+    Return the frequency of patent classes of the universe of patents published between p25 and p75 of the
+    publication_year of patents in the seed
     """
-    # TODO harmonize to use yr_lo and yr_up returned by _get_seed_pc_freq
+    # TODO unrestricted time span option?
+    # TODO restricted countries option?
     assert flavor in ["ipc", "cpc"]
     query = f"""
     WITH
@@ -86,7 +90,7 @@ def _get_universe_pc_freq(flavor, client, table_ref):
         tmp.publication_number,
         ROUND(p.publication_date/10000, 0) AS publication_year
       FROM
-        {format_table_ref_for_bq(table_ref)} AS tmp,
+        {table_ref} AS tmp,
         `patents-public-data.patents.publications` AS p
       WHERE
         p.publication_number=tmp.publication_number
@@ -110,8 +114,9 @@ def _get_universe_pc_freq(flavor, client, table_ref):
       AND stats.p75*10000)
     SELECT
       {flavor}.code AS {flavor},
-      COUNT({flavor}.code) as count,
-      total.count AS total
+      #COUNT({flavor}.code) as count,
+      #total.count AS total,
+      COUNT({flavor}.code)/total.count as freq
     FROM
       `patents-public-data.patents.publications` AS p,
       UNNEST({flavor}) AS {flavor},
@@ -121,12 +126,12 @@ def _get_universe_pc_freq(flavor, client, table_ref):
       publication_date BETWEEN stats.p25*10000
       AND stats.p75*10000
     GROUP BY
-      {flavor}, total
+      {flavor},
+      total.count
+    ORDER BY
+      freq DESC  
     """
-
-    df = client.query(query).to_dataframe()
-    df = df.set_index(flavor)
-    return (df["count"] / df["total"]).rename("freq").to_frame()
+    get_bq_job_done(query, destination_table, credentials)
 
 
 def _get_universe_pc_freq_from_file(f, flavor, time_range, countries=None):
@@ -224,8 +229,8 @@ def pc_expansion(
     assert flavor in ["ipc", "cpc"]
     assert key in ["publication_number", "family_id"]
 
-    project_id_ = project_id(key, client)
-    pc_like_clause_ = pc_like_clause(flavor, pc_list, sub_group=False)
+    project_id_ = get_project_id(key, client)
+    pc_like_clause_ = get_pc_like_clause(flavor, pc_list, sub_group=False)
 
     query = f"""
     SELECT
@@ -271,7 +276,7 @@ def _citation_expansion(
         expansion_level_clause = 'AND expansion_level in ("SEED", "PC")'
     else:
         expansion_level_clause = 'AND expansion_level LIKE "L1%"'
-    project_id_ = project_id(key, client)
+    project_id_ = get_project_id(key, client)
     query_suffix = (
         "" if key == "publication_number" else f""", UNNEST({key}) as {key}"""
     )
