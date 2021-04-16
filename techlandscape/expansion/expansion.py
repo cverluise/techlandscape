@@ -134,26 +134,6 @@ def get_universe_pc_freq(
     get_bq_job_done(query, destination_table, credentials)
 
 
-def _get_universe_pc_freq_from_file(f, flavor, time_range, countries=None):
-    """
-    Return the frequency of patent classes for patents with publication_year in <time_range>
-    and country_code in <countries> if not None (no restriction if None)
-    :param f: str, csv.gz file with universe pc freq (country_code|year|pc|freq)
-    :param flavor: str, in ["cpc", "ipc"]
-    :param time_range: List[int], [yr_lo, yr_up]
-    :param countries: List[str], ISO2 countries we are interested in
-    :return: pd.DataFrame
-    """
-    # TODO check that countries are ISO2, should be done earlier actually
-    assert os.path.isfile(f)
-    assert flavor in ["cpc", "ipc"]
-    universe_pc_freq = pd.read_csv(f, index_col=0, compression="gzip")
-    query = "@time_range[0]<=publication_year<=@time_range[1]"
-    query = query + "  and country_code in @countries" if countries else query
-    universe_pc_freq = universe_pc_freq.query(query)
-    return universe_pc_freq.groupby(flavor).mean()["freq"]
-
-
 @monitor
 def get_important_pc(
     flavor,
