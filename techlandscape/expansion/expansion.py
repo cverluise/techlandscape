@@ -1,88 +1,79 @@
-from collections import Counter
-from typing import List
 from pathlib import Path
-
-import pandas as pd
-import os
-from wasabi import Printer
-
-from techlandscape.decorators import monitor
-from techlandscape.utils import (
-    format_table_ref_for_bq,
-    flatten,
-    get_bq_job_done,
-)
-from techlandscape.query import get_pc_like_clause, get_project_id
-
-# TODO control queries with publication_number=publication_number to check that inner join
-#   rather than RIGHT/LEFT inner join is not detrimental
-msg = Printer()
+from techlandscape.utils import get_bq_job_done
+from techlandscape.query import get_project_id
 
 
-def _get_seed_pc_freq(
-    flavor: str, client, table_ref: str, key: str = "publication_number"
+def get_seed_pc_freq(
+    pc_flavor: str,
+    table_ref: str,
+    destination_table: str,
+    credentials: Path,
+    key: str = "publication_number",
+    **kwargs,
 ):
     """
-    Return a dataframe with the frequency of technological classes in the seed and their time range
-    :param client: google.cloud.bigquery.client.Client
-    :return: (pd.DataFrame, list), freq df, [yr_lo, yr_up]
+    Return the frequency of patent classes in the seed
+
+    Values:
+        - pc_flavors: "cpc", "ipc"
+        - key: "publication_number", "family_id"
     """
-    assert flavor in ["ipc", "cpc"]
+    assert pc_flavor in ["ipc", "cpc"]
     assert key in ["publication_number", "family_id"]
 
-    project_id_ = get_project_id(key, client)
+    project_id = get_project_id(key, credentials)
 
     query = f"""
-      SELECT
-        tmp.{key},
-        STRING_AGG({flavor}.code) AS {flavor},
-        CAST(ROUND(p.publication_date/10000, 0) AS INT64) AS publication_year
+    WITH tmp AS (
+          SELECT
+            tmp.{key},
+            STRING_AGG(DISTINCT({pc_flavor}.code)) AS {pc_flavor},
+            FROM
+              `{project_id}.patents.publications` AS p,
+              `{table_ref}` AS tmp,
+              UNNEST({pc_flavor}) AS {pc_flavor}
+            WHERE
+              p.{key}=tmp.{key}
+          GROUP BY
+            {key}#, publication_year
+            ),
+            total AS (SELECT COUNT({key}) as count FROM
+                `{table_ref}`
+            )
+    SELECT
+          {pc_flavor},
+          count(SPLIT({pc_flavor}, ",")) as n_{pc_flavor},
+          total.count as n_patents,
+          COUNT(SPLIT({pc_flavor}, ","))/total.count as freq
         FROM
-          `{project_id_}.patents.publications` AS p,
-          {format_table_ref_for_bq(table_ref)} AS tmp,
-          UNNEST({flavor}) AS {flavor}
-        WHERE
-          p.{key}=tmp.{key}
-      GROUP BY
-        {key}, publication_year
+          tmp,
+          total
+        GROUP BY
+          {pc_flavor},
+          total.count
+        ORDER BY
+          freq DESC 
     """
-    tmp = client.query(query=query).to_dataframe()
-    time_range = list(
-        map(
-            lambda x: int(x),
-            tmp["publication_year"].quantile([0.1, 0.9]).values,
-        )
-    )
-    seed_pc = tmp[flavor].to_list()
-
-    seed_nb_pat = len(seed_pc)
-    # seed_pc is a list of comma separated strings. E.g. "A45D20/12,A45D20/122"
-    seed_pc_list = flatten(list(map(lambda x: x.split(","), seed_pc)))
-    # split strings into lists [['','',...],['','',...],..]
-    # flatten the output ['','',...]
-    seed_pc_count = Counter(seed_pc_list)
-    # count the number of occurences of each code {'A':1, 'B':3, ...}
-    # seed_pc_freq = seed_pc_count / seed_nb_pat
-    return (
-        pd.DataFrame(
-            index=seed_pc_count.keys(),
-            data=list(map(lambda x: x / seed_nb_pat, seed_pc_count.values())),
-            columns=["freq"],
-        ),
-        time_range,
-    )
+    get_bq_job_done(query, destination_table, credentials, **kwargs)
 
 
 def get_universe_pc_freq(
-    flavor: str, table_ref: str, destination_table: str, credentials: Path
+    pc_flavor: str,
+    table_ref: str,
+    destination_table: str,
+    credentials: Path,
+    **kwargs,
 ):
     """
-    Return the frequency of patent classes of the universe of patents published between p25 and p75 of the
-    publication_year of patents in the seed
+    Return the frequency of patent classes in the universe of patents. Nb: we restrict to patents published between p25
+    and p75 of the publication_year of patents in the seed.
+
+    Values:
+        - pc_flavors: "cpc", "ipc"
     """
     # TODO unrestricted time span option?
-    # TODO restricted countries option?
-    assert flavor in ["ipc", "cpc"]
+    # Support family_id level?
+    assert pc_flavor in ["ipc", "cpc"]
     query = f"""
     WITH
       tmp AS (
@@ -113,161 +104,161 @@ def get_universe_pc_freq(
       publication_date BETWEEN stats.p25*10000
       AND stats.p75*10000)
     SELECT
-      {flavor}.code AS {flavor},
-      #COUNT({flavor}.code) as count,
-      #total.count AS total,
-      COUNT({flavor}.code)/total.count as freq
+      {pc_flavor}.code AS {pc_flavor},
+      COUNT({pc_flavor}.code) as n_cpc,
+      total.count as n_patents,
+      COUNT({pc_flavor}.code)/total.count as freq
     FROM
       `patents-public-data.patents.publications` AS p,
-      UNNEST({flavor}) AS {flavor},
+      UNNEST({pc_flavor}) AS {pc_flavor},
       stats,
       total
     WHERE
       publication_date BETWEEN stats.p25*10000
       AND stats.p75*10000
     GROUP BY
-      {flavor},
+      {pc_flavor},
       total.count
     ORDER BY
       freq DESC  
     """
-    get_bq_job_done(query, destination_table, credentials)
+    get_bq_job_done(query, destination_table, credentials, **kwargs)
 
 
-@monitor
 def get_important_pc(
-    flavor,
-    threshold,
-    client,
-    table_ref,
+    pc_flavor: str,
+    table_seed: str,
+    table_universe: str,
+    destination_table: str,
+    credentials: Path,
     key="publication_number",
-    counterfactual_f=None,
-    countries=None,
+    **kwargs,
 ):
     """
-    Return a dataframe with pc which are <threshold>-folds more represented in the seed than in the "universe"
-    of patents (restr to <time_range> and <countries> if not None
-    :param flavor: str
-    :param threshold: float, threshold above which a pc is considered over-represented in the
-    seed wrt the universe
-    :param client: google.cloud.bigquery.client.Client
-    :param table_ref: google.cloud.bigquery.table.TableReference
-    :param key: str, in ["publication_number", "family_id"]
-    :param counterfactual_f: str, csv.gz file with universe pc freq (country_code|year|pc|freq)
-    :param countries: list, iso2 country list
-    :return: pd.DataFrame
+    Return the odds of patent classes in seed compared to the universe of patents
+
+    Values:
+        - pc_flavors: "cpc", "ipc"
+        - key: "publication_number", "family_id"
     """
-    assert flavor in ["ipc", "cpc"]
+    assert pc_flavor in ["ipc", "cpc"]
     assert key in ["publication_number", "family_id"]
-    seed_pc_freq, time_range = _get_seed_pc_freq(
-        flavor, client, table_ref, key=key
-    )
-    if counterfactual_f:
-        universe_pc_freq = _get_universe_pc_freq_from_file(
-            counterfactual_f, flavor, time_range, countries
-        )
-        # Nb: all countries and years are equally weighted. Could be more sophisticated
-    else:
-        if key == "family_id":
-            raise AttributeError(
-                f"{key} mode requires a local counterfactual file. See bin/ExtractCntYrPC.py"
-            )
-        else:
-            msg.info(
-                "Local counterfactual file might considerably increase efficiency. "
-                "Have a look at bin/ExtractCntYrPC.py"
-            )
-            universe_pc_freq = _get_universe_pc_freq(flavor, client, table_ref)
-    pc_odds = seed_pc_freq.merge(
-        universe_pc_freq,
-        how="left",
-        right_index=True,
-        left_index=True,
-        suffixes=["_seed", "_universe"],
-    )
-    pc_odds["odds"] = pc_odds["freq_seed"] / pc_odds["freq_universe"]
-    pc_odds.loc[pc_odds["freq_universe"].isna(), "odds"] = threshold + 1
-    # We keep cpcs with too few occurences to be kept in the local counterfactual file (below lower_bound)
-    return pc_odds.query("odds>@threshold")
-    # list(cpc_odds.query("odds>@threshold").index)
-
-
-@monitor
-def pc_expansion(
-    flavor, pc_list, client, job_config, key="publication_number"
-):
-    """
-    Expands the seed "along" the pc dimension for patent classes in <pc_list>
-    :param flavor: str, in ["ipc", "cpc"]
-    :param pc_list: list
-    :param client: google.cloud.bigquery.client.Client
-    :param job_config: google.cloud.bigquery.job.QueryJobConfig
-    :param key: str, in ["publication_number", "family_id"]
-    :return:
-    """
-    assert isinstance(pc_list, list)
-    assert flavor in ["ipc", "cpc"]
-    assert key in ["publication_number", "family_id"]
-
-    project_id_ = get_project_id(key, client)
-    pc_like_clause_ = get_pc_like_clause(flavor, pc_list, sub_group=False)
 
     query = f"""
+    WITH tmp AS (
+        SELECT 
+            seed.{pc_flavor} as {pc_flavor},
+            seed.freq as seed_freq, 
+            universe.freq as universe_freq
+        FROM
+            `{table_seed}` as seed,
+            `{table_universe}` as universe
+        WHERE seed.{pc_flavor} = universe.{pc_flavor} and seed.{pc_flavor} IS NOT NULL)
     SELECT
-      DISTINCT({key}),
-      "PC" as expansion_level
-    FROM
-      `{project_id_}.patents.publications`,
-      UNNEST({flavor}) AS {flavor}
-    WHERE
-      {pc_like_clause_}
+        {pc_flavor},
+        seed_freq,
+        universe_freq,
+        seed_freq / universe_freq as odds
+    FROM tmp
+    ORDER BY 
+        odds DESC 
     """
-    client.query(query, job_config=job_config).result()
+    get_bq_job_done(query, destination_table, credentials, **kwargs)
 
 
-def _citation_expansion(
-    flavor,
-    expansion_level,
-    client,
-    table_ref,
-    job_config,
+def get_pc_expansion(
+    pc_flavor: str,
+    n_pc: int,
+    table_ref: str,
+    destination_table: str,
+    credentials: Path,
     key="publication_number",
+    **kwargs,
 ):
     """
-    Expands "along" the citation dimension, either backward (flavor=="citation") or forward (
-    citation=="cited_by")
-    :param flavor: str, ["citation", "cited_by"]
-    :param expansion_level: str, in ["citation", "cited_by"]
-    :param client: google.cloud.bigquery.client.Client
-    :param table_ref: google.cloud.bigquery.table.TableReference
-    :param job_config: google.cloud.bigquery.job.QueryJobConfig
-    :param key: str, in ["publication_number", "family_id"]
-    :return: bq.Job
+    Expand the seed "along" the pc dimension for patent classes with large odds in
+
+    Values:
+        - pc_flavors: "cpc", "ipc"
+        - key: "publication_number", "family_id"
+    """
+    assert pc_flavor in ["ipc", "cpc"]
+    assert key in ["publication_number", "family_id"]
+
+    project_id = get_project_id(key, credentials)
+
+    query = f"""
+    WITH
+      important_pc AS (
+      SELECT
+        {pc_flavor}
+      FROM
+        `{table_ref}`
+      ORDER BY
+        odds DESC
+      LIMIT
+        {n_pc} ),
+      patents AS (
+      SELECT
+        {key},
+        {pc_flavor}.code AS {pc_flavor}
+      FROM
+        `{project_id}.patents.publications`,
+        UNNEST({pc_flavor}) AS {pc_flavor} )
+    SELECT
+      patents.{key},
+      "PC" as expansion_level
+      # STRING_AGG(DISTINCT(patents.{pc_flavor})) AS {pc_flavor}  ## dbg
+    FROM
+      important_pc
+    LEFT JOIN
+      patents
+    ON
+      important_pc.{pc_flavor}=patents.{pc_flavor}
+    GROUP BY
+      {key}
+    """
+    get_bq_job_done(query, destination_table, credentials, **kwargs)
+
+
+def get_citation_expansion(
+    cit_flavor: str,
+    expansion_level: str,
+    table_ref: str,
+    credentials: Path,
+    key="publication_number",
+    **kwargs,
+):
+    """
+    Expand "along" the citation dimension, either backward or forward
+
+    Values:
+        - `cit_flavor`: "back", "for"
+        - `key`:  "publication_number", "family_id"
     """
     assert expansion_level in ["L1", "L2"]
-    assert flavor in ["citation", "cited_by"]
-    if flavor == "citation":
-        dataset = "patents"
-        suffix = "-BACK"
-    else:
-        dataset = "google_patents_research"
-        suffix = "-FOR"
-    if expansion_level == "L1":
-        expansion_level_clause = 'AND expansion_level in ("SEED", "PC")'
-    else:
-        expansion_level_clause = 'AND expansion_level LIKE "L1%"'
-    project_id_ = get_project_id(key, client)
+    assert cit_flavor in ["back", "for"]
+
+    dataset = "patents" if cit_flavor == "back" else "google_patents_research"
+    expansion_level_clause = (
+        'AND expansion_level in ("SEED", "PC")'
+        if expansion_level == "L1"
+        else 'AND expansion_level LIKE "L1%"'
+    )
+    project_id_ = get_project_id(key, credentials)
     query_suffix = (
         "" if key == "publication_number" else f""", UNNEST({key}) as {key}"""
     )
+    cit_var = "citation" if cit_flavor == "back" else "cited_by"
+
     query = f"""
     WITH expansion AS(
     SELECT
       cit.{key}
     FROM
       `{project_id_}.{dataset}.publications` AS p,
-      {format_table_ref_for_bq(table_ref)} AS tmp,
-      UNNEST({flavor}) AS cit
+      {table_ref} AS tmp,
+      UNNEST({cit_var}) AS cit
     WHERE
       p.{key}=tmp.{key}
       AND cit.{key} IS NOT NULL
@@ -275,23 +266,31 @@ def _citation_expansion(
     )
     SELECT 
       DISTINCT({key}),
-      "{expansion_level + suffix}" AS expansion_level
+      "{'-'.join([expansion_level, cit_flavor.upper()])}" AS expansion_level
     FROM
       expansion{query_suffix}      
     """
-    return client.query(query, job_config=job_config)
+    destination_table = kwargs.get("destination_table", table_ref)
+    get_bq_job_done(query, destination_table, credentials, **kwargs)
 
 
-@monitor
-def citation_expansion(
-    expansion_level, client, table_ref, job_config, key="publication_number"
+def get_full_citation_expansion(
+    expansion_level: str,
+    table_ref: str,
+    credentials: Path,
+    key="publication_number",
+    **kwargs,
 ):
-    back_job = _citation_expansion(
-        "citation", expansion_level, client, table_ref, job_config, key
-    )
-    for_job = _citation_expansion(
-        "cited_by", expansion_level, client, table_ref, job_config, key
-    )
+    """Expand along the citation level, both backward and forward
 
-    for_job.result()
-    back_job.result()
+    Values:
+        - `expansion_level`: "L1", "L2"
+        - `key`:  "publication_number", "family_id"
+    """
+    assert expansion_level in ["L1", "L2"]
+    get_citation_expansion(
+        "back", expansion_level, table_ref, credentials, key, **kwargs
+    )
+    get_citation_expansion(
+        "for", expansion_level, table_ref, credentials, key, **kwargs
+    )
