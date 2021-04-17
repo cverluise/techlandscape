@@ -1,20 +1,22 @@
 from techlandscape.exception import SmallSeed
 from techlandscape.utils import get_country_string_bq
 from typing import List
-from google.cloud import bigquery
+from pathlib import Path
+import json
 
 
-def get_project_id(key: str, client: bigquery.client.Client) -> str:
+def get_project_id(key: str, credentials: Path) -> str:
     """
     Return the name of the project used for expansion depending on the key ("publication_number" or "family_id").
     If `key` is "publication_number", the project is patents-public-data, else (`family_id`) this is the `client`'s
     project
     """
     assert key in ["publication_number", "family_id"]
+
     return (
         "patents-public-data"
         if key == "publication_number"
-        else client.project
+        else json.loads(Path(credentials).open("r").read()).get("project_id")
     )
 
 
@@ -36,31 +38,6 @@ def get_country_clause(countries: List[str]) -> str:
         f"AND country in ({get_country_string_bq(countries)})"
         if countries
         else ""
-    )
-
-
-def get_pc_like_clause(
-    flavor: str, pc_list: List[str], sub_group: bool = False
-):
-    """
-    Return a clause to restrict to cpc/ipc.code which contain at least one of the pc codes in `pc_list`
-    """
-    assert flavor in ["cpc", "ipc"]
-    pc_list_ = (
-        list(map(lambda x: x.split("/")[0], pc_list)) if sub_group else pc_list
-    )
-    return (
-        "("
-        + " OR ".join(
-            set(
-                list(
-                    map(
-                        lambda x: f'{flavor}.code LIKE "%' + x + '%"', pc_list_
-                    )
-                )
-            )
-        )
-        + ")"
     )
 
 
