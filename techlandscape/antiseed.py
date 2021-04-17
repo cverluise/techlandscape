@@ -1,13 +1,13 @@
 import typer
 from pathlib import Path
 from typing import List
-from techlandscape.query import (
+from techlandscape.utils import (
     get_country_clause,
     get_pc_like_clause,
     get_country_prefix,
     get_project_id,
+    get_bq_job_done,
 )
-from techlandscape.utils import get_bq_client, get_bq_job_done
 
 # TODO work on reproducibility when calling random draw
 #   Could find some inspiration here
@@ -109,8 +109,6 @@ def get_antiseed(
     """
     Draw antiseed (a la AF & augmented)
     """
-    client = get_bq_client(credentials)
-    # job_config = bigquery.QueryJobConfig(destination=destination)
 
     src_project_id = get_project_id(key, credentials)
     af_antiseed_query = get_af_antiseed_query(
