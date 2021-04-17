@@ -152,6 +152,31 @@ def get_country_clause(countries: List[str]) -> str:
     )
 
 
+def get_pc_like_clause(
+    flavor: str, pc_list: List[str], sub_group: bool = False
+):
+    """
+    Return a close to restrict to pc.code which contain at least one of the pc codes in pc_list
+    """
+    assert flavor in ["cpc", "ipc"]
+    pc_list_ = (
+        list(map(lambda x: x.split("/")[0], pc_list)) if sub_group else pc_list
+    )
+    return (
+        "("
+        + " OR ".join(
+            set(
+                list(
+                    map(
+                        lambda x: f'{flavor}.code LIKE "%' + x + '%"', pc_list_
+                    )
+                )
+            )
+        )
+        + ")"
+    )
+
+
 def get_antiseed_size(
     seed_size: int, min_size: int = 100, threshold_size: int = 250
 ) -> int:
