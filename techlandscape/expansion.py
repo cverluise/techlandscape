@@ -1,6 +1,8 @@
 from pathlib import Path
-from techlandscape.utils import get_bq_job_done
-from techlandscape.query import get_project_id
+import typer
+from techlandscape.utils import get_bq_job_done, get_project_id, get_uid
+
+app = typer.Typer()
 
 
 def get_seed_pc_freq(
@@ -125,7 +127,7 @@ def get_universe_pc_freq(
     get_bq_job_done(query, destination_table, credentials, **kwargs)
 
 
-def get_important_pc(
+def get_seed_pc_odds(
     pc_flavor: str,
     table_seed: str,
     table_universe: str,
@@ -293,4 +295,70 @@ def get_full_citation_expansion(
     )
     get_citation_expansion(
         "for", expansion_level, table_ref, credentials, key, **kwargs
+    )
+
+
+@app.command()
+def get_expansion(
+    pc_flavor: str,
+    table_ref: str,
+    staging_dataset: str,
+    credentials: Path,
+    key: str = "publication_number",
+    n_pc: int = 50,
+    **kwargs,
+):
+    """
+    Expand along PC and citations (L1 + L2)
+    """
+    name = table_ref.split(".")[-1]
+    get_seed_pc_freq(
+        pc_flavor,
+        table_ref,
+        f"{staging_dataset}.{name}_seed_{pc_flavor}_freq",
+        credentials,
+        key,
+        **kwargs,
+    )
+    get_universe_pc_freq(
+        pc_flavor,
+        table_ref,
+        f"{staging_dataset}.{name}_universe_{pc_flavor}_freq",
+        credentials,
+        **kwargs,
+    )
+    get_seed_pc_odds(
+        pc_flavor,
+        f"{staging_dataset}.{name}_seed_{pc_flavor}_freq",
+        f"{staging_dataset}.{name}_universe_{pc_flavor}_freq",
+        f"{staging_dataset}.{name}_seed_{pc_flavor}_odds",
+        credentials,
+        key,
+        **kwargs,
+    )
+    get_pc_expansion(
+        pc_flavor,
+        n_pc,
+        f"{staging_dataset}.{name}_seed_{pc_flavor}_odds",
+        table_ref,
+        credentials,
+        key,
+        write_disposition="WRITE_APPEND",
+        **kwargs,
+    )
+    get_full_citation_expansion(
+        "L1",
+        table_ref,
+        credentials,
+        key,
+        write_disposition="WRITE_APPEND",
+        **kwargs,
+    )
+    get_full_citation_expansion(
+        "L2",
+        table_ref,
+        credentials,
+        key,
+        write_disposition="WRITE_APPEND",
+        **kwargs,
     )
