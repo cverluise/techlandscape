@@ -6,13 +6,10 @@ credentials*.json
 dev*.py 
 bin/ExtractCPCCounts.py
 
-# Data
-data/persist.nosync
-data/pc/
-data/seed/
-data/tmp/
-models/
-model/persist.nosync
+# Large files
+data/*
+models/*
+plots/*
 
 # System files
 **/.DS_Store
