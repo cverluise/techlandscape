@@ -1,33 +1,32 @@
 import numpy as np
+from keras import Model
+from typing import Tuple, List
 
 
-def get_errors(model, x_test, y_test, thresh_star):
+def get_error_report(
+    model: Model,
+    texts_text: np.array,
+    x_test: np.array,
+    y_test: np.array,
+    thresh_star: float,
+) -> Tuple[List, List]:
+    """
+    Return the lists of false positives and false negatives (text)
     """
 
-    :param model:
-    :param x_test:
-    :param y_test:
-    :param thresh_star:
-    :return: (list, list, list), (false_pos, false_neg, pred_test)
-    """
-    score = model.predict(x_test).flatten().tolist()
-    pred_test = list(map(lambda x: 1 if x > thresh_star else 0, score))
-    confusion = list(zip(y_test, pred_test))
-    false_pos = [i for i, pair in enumerate(confusion) if pair == (0, 1)]
-    false_neg = [i for i, pair in enumerate(confusion) if pair == (1, 0)]
-    return false_pos, false_neg, score
+    def get_errors(
+        model: Model, x_test: np.array, y_test: np.array, thresh_star: float
+    ) -> Tuple[List, List, List]:
+        """
+        Return the index of false positives, false negatives and list of scores (all)
+        """
+        score = model.predict(x_test).flatten().tolist()
+        pred_test = list(map(lambda x: 1 if x > thresh_star else 0, score))
+        confusion = list(zip(y_test, pred_test))
+        false_pos = [i for i, pair in enumerate(confusion) if pair == (0, 1)]
+        false_neg = [i for i, pair in enumerate(confusion) if pair == (1, 0)]
+        return false_pos, false_neg, score
 
-
-def error_report(model, texts_text, x_test, y_test, thresh_star):
-    """
-
-    :param model:
-    :param texts_text:
-    :param x_test:
-    :param y_test:
-    :param thresh_star:
-    :return: List
-    """
     false_pos, false_neg, score = get_errors(
         model, x_test, y_test, thresh_star
     )
