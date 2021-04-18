@@ -223,6 +223,60 @@ def get_pc_expansion(
     get_bq_job_done(query, destination_table, credentials, **kwargs)
 
 
+def get_full_pc_expansion(
+    pc_flavor: str,
+    n_pc: int,
+    table_ref: str,
+    staging_dataset: str,
+    credentials: Path,
+    precomputed: bool = False,
+    key="publication_number",
+    **kwargs,
+):
+    """Compute (or use precomputed) seed pc odds and expand along the pc dimension.
+
+    Values:
+        - pc_flavors: "cpc", "ipc"
+        - key: "publication_number", "family_id"
+    """
+    name = table_ref.split(".")[-1]
+
+    if not precomputed:
+        get_seed_pc_freq(
+            pc_flavor,
+            table_ref,
+            f"{staging_dataset}.{name}_seed_{pc_flavor}_freq",
+            credentials,
+            key,
+            verbose=False,
+        )
+        get_universe_pc_freq(
+            pc_flavor,
+            table_ref,
+            f"{staging_dataset}.{name}_universe_{pc_flavor}_freq",
+            credentials,
+            verbose=False,
+        )
+        get_seed_pc_odds(
+            pc_flavor,
+            f"{staging_dataset}.{name}_seed_{pc_flavor}_freq",
+            f"{staging_dataset}.{name}_universe_{pc_flavor}_freq",
+            f"{staging_dataset}.{name}_seed_{pc_flavor}_odds",
+            credentials,
+            key,
+            verbose=False,
+        )
+    get_pc_expansion(
+        pc_flavor,
+        n_pc,
+        f"{staging_dataset}.{name}_seed_{pc_flavor}_odds",
+        table_ref,
+        credentials,
+        key,
+        **kwargs,
+    )
+
+
 def get_citation_expansion(
     cit_flavor: str,
     expansion_level: str,
@@ -300,51 +354,28 @@ def get_full_citation_expansion(
 
 @app.command()
 def get_expansion(
-    pc_flavor: str,
     table_ref: str,
     staging_dataset: str,
     credentials: Path,
     key: str = "publication_number",
+    pc_flavor: str = "cpc",
+    precomputed: bool = False,
     n_pc: int = 50,
-    **kwargs,
 ):
     """
     Expand along PC and citations (L1 + L2)
     """
-    name = table_ref.split(".")[-1]
-    get_seed_pc_freq(
-        pc_flavor,
-        table_ref,
-        f"{staging_dataset}.{name}_seed_{pc_flavor}_freq",
-        credentials,
-        key,
-        **kwargs,
-    )
-    get_universe_pc_freq(
-        pc_flavor,
-        table_ref,
-        f"{staging_dataset}.{name}_universe_{pc_flavor}_freq",
-        credentials,
-        **kwargs,
-    )
-    get_seed_pc_odds(
-        pc_flavor,
-        f"{staging_dataset}.{name}_seed_{pc_flavor}_freq",
-        f"{staging_dataset}.{name}_universe_{pc_flavor}_freq",
-        f"{staging_dataset}.{name}_seed_{pc_flavor}_odds",
-        credentials,
-        key,
-        **kwargs,
-    )
-    get_pc_expansion(
+
+    get_full_pc_expansion(
         pc_flavor,
         n_pc,
-        f"{staging_dataset}.{name}_seed_{pc_flavor}_odds",
         table_ref,
+        staging_dataset,
         credentials,
+        precomputed,
         key,
         write_disposition="WRITE_APPEND",
-        **kwargs,
+        verbose=False,
     )
     get_full_citation_expansion(
         "L1",
@@ -352,7 +383,7 @@ def get_expansion(
         credentials,
         key,
         write_disposition="WRITE_APPEND",
-        **kwargs,
+        verbose=False,
     )
     get_full_citation_expansion(
         "L2",
@@ -360,5 +391,9 @@ def get_expansion(
         credentials,
         key,
         write_disposition="WRITE_APPEND",
-        **kwargs,
+        verbose=False,
     )
+
+
+if __name__ == "__main__":
+    app()
