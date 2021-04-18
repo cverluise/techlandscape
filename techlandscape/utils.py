@@ -9,7 +9,7 @@ from google.cloud import bigquery
 from google.oauth2 import service_account
 from techlandscape.lib import ISO2CNT
 from techlandscape.decorators import timer
-from techlandscape.exception import SmallSeed
+from techlandscape.exception import SmallSeed, SMALL_SEED_MSG
 
 ok = "\u2713"
 not_ok = "\u2717"
@@ -215,3 +215,22 @@ def densify_var(
     )
     tmp[group] = dense_var
     return tmp
+
+
+def get_share_test(
+    seed_size: int, min_size: int = 100, threshold_size: int = 250
+) -> float:
+    """
+    Return the antiseed size such that the seed never represents less than 10% of the sample
+    between `min_size` and `threshold_size` (linear) and 20% of the sample above `threshold_size`
+    (constant). Nb: seeds with less than `min_size` patents raise an error.
+    """
+    if seed_size < min_size:
+        raise SmallSeed(SMALL_SEED_MSG)
+    elif min_size <= seed_size < threshold_size:
+        share_test = (
+            0.5 - (seed_size - min_size) / (threshold_size - min_size) * 0.3
+        )
+    else:
+        share_test = 0.2
+    return share_test
