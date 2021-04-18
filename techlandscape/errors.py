@@ -1,9 +1,13 @@
 import numpy as np
 from keras import Model
 from typing import Tuple, List
+import typer
+
+app = typer.Typer()
 
 
-def get_error_report(
+@app.command()
+def get_report(
     model: Model,
     texts_text: np.array,
     x_test: np.array,
@@ -37,3 +41,7 @@ def get_error_report(
     false_neg_texts = np.array(texts_text)[false_neg].tolist()
     false_neg_report = list(zip(false_neg_scores, false_neg_texts))
     return false_pos_report, false_neg_report
+
+
+if __name__ == "__main__":
+    app()
