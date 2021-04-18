@@ -1,3 +1,6 @@
+import plotly.express as px
+
+
 ISO2CNT = {
     "AP": "ARIPO",
     "AM": "ARMENIA",
@@ -125,3 +128,6 @@ CNT_GROUPS = {
     "g7": ["CA", "FR", "DE", "IT", "JP", "GB", "US"],
     "brics": ["BR", "RU", "IN", "CN", "ZA"],
 }
+
+COLOR_UNIQUE = [px.colors.sequential.Blues[-3]]
+COLOR_SEQUENCE = px.colors.diverging.Spectral
