@@ -1,8 +1,11 @@
 [tool.poetry]
-name = "TechLandscape"
+name = "techlandscape"
 version = "0.1.0"
 description = ""
 authors = ["Cyril Verluise <cyril.verluise@gmail.com>"]
+
+[tool.poetry.scripts]
+patcit = "techlandscape.main:app"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -18,27 +21,12 @@ decorator = "^4.4.2"
 numpy = ">=1.19.2,<1.20.0"
 tensorflow = "^2.4.1"
 spacy = "^3.0.3"
+pyyaml = "^5.4.1"
+plotly = "^4.14.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
 pre-commit = "^1.18"
-
-[tool.black]
-line-length = 79
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
 
 [build-system]
 requires = ["poetry>=0.12"]

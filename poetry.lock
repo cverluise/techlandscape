@@ -581,6 +581,18 @@ all = ["google-cloud-storage (>=1.26.0,<2.0.0)"]
 gcs = ["google-cloud-storage (>=1.26.0,<2.0.0)"]
 
 [[package]]
+category = "main"
+description = "An open-source, interactive data visualization library for Python"
+name = "plotly"
+optional = false
+python-versions = "*"
+version = "4.14.3"
+
+[package.dependencies]
+retrying = ">=1.3.3"
+six = "*"
+
+[[package]]
 category = "dev"
 description = "plugin and hook calling mechanisms for python"
 name = "pluggy"
@@ -777,6 +789,17 @@ requests = ">=2.0.0"
 
 [package.extras]
 rsa = ["oauthlib (>=3.0.0)"]
+
+[[package]]
+category = "main"
+description = "Retrying"
+name = "retrying"
+optional = false
+python-versions = "*"
+version = "1.3.3"
+
+[package.dependencies]
+six = ">=1.7.0"
 
 [[package]]
 category = "main"
@@ -1150,7 +1173,7 @@ python-versions = "*"
 version = "1.12.1"
 
 [metadata]
-content-hash = "a87b06c89b811a4d9a2545db88d57a119e0ff228dda163a42b38181b95261444"
+content-hash = "3c4bfcd40fbfc103069fab1f32ecbbc5b6e0260ceb5f4141049062641ccda663"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -1616,6 +1639,10 @@ pathy = [
     {file = "pathy-0.4.0-py3-none-any.whl", hash = "sha256:2f254d2241916614323e8a3c5e3dccf22484d9a3de9b385271bb3b629dcfab7b"},
     {file = "pathy-0.4.0.tar.gz", hash = "sha256:1ac473a6f61e36f0c4b70303b3e2e63c9bfb3d9707aedd8daeffcaeb0b645734"},
 ]
+plotly = [
+    {file = "plotly-4.14.3-py2.py3-none-any.whl", hash = "sha256:d68fc15fcb49f88db27ab3e0c87110943e65fee02a47f33a8590f541b3042461"},
+    {file = "plotly-4.14.3.tar.gz", hash = "sha256:7d8aaeed392e82fb8e0e48899f2d3d957b12327f9d38cdd5802bc574a8a39d91"},
+]
 pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
@@ -1797,6 +1824,9 @@ requests-oauthlib = [
     {file = "requests-oauthlib-1.3.0.tar.gz", hash = "sha256:b4261601a71fd721a8bd6d7aa1cc1d6a8a93b4a9f5e96626f8e4d91e8beeaa6a"},
     {file = "requests_oauthlib-1.3.0-py2.py3-none-any.whl", hash = "sha256:7f71572defaecd16372f9006f33c2ec8c077c3cfa6f5911a9a90202beb513f3d"},
     {file = "requests_oauthlib-1.3.0-py3.7.egg", hash = "sha256:fa6c47b933f01060936d87ae9327fead68768b69c6c9ea2109c48be30f2d4dbc"},
+]
+retrying = [
+    {file = "retrying-1.3.3.tar.gz", hash = "sha256:08c039560a6da2fe4f2c426d0766e284d3b736e355f8dd24b37367b0bb41973b"},
 ]
 rsa = [
     {file = "rsa-4.7.2-py3-none-any.whl", hash = "sha256:78f9a9bf4e7be0c5ded4583326e7461e3a3c5aae24073648b4bdfa797d78c9d2"},
