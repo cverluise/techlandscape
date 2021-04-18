@@ -2,6 +2,7 @@ import random
 import string
 import json
 import typer
+import pandas as pd
 from pathlib import Path
 from typing import List
 from google.cloud import bigquery
@@ -196,3 +197,21 @@ def get_antiseed_size(
         share_seed = 0.2
         antiseed_size = int(seed_size / share_seed)
     return antiseed_size
+
+
+def densify_var(
+    df: pd.DataFrame, group: str, func: callable, var: str, n_keep: int
+):
+    """
+    Return `df` with a denser `group`; only the `n_keep` (non null) categories
+    wrt `var` are kept, other categories of `group` are pulled into "others"
+    """
+    tmp = df.copy()
+    var_clause = tmp.groupby(group).apply(func)[var].nlargest(n_keep + 1).index
+    # filter out "" and None
+    var_clause = list(filter(lambda x: x, var_clause))[:n_keep]
+    dense_var = list(
+        map(lambda x: x if x in var_clause else "others", tmp[group].values)
+    )
+    tmp[group] = dense_var
+    return tmp
