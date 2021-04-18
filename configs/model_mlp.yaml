@@ -1,0 +1,6 @@
+learning_rate: [1e-3]
+epochs: [100]
+batch_size: [64]
+layers: [1, 2]  # when 1, no hidden layer -> standard logistic
+units: [64]
+dropout_rate: [0, 0.2]
