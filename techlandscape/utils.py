@@ -201,7 +201,7 @@ def get_antiseed_size(
 
 def densify_var(
     df: pd.DataFrame, group: str, func: callable, var: str, n_keep: int
-):
+) -> pd.DataFrame:
     """
     Return `df` with a denser `group`; only the `n_keep` (non null) categories
     wrt `var` are kept, other categories of `group` are pulled into "others"
