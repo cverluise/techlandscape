@@ -1,7 +1,11 @@
 model:
   architecture: cnn
 
-data prep:
+data:
+  train:
+  test:
+
+tok2vec:
   max_length: 250
   top_k: 5000
 
