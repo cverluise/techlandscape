@@ -1,6 +1,6 @@
 # secret
 config.json
-credentials*.json
+credentials*
 
 #dev
 dev*.py 
