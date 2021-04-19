@@ -25,7 +25,7 @@ class TextVectorizer:
 
     def fit_ngram_vectorizer(self):
         kwargs = {
-            k: self.cfg.get(k)
+            k: self.cfg["tok2vec"][k]
             for k in [
                 "ngram_range",
                 "dtype",
@@ -44,14 +44,14 @@ class TextVectorizer:
             vectorizer = self.fit_ngram_vectorizer()
             x_train = vectorizer.transform(self.text_train)
         selector = SelectKBest(
-            f_classif, k=min(self.cfg.get("top_k"), x_train.shape[1])
+            f_classif, k=min(self.cfg["tok2vec"]["top_k"], x_train.shape[1])
         )
         selector.fit(x_train, self.y_train)
         return selector
 
     def fit_sequence_tokenizer(self):
         # Create vocabulary with training texts.
-        tokenizer = text.Tokenizer(num_words=self.cfg.get("top_k"))
+        tokenizer = text.Tokenizer(num_words=self.cfg["tok2vec"]["top_k"])
         tokenizer.fit_on_texts(self.text_train)
         return tokenizer
 
@@ -93,8 +93,8 @@ class TextVectorizer:
         # Get max sequence length.
         max_length = len(max(x_train, key=len))
         # TODO: Very sensitive to outliers. Trimming above p90 might be more appropriate.
-        if max_length > self.cfg.get("max_length"):
-            max_length = self.cfg.get("max_length")
+        if max_length > self.cfg["tok2vec"]["max_length"]:
+            max_length = self.cfg["tok2vec"]["max_length"]
 
         # Fix sequence length to max value. Sequences shorter than the length are
         # padded in the beginning and sequences longer are truncated
