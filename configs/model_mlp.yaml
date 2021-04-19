@@ -1,6 +1,19 @@
-learning_rate: [1e-3]
-epochs: [100]
-batch_size: [64]
-layers: [1, 2]  # when 1, no hidden layer -> standard logistic
-units: [64]
-dropout_rate: [0, 0.2]
+model:
+  architecture: mlp
+
+data prep:
+  ngram_range: (1, 2)  # Use 1-grams + 2-grams.
+  top_k: 5000
+  dtype: int32
+  strip_accents: unicode
+  decode_error: replace
+  analyzer: word  # Split text into word tokens.
+  min_df: 2
+
+training:
+  learning_rate: [1e-3]
+  epochs: [100]
+  batch_size: [64]
+  layers: [1, 2]  # when 1, no hidden layer -> standard logistic
+  units: [64]
+  dropout_rate: [0, 0.2]

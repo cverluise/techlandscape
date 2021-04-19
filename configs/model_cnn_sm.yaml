@@ -1,9 +1,17 @@
-learning_rate: [1e-3]
-epochs: [100]
-batch_size: [64]
-blocks: [1]
-filters: [64, 128]
-dropout_rate: [0]
-embedding_dim: [100]
-kernel_size: [3, 5]
-pool_size: [3]
+model:
+  architecture: cnn
+
+data prep:
+  max_length: 250
+  top_k: 5000
+
+training:
+  learning_rate: [1e-3]
+  epochs: [100]
+  batch_size: [64]
+  blocks: [1]
+  filters: [64, 128]
+  dropout_rate: [0]
+  embedding_dim: [100]
+  kernel_size: [3, 5]
+  pool_size: [3]
