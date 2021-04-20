@@ -26,9 +26,7 @@ def train_mlp(texts_train, texts_test, y_train, y_test, params):
     """
 
     # Vectorize texts.
-    x_train, x_test, _ = vectorize_text.get_ngram(
-        texts_train, texts_test, y_train
-    )
+    x_train, x_test, _ = vectorize_text.get_ngram(texts_train, texts_test, y_train)
 
     # Create model instance.
     model = build_model.build_mlp(
@@ -38,9 +36,7 @@ def train_mlp(texts_train, texts_test, y_train, y_test, params):
         input_shape=x_train.shape[1:],
     )
     optimizer = Adam(lr=params["learning_rate"])
-    model.compile(
-        optimizer=optimizer, loss="binary_crossentropy", metrics=["accuracy"]
-    )
+    model.compile(optimizer=optimizer, loss="binary_crossentropy", metrics=["accuracy"])
 
     # Create callback for early stopping on validation loss. If the loss does
     # not decrease in two consecutive tries, stop training.
@@ -89,9 +85,7 @@ def train_cnn(texts_train, texts_test, y_train, y_test, params):
     :return: fitted model, model history
     """
     # Vectorize texts.
-    x_train, x_test, tokenizer = vectorize_text.get_sequence(
-        texts_train, texts_test
-    )
+    x_train, x_test, tokenizer = vectorize_text.get_sequence(texts_train, texts_test)
     num_features = min(len(tokenizer.word_index) + 1, vectorize_text.TOP_K)
 
     # Buid models.
@@ -108,9 +102,7 @@ def train_cnn(texts_train, texts_test, y_train, y_test, params):
 
     # Compile model with learning parameters.
     optimizer = Adam(lr=params["learning_rate"])
-    model.compile(
-        optimizer=optimizer, loss="binary_crossentropy", metrics=["accuracy"]
-    )
+    model.compile(optimizer=optimizer, loss="binary_crossentropy", metrics=["accuracy"])
     # Create callback for early stopping on validation loss. If the loss does
     # not decrease in two consecutive tries, stop training.
     callbacks = [EarlyStopping(monitor="val_loss", patience=2)]

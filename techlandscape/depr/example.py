@@ -74,12 +74,8 @@ segment_df = asyncio.run(
 tmp = classif_df.query("expansion_level=='SEED'")[
     ["publication_number", "expansion_level"]
 ]
-tmp = tmp.append(
-    segment_df.reset_index()[["publication_number", "expansion_level"]]
-)
-tmp = tmp.drop_duplicates(["publication_number"]).set_index(
-    "publication_number"
-)
+tmp = tmp.append(segment_df.reset_index()[["publication_number", "expansion_level"]])
+tmp = tmp.drop_duplicates(["publication_number"]).set_index("publication_number")
 # load_to_bq(
 #     tmp,
 #     client=client,

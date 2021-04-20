@@ -23,9 +23,7 @@ def get_threshold(model, x_test, y_test, step=0.02):
     range_ = np.arange(0, 1, step)
     for thresh in range_:
         pred_test = list(map(lambda x: 1 if x > thresh else 0, proba_test))
-        _, _, fscore, support = precision_recall_fscore_support(
-            y_test, pred_test
-        )
+        _, _, fscore, support = precision_recall_fscore_support(y_test, pred_test)
         f1_prod += [fscore[0] * fscore[1]]
     threshs_star = range_[np.where(np.array(f1_prod) == max(f1_prod))]
     thresh_star = threshs_star[0] + (threshs_star[-1] - threshs_star[0]) / 2
@@ -76,9 +74,7 @@ def grid_search(
                 texts_train, texts_test, y_train, y_test, params
             )
         pred_test = model.predict_classes(x_test)
-        prec, rec, f1, support = precision_recall_fscore_support(
-            y_test, pred_test
-        )
+        prec, rec, f1, support = precision_recall_fscore_support(y_test, pred_test)
         performance.update(
             {
                 model_name: {
@@ -110,8 +106,6 @@ def get_best_model(performance_df, model_type, log_root):
     assert model_type in ["cnn", "mlp"]
     msg = Printer()
     performance_df["f1_prod"] = performance_df["f1_0"] * performance_df["f1_1"]
-    best_model = list(
-        performance_df.sort_values("f1_prod", ascending=False).index
-    )[0]
+    best_model = list(performance_df.sort_values("f1_prod", ascending=False).index)[0]
     msg.info(f"Best model: {' '.join(best_model.split('-'))}")
     return load_model(f"{log_root}-{model_type}-{best_model}.h5")

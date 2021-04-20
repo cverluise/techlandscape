@@ -29,27 +29,17 @@ async def get_pruning_model(
     :return: (keras.model, List[str]), (model, texts_train)
     """
     assert model_type in ["cnn", "mlp"]
-    assert os.path.isfile(
-        os.path.join(data_path, f"{table_name}_classif.csv.gz")
-    )
+    assert os.path.isfile(os.path.join(data_path, f"{table_name}_classif.csv.gz"))
     assert os.path.exists(model_path)
     assert os.path.exists(data_path)
 
     log_root = os.path.join(model_path, table_name)
-    fio = os.path.join(
-        model_path, f"{table_name}-{model_type}-performance.csv"
-    )
+    fio = os.path.join(model_path, f"{table_name}-{model_type}-performance.csv")
 
     @load_or_persist(fio=fio)
     def main():
         performance_df = grid_search(
-            params_grid,
-            model_type,
-            texts_train,
-            texts_test,
-            y_train,
-            y_test,
-            log_root,
+            params_grid, model_type, texts_train, texts_test, y_train, y_test, log_root
         )
         return performance_df
 
@@ -58,9 +48,7 @@ async def get_pruning_model(
     return model, texts_train
 
 
-async def get_pruning_data(
-    client, table_ref, table_name, data_path, countries=None
-):
+async def get_pruning_data(client, table_ref, table_name, data_path, countries=None):
     """
     Load expansion data
     """
@@ -71,9 +59,7 @@ async def get_pruning_data(
 
     @load_or_persist(fio=fio)
     def main():
-        expansion_df = get_expansion_result(
-            "*expansion", client, table_ref, countries
-        )
+        expansion_df = get_expansion_result("*expansion", client, table_ref, countries)
         return expansion_df
 
     main()
@@ -119,9 +105,7 @@ async def full_pruning(
     """
     fio = os.path.join(data_path, f"{table_name}_segment.csv")
 
-    if os.path.isfile(
-        fio
-    ):  # @load_or_persist cannot be applied to a coroutine
+    if os.path.isfile(fio):  # @load_or_persist cannot be applied to a coroutine
         segment_df = pd.read_csv(fio, index_col=0)
     else:
         config = bq_config if bq_config else Config()
@@ -142,9 +126,7 @@ async def full_pruning(
             )
         )
         data_task = asyncio.create_task(
-            get_pruning_data(
-                client, table_ref, table_name, data_path, countries
-            )
+            get_pruning_data(client, table_ref, table_name, data_path, countries)
         )
 
         await model_task
