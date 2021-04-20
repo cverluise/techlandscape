@@ -19,33 +19,46 @@ from techlandscape.utils import get_config
 from techlandscape.exception import UnknownModel, UNKNOWN_MODEL_MSG
 
 
+# TODO
+#   improve using self as of ModelBuilder
+#   Check working properly (as of textVectorizer for cnn, MLP ok)
+
+
 class DataLoader:
     def __init__(self, config: Path):
         self.cfg = get_config(config)
-        self.model_architecture = self.cfg["model"]["architecture"]
         self.train_path = Path(self.cfg["data"]["train"])
         self.test_path = Path(self.cfg["data"]["test"])
-        self.text_train = self._load_data(self.train_path, "text")
-        self.text_test = self._load_data(self.test_path, "text")
-        self.y_train = np.array(self._load_data(self.train_path, "is_seed"))
-        self.y_test = np.array(self._load_data(self.test_path, "is_seed"))
+        self.text_train = None
+        self.text_test = None
+        self.y_train = None
+        self.y_test = None
 
     @staticmethod
-    def _load_data(path: Path, var: str):
+    def get_data(path: Path, var: str):
         return [
             json.loads(line)[var] for line in path.open("r").read().split("\n") if line
         ]
 
-    def get_data(self):
-        return self.text_train, self.text_test, self.y_train, self.y_test
+    def load_data(self):
+        self.text_train = self.get_data(self.train_path, "text")
+        self.text_test = self.get_data(self.test_path, "text")
+        self.y_train = np.array(self.get_data(self.train_path, "is_seed"))
+        self.y_test = np.array(self.get_data(self.test_path, "is_seed"))
+
+        return self
 
 
 class TextVectorizer(DataLoader):
     def __init__(self, config: Path):
         super().__init__(config)
-        if self.model_architecture == "cnn":
-            self.tokenizer = self.fit_sequence_tokenizer()
-            self.num_features = self.get_num_features()
+        self.model_architecture = self.cfg["model"]["architecture"]
+        self.tokenizer = None
+        self.vectorizer = None
+        self.selector = None
+        self.num_features = None
+        self.x_train = None
+        self.x_test = None
 
     def fit_ngram_vectorizer(self):
         kwargs = {
@@ -55,32 +68,24 @@ class TextVectorizer(DataLoader):
                 "dtype",
                 "strip_accents",
                 "decode_error",
-                "analyser",
+                "analyzer",
                 "min_df",
             ]
         }
-        vectorizer = TfidfVectorizer(**kwargs)
-        vectorizer.fit(self.text_train)
-        return vectorizer
+        self.vectorizer = TfidfVectorizer(**kwargs).fit(self.text_train)
+        return self
 
-    def fit_ngram_feature_selector(self, x_train: np.array = None):
-        if not x_train:  # just a hook to avoid regenerating x_train in already computed
-            vectorizer = self.fit_ngram_vectorizer()
-            x_train = vectorizer.transform(self.text_train)
-        selector = SelectKBest(
-            f_classif, k=min(self.cfg["tok2vec"]["top_k"], x_train.shape[1])
-        )
-        selector.fit(x_train, self.y_train)
-        return selector
+    def fit_ngram_feature_selector(self):
+        self.selector = SelectKBest(
+            f_classif, k=min(self.cfg["tok2vec"]["top_k"], self.x_train.shape[1])
+        ).fit(self.x_train, self.y_train)
+        return self
 
     def fit_sequence_tokenizer(self):
         # Create vocabulary with training texts.
         tokenizer = text.Tokenizer(num_words=self.cfg["tok2vec"]["top_k"])
-        tokenizer.fit_on_texts(self.text_train)
-        return tokenizer
-
-    def get_num_features(self):
-        return min(len(self.tokenizer.word_index) + 1, self.cfg["tok2vec"]["top_k"])
+        self.tokenizer = tokenizer.fit_on_texts(self.text_train)
+        return self
 
     def get_ngrams(self):
         """
@@ -88,37 +93,40 @@ class TextVectorizer(DataLoader):
         the number of columns corresponding to the card of the (ngram) vocabulary.
         Nb: Used in the MLP model only
         """
-
-        vectorizer = self.fit_ngram_vectorizer()
+        self.load_data()
+        self.fit_ngram_vectorizer()
 
         # Learn vocabulary from training texts and vectorize training texts.
-        x_train = vectorizer.transform(self.text_train)
+        self.x_train = self.vectorizer.transform(self.text_train)
         # Vectorize test texts.
-        x_test = vectorizer.transform(self.text_test)
+        self.x_test = self.vectorizer.transform(self.text_test)
 
         # Find top 'k' vectorized features.
-        selector = self.fit_ngram_feature_selector(x_train=x_train)
+        self.fit_ngram_feature_selector()
 
         # Keep only top k features
-        x_train = selector.transform(x_train).astype("float32")
-        x_test = selector.transform(x_test).astype("float32")
+        self.x_train = self.selector.transform(self.x_train).astype("float32")
+        self.x_test = self.selector.transform(self.x_test).astype("float32")
 
-        return x_train, x_test
+        return self
 
     def get_sequences(self):
         """
         Return the padded sequence of texts (train & test) with indices mapping to vocabulary (0 reserved for empty)
         and the related word-index mapping.
         """
-
-        tokenizer = self.fit_sequence_tokenizer()
+        self.load_data()
+        self.fit_sequence_tokenizer()
+        self.num_features = min(
+            len(self.tokenizer.word_index) + 1, self.cfg["tok2vec"]["top_k"]
+        )
 
         # Vectorize training and test texts.
-        x_train = tokenizer.texts_to_sequences(self.text_train)
-        x_test = tokenizer.texts_to_sequences(self.text_test)
+        self.x_train = self.tokenizer.texts_to_sequences(self.text_train)
+        self.x_test = self.tokenizer.texts_to_sequences(self.text_test)
 
         # Get max sequence length.
-        max_length = len(max(x_train, key=len))
+        max_length = len(max(self.x_train, key=len))
         # TODO: Very sensitive to outliers. Trimming above p90 might be more appropriate.
         if max_length > self.cfg["tok2vec"]["max_length"]:
             max_length = self.cfg["tok2vec"]["max_length"]
@@ -126,19 +134,19 @@ class TextVectorizer(DataLoader):
         # Fix sequence length to max value. Sequences shorter than the length are
         # padded in the beginning and sequences longer are truncated
         # at the beginning.
-        x_train = sequence.pad_sequences(x_train, maxlen=max_length)
-        x_test = sequence.pad_sequences(x_test, maxlen=max_length)
-        return x_train, x_test
+        self.x_train = sequence.pad_sequences(self.x_train, maxlen=max_length)
+        self.x_test = sequence.pad_sequences(self.x_test, maxlen=max_length)
+        return self
 
     def vectorize_text(self):
         """Return vectorized texts (train and test)"""
         if self.model_architecture == "cnn":
-            x_train, x_test = self.get_sequences()
+            self.get_sequences()
         elif self.model_architecture == "mlp":
-            x_train, x_test = self.get_ngrams()
+            self.get_ngrams()
         else:
             UnknownModel(UNKNOWN_MODEL_MSG)
-        return x_train, x_test
+        return self
 
 
 class ModelBuilder(TextVectorizer):
@@ -153,7 +161,6 @@ class ModelBuilder(TextVectorizer):
         super().__init__(config)
         self.x_train, self.x_test = self.vectorize_text()
         self.input_shape = self.x_train.shape[1:]
-        # TODO see if input_shape could be inferred from config file params
 
     def build_mlp(self) -> models.Sequential:
         """
@@ -268,7 +275,7 @@ class ModelTrainer(ModelCompiler):
         ]
 
     def train_model(self):
-        # TODO find a way to keep track of history
+        # TODO find a way to keep track of history -> do it with self
         model = self.compile_model()
         model.fit(
             self.x_train,
