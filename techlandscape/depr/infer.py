@@ -17,9 +17,7 @@ mapbox_token = Config().mapbox_token
 
 def prepare_country_date_df(client, table_ref, data_path):
     df = stylized_facts.get_patent_country_date(client, table_ref, data_path)
-    df["publication_year"] = df["publication_date"].apply(
-        lambda x: int(x / 10000)
-    )
+    df["publication_year"] = df["publication_date"].apply(lambda x: int(x / 10000))
     return df
 
 
@@ -28,11 +26,7 @@ def prepare_entity_df(flavor, client, table_ref, data_path, country_date_df):
     df = stylized_facts.get_patent_entity(flavor, client, table_ref, data_path)
     df = df.merge(country_date_df, how="left", on="publication_number")
     df = df.merge(
-        1
-        / df.groupby("publication_number")
-        .count()
-        .max(1)
-        .rename(f"nb_{flavor}"),
+        1 / df.groupby("publication_number").count().max(1).rename(f"nb_{flavor}"),
         how="left",
         on="publication_number",
     )
@@ -73,9 +67,7 @@ def prepare_geoc_df(client, table_ref, data_path, inventor_df, assignee_df):
 @monitor
 def country_date_analysis(country_date_df, table_name, plots_path):
     # # nb patents by country
-    fig = fig_wrapper(
-        country_date_df, mode="bar", groups=["country_code"], f=len
-    )
+    fig = fig_wrapper(country_date_df, mode="bar", groups=["country_code"], f=len)
     fig.write_image(f"{plots_path}{table_name}_nb_patents_country.png")
 
     # # nb patents by year
@@ -113,9 +105,7 @@ def country_date_analysis(country_date_df, table_name, plots_path):
         normalize=True,
         norm_axis=1,
     )
-    fig.write_image(
-        f"{plots_path}{table_name}_nb_patents_year_country-norm.png"
-    )
+    fig.write_image(f"{plots_path}{table_name}_nb_patents_year_country-norm.png")
 
 
 @monitor
@@ -127,14 +117,9 @@ def entity_analysis(flavor, entity_df, table_name, plots_path):
 
     # # nb patents by entity orig country
     fig = fig_wrapper(
-        tmp[[f"{flavor}_country", f"nb_{flavor}"]],
-        "bar",
-        [f"{flavor}_country"],
-        f=sum,
+        tmp[[f"{flavor}_country", f"nb_{flavor}"]], "bar", [f"{flavor}_country"], f=sum
     )
-    fig.write_image(
-        f"{plots_path}{table_name}_nb_patents_{flavor}-orig-country.png"
-    )
+    fig.write_image(f"{plots_path}{table_name}_nb_patents_{flavor}-orig-country.png")
 
     # # nb patents by entity orig country by year
     fig = fig_wrapper(
@@ -149,10 +134,7 @@ def entity_analysis(flavor, entity_df, table_name, plots_path):
 
     # # nb patents by entity
     fig = fig_wrapper(
-        tmp[[f"{flavor}_name", f"nb_{flavor}"]],
-        "bar",
-        [f"{flavor}_name"],
-        f=sum,
+        tmp[[f"{flavor}_name", f"nb_{flavor}"]], "bar", [f"{flavor}_name"], f=sum
     )
     fig.write_image(f"{plots_path}{table_name}_nb_patents_{flavor}.png")
 
@@ -163,9 +145,7 @@ def entity_analysis(flavor, entity_df, table_name, plots_path):
         ["publication_year", f"{flavor}_name"],
         f=sum,
     )
-    fig.write_image(
-        f"{plots_path}{table_name}_nb_patents_{flavor}_country_year.png"
-    )
+    fig.write_image(f"{plots_path}{table_name}_nb_patents_{flavor}_country_year.png")
 
 
 @monitor
@@ -191,9 +171,7 @@ def geoc_analysis(geoc_df, table_name, plots_path):
         zoom=1,
     )
     po.plot(
-        fig,
-        filename=f"{plots_path}{table_name}_all_geoc_year.html",
-        auto_open=False,
+        fig, filename=f"{plots_path}{table_name}_all_geoc_year.html", auto_open=False
     )
 
     for e in ["inventor", "applicant"]:
@@ -229,9 +207,7 @@ def full_inference(table_name, data_path, plots_path, bq_config=None):
     assignee_df = prepare_entity_df(
         "assignee", client, table_ref, data_path, country_date_df
     )
-    geoc_df = prepare_geoc_df(
-        client, table_ref, data_path, inventor_df, assignee_df
-    )
+    geoc_df = prepare_geoc_df(client, table_ref, data_path, inventor_df, assignee_df)
 
     country_date_analysis(country_date_df, table_name, plots_path)
     entity_analysis("inventor", inventor_df, table_name, plots_path)
