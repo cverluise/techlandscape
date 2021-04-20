@@ -1,0 +1,23 @@
+patent:
+  general: US-20080248355-A1,CN-1322266-C
+  hydrogen storage materials (inc. alloy): US-7678362-B2,US-7118611-B2,CN-203500844-U,US-7094493-B2,US-10622655-B2,WO-2019239141-A1,US-8871671-B2,JP-6061354-B2,EP-2554694-B1,FR-2939784-A1,CA-2980664-C,CN-103797142-A
+  fuel delivery/filling: US-7678479-B2,JP-6418680-B2,DE-102009016475-B4,US-7093626-B2,DE-102013203892-A,KR-101107633-B1
+  fuel cell: JP-4849775-B2,JP-3706611-B2,US-6875536-B2,JP-5338903-B2
+
+cpc:
+  general: Y02E60/30,Y02E60/32,Y02E60/321,Y02E60/322,Y02E60/324,Y02E60/325,Y02E60/327,Y02E60/328,Y02E60/34,Y02E60/36,Y02E60/362,Y02E60/364,Y02E60/366,Y02E60/368
+  separation of gas: B01D53/02
+  hydrogen gas: C01B3/00-58,F17C2221/012
+  alloy: C22C19/03,C22C22/00,C22C33/00
+  absorption/adsorption: F25B17/12
+  electrode and fuel cells: H01M4/38,H01M8/06,F17C2221/012
+  fuel delivery/filling: F17C6/00,F17C5/02
+
+keyword:
+  general: hydrogen fuel cells,hydrogen storage,liquid hydrogen,solid-state hydrogen storage,compressed hydrogen storage
+  separation of gas: electrostatic separation,electrolysis,solid sorbent,gas chromatography
+  hydrogen gas: dehydrogenation reaction,hydrogen gas,hydrogen fuel
+  alloy: alloy,storage material,manganese hydrides,hydrogen storage materials
+  absorption/adsorption: absorption,adsorption
+  electrode and fuel cells: fuel cell,electrode,fuel cell vehicle
+  fuel delivery/filling: coupling process,hydrogen-powered device
