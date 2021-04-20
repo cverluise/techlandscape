@@ -1,23 +1,32 @@
-model:
-  architecture: mlp
-
 data:
   train:
   test:
 
 tok2vec:
-  ngram_range: (1, 2)  # Use 1-grams + 2-grams.
+  ngram_range: [1,2]  # Use 1-grams + 2-grams.
   top_k: 5000
-  dtype: int32
+  dtype: float32
   strip_accents: unicode
   decode_error: replace
   analyzer: word  # Split text into word tokens.
   min_df: 2
 
+model:
+  architecture: mlp
+  layers: 1 # [1,2] number of hidden layers -1. If 1, no hidden layer -> standard logistic
+  units: 64  # number of units per hidden layer.
+  dropout_rate: .2 # [0,0.2], fraction of the input units to drop.
+
 training:
-  learning_rate: [1e-3]
-  epochs: [100]
-  batch_size: [64]
-  layers: [1, 2]  # when 1, no hidden layer -> standard logistic
-  units: [64]
-  dropout_rate: [0, 0.2]
+  epochs: 100
+  batch_size: 64
+  optimizer:
+    learning_rate: 1e-3
+    loss: binary_crossentropy
+    metrics: ["accuracy"]
+  callbacks:
+    monitor: val_loss
+    patience: 2
+
+logger:
+    verbose: 2  # Logs once per epoch.
