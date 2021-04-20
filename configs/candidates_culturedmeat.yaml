@@ -3,7 +3,7 @@ patent:
   cell line: US-20160227830-A1,WO-2017124100-A1,WO-1999031222-A1,WO-2015008275-A1
   scaffolding: US-6835390-B1,US-20200245658-A1,WO-2014039938-A1,WO-2014110250-A1,US-20190338232-A1,US-20050010965-A1,CN-101132803-A
   in-vitro growing cell: WO-2018011805-A9
-  animal-free meat:	US-9752122-B2,US-9332779-B2,WO-2019016795-A1
+  animal-free meat: US-9752122-B2,US-9332779-B2,WO-2019016795-A1
   growth factor: JP-6111510-B1,WO-2018096343-A1,WO-2017124100-A1
 cpc:
   synthetic meat: A23J3/225,A23J3/227,A23J1/006,A23J1/007,A23J3/14,A23J3/16,A23J3/18,A23L13/40
@@ -13,5 +13,5 @@ cpc:
 keyword:
   general: in vitro meat,lab-grown meat,cell-based meat,cultivated meat,cellular agriculture,cultured meat
   cell line: stem cells,muscle cells,induced pluripotent stem cells
-  scaffolding:	bioreactors,scaffold,3d cell cultures,3d tissue engineering
+  scaffolding: bioreactors,scaffold,3d cell cultures,3d tissue engineering
   growth factor: growth medium,culture media

@@ -16,9 +16,9 @@ cpc:
 keyword:
   general: blockchain,digital mining
   cryptocurrency: bitcoin,cryptocoin,cryptocurrency,digital wallet,ethereum
-  smart contracts: contracts,certification,record keeping
+  smart contracts: smart contracts,record keeping
   ledger type: distributed ledger,distributed node,private ledger,public ledger,intelligent node,full node
   authentication protocol: digital signatures,public key,user identity,hashing
-  consensus methods: consensus methodologies,proof of work,pow,proof of stake,pos,deposition based,ripple
+  consensus methods: consensus methodologies,proof of work,proof of stake,deposition based,ripple
 
 

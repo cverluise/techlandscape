@@ -11,13 +11,13 @@ cpc:
   natural language processing: G06F17/27,G06F17/28,H04L41/16,G06F17/289,G06F17/2795
 
 keyword:
-  general ai - algorithm: adaboost,xgboost,bayesian network,decision tree,genetic algorithm,gradient tree boosting,logistic regression,random forest,rankboost,support vector machine,multilayer perceptron,hidden markov model,gans,generalized adversarial network,cnn,convolutional neural network
+  general ai - algorithm: adaboost,xgboost,bayesian network,decision tree,genetic algorithm,gradient tree boosting,logistic regression,random forest,rankboost,support vector machine,multilayer perceptron,hidden markov model,generalized adversarial network,convolutional neural network
   general ai - technique: backpropagation,stochastic gradient descent,hashmap
   general ai - concept: supervised training,reinforcement learning,neural network,self learning,semi supervised learning,unsupervised training,transfer learning,overfitting,active learning,clustering,data mining,deep learning,expert system,embedding,machine learning,fuzzy logic,feature selection,objective function,target function,regression model,signal processing
-  general nlp: natural language processing,computational linguistics,nlp,chatbot,text embedding
+  general nlp: natural language processing,computational linguistics,chatbot,text embedding
   text classification: text classification, sentiment analysis
   named entity recognition: named entity recognition,entity identification,entity chunking,entity extraction
   question answering: automated question answering,automatic question answering
-  language modeling: language modeling,bert,gpt-3,gpt-2,transformers,word2vec,sense2vec,recursive neural network,rnn,sequence modeling
+  language modeling: language modeling,bert,gpt-3,gpt-2,transformers,word2vec,sense2vec,recursive neural network,sequence modeling
   summarization: text summarization, sentence summary
   automatic translation: automatic translation, machine translation, auto-translate

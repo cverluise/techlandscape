@@ -19,5 +19,5 @@ keyword:
   general: self-driving vehicle,autopilot,driverless vehicle,autonomous vehicle,automated vehicles
   communication: vehicle connectivity,vehicle-to-vehicle communication
   smart logistics: fleet management
-  perception analysis & decision: lidar,sonar,radar,camera,object detection,obstacle detection,object classification,cruise control,pedestrian detection,environment mapping,surround view,blind spot detection,park assistance, lane departure,traffic sign recognition,localisation,navigation,drive assist system
+  perception analysis & decision: vehicle lidar,vehicle sonar,vehicle radar,vehicle camera,object detection,obstacle detection,object classification,cruise control,pedestrian detection,environment mapping,surround view,blind spot detection,park assistance,lane departure,traffic sign recognition,drive assist system
   computing: trajectory generation,reactive control,path trajectory planning,manoeuvers planning
