@@ -13,12 +13,8 @@ class QueryCandidates:
     def __init__(self, config_file: Path):
         self.config_file = Path(config_file)
         self.config = self.get_config()
-        self.patents = flatten(
-            [v.split(",") for _, v in self.config["patent"].items()]
-        )
-        self.cpcs = flatten(
-            [v.split(",") for _, v in self.config["cpc"].items()]
-        )
+        self.patents = flatten([v.split(",") for _, v in self.config["patent"].items()])
+        self.cpcs = flatten([v.split(",") for _, v in self.config["cpc"].items()])
         self.keywords = flatten(
             [v.split(",") for _, v in self.config["keyword"].items()]
         )
@@ -90,7 +86,7 @@ class QueryCandidates:
         SELECT
           p.family_id,
           STRING_AGG(tmp.publication_number) AS publication_number,
-          CONCAT(ANY_VALUE(tmp.title), "|", ANY_VALUE(tmp.abstract)) AS text,
+          CONCAT(ANY_VALUE(tmp.title), "\\n\\n", ANY_VALUE(tmp.abstract)) AS text,
           STRING_AGG(DISTINCT(tmp.match)) AS match,
           ARRAY_LENGTH(SPLIT(STRING_AGG(tmp.match))) AS match_number,
         FROM
@@ -106,9 +102,7 @@ class QueryCandidates:
 
 
 @app.command()
-def get_candidates(
-    config_file: Path, destination_table: str, credentials: Path
-):
+def get_candidates(config_file: Path, destination_table: str, credentials: Path):
     """
     Return seed candidates based on `config_file`. Candidate table is saved to `destination_table`
     """
