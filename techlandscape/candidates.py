@@ -102,12 +102,14 @@ class QueryCandidates:
 
 
 @app.command()
-def get_candidates(config_file: Path, destination_table: str, credentials: Path):
+def get_candidates(
+    config_file: Path, destination_table: str, credentials: Path, verbose: bool = False
+):
     """
     Return seed candidates based on `config_file`. Candidate table is saved to `destination_table`
     """
     query = QueryCandidates(config_file).get_query()
-    get_bq_job_done(query, destination_table, credentials)
+    get_bq_job_done(query, destination_table, credentials, verbose=verbose)
 
 
 if __name__ == "__main__":
