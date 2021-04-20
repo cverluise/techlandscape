@@ -1,0 +1,24 @@
+patent:
+  general: EP-3125489-B1,US-9785369-B1,DE-102016104478-A1
+  document verification: US-9853819-B2,US-9842216-B2,US-9855785-B1,US-20180137465-A1
+  identity management: US-9635000-B1,EP-329562-A1,EP-3295350-B1,CN-105719172-A,CN-105701372-B
+  consensus methods: US-9836908-B2
+  payment protocol: US-9818092-B2,US-9824031-B1,US-10643202-B2,CN-105844505-A
+  authentication protocol: US-9298806-B1,CN-105790954-B,US-9858781-B1,US-9853977-B1
+  applications: US-9641338-B2,US-9641342-B2,EP-325719-B1
+cpc:
+  digital transmission and data processing: H04L009/08,H04L67/00,H04L009/10,H04L009/12,H04L009/14,H04L009/28,H04L29/06
+  payment protocol: G06Q20/00,G06F21/00,G06F12/14,G06Q20/06,G06Q20/10,G06Q20/20,G06Q20/32,G06Q20/36
+  cryptographic mechanism: H04L2209/00,G09C001/00,G09C001/02,G09C001/04,G09C001/06
+  network security protocol: H04L63/00,G06Q30/0619
+  computer security: G06F21/00,G06F021/24,G06F021/00,G06F021/02,G06F012/28,G06F012/14
+  digital computing method: G06F17/00
+keyword:
+  general: blockchain,digital mining
+  cryptocurrency: bitcoin,cryptocoin,cryptocurrency,digital wallet,ethereum
+  smart contracts: contracts,certification,record keeping
+  ledger type: distributed ledger,distributed node,private ledger,public ledger,intelligent node,full node
+  authentication protocol: digital signatures,public key,user identity,hashing
+  consensus methods: consensus methodologies,proof of work,pow,proof of stake,pos,deposition based,ripple
+
+

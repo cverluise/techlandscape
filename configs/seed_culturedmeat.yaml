@@ -8,10 +8,10 @@ patent:
 cpc:
   synthetic meat: A23J3/225,A23J3/227,A23J1/006,A23J1/007,A23J3/14,A23J3/16,A23J3/18,A23L13/40
   cell line: C12M21/08,C12M45/02
-  growth factor: C12N2501,C12M41/48
   scaffolding: C12N5/00
+  growth factor: C12N2501,C12M41/48
 keyword:
   general: in vitro meat,lab-grown meat,cell-based meat,cultivated meat,cellular agriculture,cultured meat
   cell line: stem cells,muscle cells,induced pluripotent stem cells
-  scaffolding:	bioreactors,scaffold,3D cell cultures,3D tissue engineering
+  scaffolding:	bioreactors,scaffold,3d cell cultures,3d tissue engineering
   growth factor: growth medium,culture media
