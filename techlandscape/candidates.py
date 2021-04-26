@@ -112,5 +112,44 @@ def get_candidates(
     get_bq_job_done(query, destination_table, credentials, verbose=verbose)
 
 
+@app.command()
+def get_candidates_sample(
+    table_ref: str,
+    credentials: Path,
+    destination_table: str = None,
+    size_bin: int = 500,
+    verbose: bool = False,
+):
+    """Return sample of seed candidates. If no `destination_table`, output saved to `table_ref`(overwrite)"""
+    query = f"""
+    WITH
+      table_stats AS (
+      SELECT
+        *,
+        SUM(nb_bin) OVER() AS nb_total
+      FROM (
+        SELECT
+          match,
+          COUNT(match) AS nb_bin
+        FROM
+          `{table_ref}`
+        GROUP BY
+          match) )
+    SELECT
+      *
+    FROM
+      `{table_ref}`
+    JOIN
+      table_stats
+    USING
+      (match)
+    WHERE
+      RAND()<{size_bin}/nb_bin
+    ORDER BY
+      RAND()"""
+    destination_table = destination_table if destination_table else table_ref
+    get_bq_job_done(query, destination_table, credentials, verbose=verbose)
+
+
 if __name__ == "__main__":
     app()
