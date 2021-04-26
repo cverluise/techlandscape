@@ -1,0 +1,13 @@
+patent:
+  zinc finger: WO-2000041566-A9,WO-2003087341-A3
+  talens: WO-2010079430-A1,WO-2011072246-A2,US-8440431-B2,US-8440432-B2,US-8450471-B2,US-8566363-B2
+  crispr: WO-2014093661-A2,WO-2013176772-A1
+  others: US-20170367280-A1
+cpc:
+  general: A01K,A01H,A61K,A61P,C07K,C12N,C12Y,C12Q,G01N,C12Y
+keyword:
+  general: dna editing,gene editing,genome engineering,recombinant targeting vectors,homologous recombination,double-strand dna break,homology-directed repair,targeted dna sequence,dna cleavage,fok1,sequence-specific nuclease system
+  zinc finger: zinc finger nuclease,cys2-his2
+  talens: transcriptional activator-like effector nuclease,talens
+  crispr: clustered regularly interspaced short palindromic repeat,crispr/cas,cas9,pre-crrna,tracrrna,enzyme rnase,single guide rna,crispr-cpf1
+  others: ngago,single-stranded dna-guided argonaute endonuclease,natronobacterium gregoriy argonaute
