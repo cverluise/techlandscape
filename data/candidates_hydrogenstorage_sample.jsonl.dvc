@@ -1,0 +1,3 @@
+outs:
+- md5: 86df59134d54e1623ae83c1519e82e7d
+  path: candidates_hydrogenstorage_sample.jsonl

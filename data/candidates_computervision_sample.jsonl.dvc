@@ -1,0 +1,3 @@
+outs:
+- md5: ed486ae9279922656557f3cb03632805
+  path: candidates_computervision_sample.jsonl

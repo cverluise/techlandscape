@@ -1,0 +1,3 @@
+outs:
+- md5: a67708e53341ef8ecdb57776dace8049
+  path: candidates_selfdrivingvehicle_sample.jsonl
