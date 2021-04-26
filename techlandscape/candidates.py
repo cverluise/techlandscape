@@ -87,7 +87,7 @@ class QueryCandidates:
           p.family_id,
           STRING_AGG(tmp.publication_number) AS publication_number,
           CONCAT(ANY_VALUE(tmp.title), "\\n\\n", ANY_VALUE(tmp.abstract)) AS text,
-          STRING_AGG(DISTINCT(tmp.match)) AS match,
+          STRING_AGG(DISTINCT(tmp.match), "," order by tmp.match ASC ) AS match,
           ARRAY_LENGTH(SPLIT(STRING_AGG(tmp.match))) AS match_number,
         FROM
           tmp
