@@ -7,9 +7,7 @@ dev*.py
 bin/ExtractCPCCounts.py
 
 # Large files
-data/*
-models/*
-plots/*
+deleteme/*
 
 # System files
 **/.DS_Store
