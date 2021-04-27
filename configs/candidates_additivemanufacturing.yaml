@@ -18,3 +18,9 @@ keyword:
   general: 3d-printing,stereolithography,additive manufacturing,three-dimensional objects,rapid prototyping,additive material manufacturing
   materials: three dimensional printing material,3d-priting materials,metallic powder
   process: laser cusing,laser sintering,beam sintering,fused deposition modeling,photolithography,laminated object manufacturing,fuse deposition model
+option:
+  - Create 3D printable model with computer aided design
+  - Examine stereolithography file for errors and inconsistency
+  - Convert model into a series of thin layers
+  - Manufacture materials for 3D printings
+  - Print 3D model
