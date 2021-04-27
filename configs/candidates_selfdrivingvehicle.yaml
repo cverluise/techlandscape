@@ -19,3 +19,8 @@ keyword:
   smart logistics: fleet management
   perception analysis & decision: vehicle lidar,vehicle sonar,vehicle radar,vehicle camera,object detection,obstacle detection,object classification,cruise control,pedestrian detection,environment mapping,surround view,blind spot detection,park assistance,lane departure,traffic sign recognition,drive assist system
   computing: trajectory generation,reactive control,path trajectory planning,manoeuvers planning
+option:
+  - Enable vehicle to make autonomous decisions
+  - Automate vehicle handling
+  - Vehicle-to-vehicle communication
+  - Communication between vehicle and rest-of-the-world
