@@ -20,5 +20,11 @@ keyword:
   ledger type: distributed ledger,distributed node,private ledger,public ledger,intelligent node,full node
   authentication protocol: digital signatures,public key,user identity,hashing
   consensus methods: consensus methodologies,proof of work,proof of stake,deposition based,ripple
-
+option:
+  - Record transactions between two parties
+  - Serve as public transaction ledger of cryptocurrency
+  - Execute or enforce smart contract
+  - Hash tree verification / Verify the authenticity of documents / Proof of work
+  - Analyse transactions in a distributed ledger
+  - Manage Identity System based on the concept of peer-to-peer protocols (IDMS) / Mediate user authentification
 
