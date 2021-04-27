@@ -11,3 +11,7 @@ keyword:
   talens: transcriptional activator-like effector nuclease,talens
   crispr: clustered regularly interspaced short palindromic repeat,crispr/cas,cas9,pre-crrna,tracrrna,enzyme rnase,single guide rna,crispr-cpf1
   others: ngago,single-stranded dna-guided argonaute endonuclease,natronobacterium gregoriy argonaute
+option:
+  - Target DNA sequence
+  - Break DNA sequence
+  - Edit DNA sequence
