@@ -158,12 +158,11 @@ def prep_prodigy_annotation(data: Path, config: Path):
 
     config = get_config(config)
     options = config.get("option")
-    if not options:
-        raise ValueError(f"No option in config file.")
 
     for line in Path(data).open("r"):
         line = json.loads(line)
-        line = add_prodigy_options(line, options)
+        if options:
+            line = add_prodigy_options(line, options)
         typer.echo(json.dumps(line))
 
 
