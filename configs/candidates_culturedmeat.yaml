@@ -15,3 +15,7 @@ keyword:
   cell line: stem cells,muscle cells,induced pluripotent stem cells
   scaffolding: bioreactors,scaffold,3d cell cultures,3d tissue engineering
   growth factor: growth medium,culture media
+option:
+  - Seed cells to scaffolds (molds meant to reflect and encourage the cells to organize into a larger structure)
+  - Obtain and manage cell lines (generally stem cells)
+  - Source growth factors (extend the replicative capacity of cells)
