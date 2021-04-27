@@ -1,7 +1,8 @@
 import yaml
 import typer
+import json
 from pathlib import Path
-from techlandscape.utils import flatten, get_bq_job_done
+from techlandscape.utils import flatten, get_bq_job_done, get_config
 from typing import List
 
 app = typer.Typer()
@@ -10,20 +11,13 @@ app = typer.Typer()
 class QueryCandidates:
     """Class """
 
-    def __init__(self, config_file: Path):
-        self.config_file = Path(config_file)
-        self.config = self.get_config()
+    def __init__(self, config: Path):
+        self.config = get_config(config)
         self.patents = flatten([v.split(",") for _, v in self.config["patent"].items()])
         self.cpcs = flatten([v.split(",") for _, v in self.config["cpc"].items()])
         self.keywords = flatten(
             [v.split(",") for _, v in self.config["keyword"].items()]
         )
-
-    def get_config(self) -> dict:
-        """Load config file"""
-        with self.config_file.open("r") as config:
-            config = yaml.load(config, Loader=yaml.FullLoader)
-        return config
 
     def get_query_patents(self, patents: List[str]) -> str:
         """Return candidates query based on patent similarity"""
@@ -103,12 +97,12 @@ class QueryCandidates:
 
 @app.command()
 def get_candidates(
-    config_file: Path, destination_table: str, credentials: Path, verbose: bool = False
+    config: Path, destination_table: str, credentials: Path, verbose: bool = False
 ):
     """
-    Return seed candidates based on `config_file`. Candidate table is saved to `destination_table`
+    Return seed candidates based on `config`. Candidate table is saved to `destination_table`
     """
-    query = QueryCandidates(config_file).get_query()
+    query = QueryCandidates(config).get_query()
     get_bq_job_done(query, destination_table, credentials, verbose=verbose)
 
 
@@ -149,6 +143,28 @@ def get_candidates_sample(
       RAND()"""
     destination_table = destination_table if destination_table else table_ref
     get_bq_job_done(query, destination_table, credentials, verbose=verbose)
+
+
+@app.command()
+def prep_prodigy_annotation(data: Path, config: Path):
+    """Return `data` with options for prodigy annotation to stdout.
+    Nb: data is expected to be a jsonl file."""
+
+    def add_prodigy_options(line: dict, options: List[str]):
+        line.update(
+            {"options": [{"id": i, "text": option} for i, option in enumerate(options)]}
+        )
+        return line
+
+    config = get_config(config)
+    options = config.get("option")
+    if not options:
+        raise ValueError(f"No option in {config}")
+
+    for line in Path(data).open("r"):
+        line = json.loads(line)
+        line = add_prodigy_options(line, options)
+        typer.echo(json.dumps(line))
 
 
 if __name__ == "__main__":
