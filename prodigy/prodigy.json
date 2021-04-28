@@ -1,0 +1,10 @@
+{
+  "show_stats":true,
+  "show_flag":true,
+  "swipe":true,
+  "split_sents_threshold":20000,
+  "feed_overlap": false,
+  "host": "0.0.0.0",
+  "force_stream_order": true,
+  "choice_style": "multiple"
+}
