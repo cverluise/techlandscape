@@ -20,6 +20,6 @@ keyword:
   summarization: text summarization, sentence summary
   automatic translation: automatic translation, machine translation, auto-translate
 option:
-  - Process digital images
-  - Analyse digital images
-  - Understand digital images
+  - Process natural language
+  - Analyse natural language
+  - Understand natural language
