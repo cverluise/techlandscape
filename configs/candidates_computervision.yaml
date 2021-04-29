@@ -14,7 +14,6 @@ keyword:
   facial recognition: face recognition,facial recognition,biometric data,biometrics,mass surveillance,face unlock,traffic cameras
   object detection: object detection,edge detection,obstacle avoidance,motion tracking
 option:
-  -option:
-    - Process natural language
-    - Analyse natural language
-    - Understand natural language
+  - Process digital images
+  - Analyse digital images
+  - Understand digital images
