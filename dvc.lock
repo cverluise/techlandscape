@@ -1,0 +1,40 @@
+schema: '2.0'
+stages:
+  candidates:
+    cmd: "ls configs/candidates_*.yaml | cut -d_ -f2 | parallel -j 8 --eta 'python\
+      \ techlandscape/candidates.py get-candidates configs/candidates_{} patentcity.techdiffusion.candidates_{.}\
+      \ credentials_bq.json'\nls configs/candidates_*.yaml | cut -d_ -f2 | parallel\
+      \ -j 8 --eta 'python techlandscape/candidates.py get-candidates-sample patentcity.techdiffusion.candidates_{.}\
+      \ credentials_bq.json --destination-table patentcity.techdiffusion.candidates_{.}_sample'\n\
+      ls configs/candidates_*.yaml | cut -d_ -f2 | parallel -j 8 --eta 'bq extract\
+      \ --destination_format NEWLINE_DELIMITED_JSON patentcity:techdiffusion.candidates_{.}_sample\
+      \ gs://tmp/candidates_{.}_sample.jsonl'\ngsutil cp \"gs://tmp/candidates_*_sample.jsonl\"\
+      \ data/\nls configs/candidates_*.yaml | cut -d/ -f2 | parallel -j 8 --eta 'mv\
+      \ data/{.}_sample.jsonl data/{.}_sample.tmp.jsonl && python techlandscape/candidates.py\
+      \ prep-prodigy-annotation data/{.}_sample.tmp.jsonl configs/{} >> data/{.}_sample.jsonl'\
+      \ && rm data/*.tmp.*\n"
+    deps:
+    - path: configs/candidates_additivemanufacturing.yaml
+      md5: cfbaa48af3c6ab29c3875c04db4e46af
+      size: 1760
+    - path: configs/candidates_blockchain.yaml
+      md5: 9cd1e45be34c212733c582917ce7996d
+      size: 1829
+    - path: configs/candidates_computervision.yaml
+      md5: eeab8291cc7a14b57e30da26a85a5aeb
+      size: 2126
+    - path: configs/candidates_culturedmeat.yaml
+      md5: 31dcf89cb993ad8621e0ddebd07e649a
+      size: 1215
+    - path: configs/candidates_genomeediting.yaml
+      md5: c02cebad4bed285d17c0adc02ea07139
+      size: 1051
+    - path: configs/candidates_hydrogenstorage.yaml
+      md5: 3fba8c0c0b4418289cd308d87836cf07
+      size: 1449
+    - path: configs/candidates_naturallanguageprocessing.yaml
+      md5: 8b937978fc64ca7566ffd9d5d6bfbcdd
+      size: 1974
+    - path: configs/candidates_selfdrivingvehicle.yaml
+      md5: 1d727347882f4a013b9d6fab50ecb201
+      size: 2591
