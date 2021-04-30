@@ -1,0 +1,34 @@
+vars:
+  - bq:
+      project: patentcity
+      dataset: techdiffusion
+      credentials: credentials_bq.json
+  - gs:
+      tmp: gs://tmp
+
+stages:
+  candidates:
+    cmd:
+      ls configs/candidates_*.yaml | cut -d_ -f2 | parallel -j 8 --eta 'python techlandscape/candidates.py get-candidates configs/candidates_{} ${bq.project}.${bq.dataset}.candidates_{.} ${bq.credentials}'
+      ls configs/candidates_*.yaml | cut -d_ -f2 | parallel -j 8 --eta 'python techlandscape/candidates.py get-candidates-sample ${bq.project}.${bq.dataset}.candidates_{.} ${bq.credentials} --destination-table ${bq.project}.${bq.dataset}.candidates_{.}_sample'
+      ls configs/candidates_*.yaml | cut -d_ -f2 | parallel -j 8 --eta 'bq extract --destination_format NEWLINE_DELIMITED_JSON ${bq.project}.${bq.dataset}.candidates_{.}_sample ${gs.tmp}/candidates_{.}_sample.jsonl'
+      gsutil cp "${gs.tmp}.candidates_*_sample.jsonl" data/
+      ls configs/candidates_*.yaml | cut -d/ -f2 | parallel -j 8 --eta 'mv data/{.}_sample.jsonl data/{.}_sample.tmp.jsonl && python techlandscape/candidates.py prep-prodigy-annotation data/{.}_sample.tmp.jsonl configs/{} >> data/{.}_sample.jsonl' && rm data/*.tmp.*
+    deps:
+      - configs/candidates_additivemanufacturing.yaml
+      - configs/candidates_computervision.yaml
+      - configs/candidates_genomeediting.yaml
+      - configs/candidates_naturallanguageprocessing.yaml
+      - configs/candidates_blockchain.yaml
+      - configs/candidates_culturedmeat.yaml
+      - configs/candidates_hydrogenstorage.yaml
+      - configs/candidates_selfdrivingvehicle.yaml
+    outs:
+      - data/candidates_additivemanufacturing_sample.jsonl
+      - data/candidates_computervision_sample.jsonl
+      - data/candidates_genomeediting_sample.jsonl
+      - data/candidates_naturallanguageprocessing_sample.jsonl
+      - data/candidates_blockchain_sample.jsonl
+      - data/candidates_culturedmeat_sample.jsonl
+      - data/candidates_hydrogenstorage_sample.jsonl
+      - data/candidates_selfdrivingvehicle_sample.jsonl
