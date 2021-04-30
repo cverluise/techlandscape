@@ -7,12 +7,12 @@ patent:
   growth factor: JP-6111510-B1,WO-2018096343-A1,WO-2017124100-A1
 cpc:
   synthetic meat: A23J3/225,A23J3/227,A23J1/006,A23J1/007,A23J3/14,A23J3/16,A23J3/18,A23L13/40
-  cell line: C12M21/08,C12M45/02
-  scaffolding: C12N5/00
-  growth factor: C12N2501,C12M41/48
+  #cell line: C12M21/08,C12M45/02
+  #scaffolding: C12N5/00
+ # growth factor: C12N2501,C12M41/48
 keyword:
   general: in vitro meat,lab-grown meat,cell-based meat,cultivated meat,cellular agriculture,cultured meat, engineered meat
-  cell line: muscle cells
+  #cell line: muscle cells
   scaffolding: tissue engineering meat, endogenous extracellular matrix, tissue engineering edible meat
 option:
   - Seed cells to scaffolds (molds meant to reflect and encourage the cells to organize into a larger structure)
