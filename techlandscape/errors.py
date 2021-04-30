@@ -1,5 +1,4 @@
 import numpy as np
-from keras import Model
 from typing import Tuple, List
 import typer
 
@@ -8,10 +7,10 @@ app = typer.Typer()
 
 @app.command()
 def get_report(
-    model: Model,
-    texts_text: np.array,
-    x_test: np.array,
-    y_test: np.array,
+    model,  # keras.models.sequential
+    texts_text,  # np.array
+    x_test,  # np.array
+    y_test,  # np.array
     thresh_star: float,
 ) -> Tuple[List, List]:
     """
@@ -19,7 +18,7 @@ def get_report(
     """
 
     def get_errors(
-        model: Model, x_test: np.array, y_test: np.array, thresh_star: float
+        model, x_test, y_test, thresh_star: float
     ) -> Tuple[List, List, List]:
         """
         Return the index of false positives, false negatives and list of scores (all)
@@ -31,9 +30,7 @@ def get_report(
         false_neg = [i for i, pair in enumerate(confusion) if pair == (1, 0)]
         return false_pos, false_neg, score
 
-    false_pos, false_neg, score = get_errors(
-        model, x_test, y_test, thresh_star
-    )
+    false_pos, false_neg, score = get_errors(model, x_test, y_test, thresh_star)
     false_pos_scores = np.array(score)[false_pos].tolist()
     false_pos_texts = np.array(texts_text)[false_pos].tolist()
     false_pos_report = list(zip(false_pos_scores, false_pos_texts))

@@ -162,7 +162,7 @@ class ModelBuilder(TextVectorizer):
         self.x_train, self.x_test = self.vectorize_text()
         self.input_shape = self.x_train.shape[1:]
 
-    def build_mlp(self) -> models.Sequential:
+    def build_mlp(self):  # -> models.Sequential
         """
         Return a Multi layer perceptron Keras model
         """
@@ -184,7 +184,7 @@ class ModelBuilder(TextVectorizer):
         model.add(Dense(units=1, activation="sigmoid"))
         return model
 
-    def build_cnn(self, embedding_matrix: dict = None) -> models.Sequential:
+    def build_cnn(self, embedding_matrix: dict = None):  # -> models.Sequential
         """
         Return a CNN model with <blocks> Convolution-Pooling pair layers.
         """
