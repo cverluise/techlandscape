@@ -5,7 +5,7 @@ description = ""
 authors = ["Cyril Verluise <cyril.verluise@gmail.com>"]
 
 [tool.poetry.scripts]
-patcit = "techlandscape.main:app"
+techlandscape = "techlandscape.main:app"
 
 [tool.poetry.dependencies]
 python = "^3.8"
