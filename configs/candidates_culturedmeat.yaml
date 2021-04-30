@@ -13,10 +13,7 @@ cpc:
 keyword:
   general: in vitro meat,lab-grown meat,cell-based meat,cultivated meat,cellular agriculture,cultured meat, engineered meat
   cell line: muscle cells
- # cell line: stem cells,muscle cells,induced pluripotent stem cells
   scaffolding: tissue engineering meat, endogenous extracellular matrix, tissue engineering edible meat
- # scaffolding: bioreactors,scaffold,3d cell cultures,3d tissue engineering 
- # growth factor: growth medium,culture media
 option:
   - Seed cells to scaffolds (molds meant to reflect and encourage the cells to organize into a larger structure)
   - Obtain and manage cell lines (generally stem cells)

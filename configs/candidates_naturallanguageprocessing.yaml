@@ -6,7 +6,6 @@ patent:
   summarization: US-20060206806-A1,US-20140195897-A1,US-7752204-B2
   automatic translation: US-5615301-A,US-10452787-B2
 cpc:
-  general ai: B25J9/161,G06F17/16,G06N5/003,G06N7/005,G06N7/046,B29C66/965,G08B29/186,F02D41/1405,G01N29/4481,G06F11/1476,G06F17/2282,H02P21/0014,H02P23/0018,H03H2222/04,Y10S128/924,Y10S128/925,B64G2001/247,F05B2270/707,F05B2270/709,F05D2270/709,G10H2250/151,H04L25/03165,H04Q2213/054,H04Q2213/343,B60G2600/1876,B60G2600/1878,B60G2600/1879,E21B2041/0028,F16H2061/0081,F16H2061/0084,G06F2207/4824,G10K2210/3024,G10K2210/3038,H03H2017/0208,B29C2945/76979,G05B2219/33002,G06T2207/20081,G06T2207/20084,G06T2207/20084,H04L2025/03464,H04L2025/03554,H04Q2213/13343
   natural language processing: G06F17/27,G06F17/28,H04L41/16,G06F17/289,G06F17/2795
 keyword:
   general ai - algorithm: adaboost,xgboost,bayesian network,decision tree,genetic algorithm,gradient tree boosting,logistic regression,random forest,rankboost,support vector machine,multilayer perceptron,hidden markov model,generalized adversarial network,convolutional neural network
@@ -16,7 +15,7 @@ keyword:
   text classification: text classification, sentiment analysis
   named entity recognition: named entity recognition,entity identification,entity chunking,entity extraction
   question answering: automated question answering,automatic question answering
-  language modeling: language modeling,bert,gpt-3,gpt-2,transformers,word2vec,sense2vec,recursive neural network,sequence modeling
+  language modeling: language modeling,bert,gpt-3,gpt-2,word2vec,sense2vec,recursive neural network,sequence modeling
   summarization: text summarization, sentence summary
   automatic translation: automatic translation, machine translation, auto-translate
 option:

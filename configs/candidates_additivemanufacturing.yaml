@@ -11,15 +11,10 @@ cpc:
   physical materials: A43D2200/60,A23P2020/253
   polymers: B29C64/10,C08L101/00
   process: B29C67/00,B22F3/00,G05B2219/49013,G03F7/70416,B28B1/001,B33Y10/00,B23K9/04,B23K10/027,B23K15/0086,B23K11/0013
- # application - electronics: H05K3/4664,H05K3/0014
- # application - food: A43D2200/60,A23P2020/253
- # application - health: A61C13/0013,A61C13/0018,A61C13/0019,A61F2002/30987,A61F2002/30962,A61F2/30942,A61F2002/30943,A61F2002/30944,A61F2002/30945,A61F2002/30946,A61F2002/30947,A61F2002/30948,A61F2002/30949,A61F2002/30950,A61F2002/30951,A61F2002/30952
 keyword:
   general: 3d-printing,stereolithography,additive manufacturing,three-dimensional objects,rapid prototyping,additive material manufacturing
-  #materials: three dimensional printing material,3d-priting materials,metallic powder
   materials: three dimensional printing material,3d-priting materials
   process: photolithography, fuse deposition model
-  #process: laser cusing,laser sintering,beam sintering,fused deposition modeling,photolithography,laminated object manufacturing,fuse deposition model
 option:
   - Create 3D printable model with computer aided design
   - Examine stereolithography file for errors and inconsistency
