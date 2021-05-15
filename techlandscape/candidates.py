@@ -23,16 +23,27 @@ class QueryCandidates:
         """Return candidates query based on patent similarity"""
         patents = patents if patents else self.patents
         query = f"""
-        SELECT
-          similar.publication_number,
+        WITH SIMILAR AS (
+            SELECT
+              similar.publication_number,
+              "patent" AS match
+            FROM
+              `patents-public-data.google_patents_research.publications` AS gpr,
+              UNNEST(similar) AS similar
+            WHERE
+              gpr.publication_number IN ({",".join(map(lambda x: '"' + x + '"', patents))})
+            )
+        SELECT 
+          SIMILAR.publication_number,
           title,
           abstract,
-          "patent" AS match
-        FROM
+          SIMILAR.match 
+        FROM 
           `patents-public-data.google_patents_research.publications` AS gpr,
-          UNNEST(similar) AS similar
-        WHERE
-          gpr.publication_number IN ({",".join(map(lambda x: '"' + x + '"', patents))})
+          SIMILAR 
+        WHERE 
+          SIMILAR.publication_number=gpr.publication_number
+          AND SIMILAR.publication_number IS NOT NULL  
           """
         return query
 
