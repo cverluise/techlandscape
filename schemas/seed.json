@@ -1,0 +1,54 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "family_id",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "publication_number",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "match",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "match_number",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "answer",
+    "type": "STRING"
+  },
+  {
+    "mode": "REPEATED",
+    "name": "accept_text",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "nb_total",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "nb_bin",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "text",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "_input_hash",
+    "type": "INTEGER"
+  }
+]
+
+
