@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 from techlandscape.lib import ISO2CNT
 from techlandscape.decorators import timer
 from techlandscape.exception import SmallSeed, SMALL_SEED_MSG
-import typer
+from techlandscape.enumerators import PrimaryKey, TechClass
 
 app = typer.Typer()
 
@@ -116,27 +116,30 @@ def get_uid(n: int = 6) -> str:
     return "".join(random.choice(seq) for i in range(n))
 
 
-def get_project_id(key: str, credentials: Path) -> str:
+def get_project_id(primary_key: PrimaryKey, credentials: Path) -> str:
     """
-    Return the name of the project used for expansion depending on the key ("publication_number" or "family_id").
-    If `key` is "publication_number", the project is patents-public-data, else (`family_id`) this is the `client`'s
+    Return the name of the project used for expansion depending on the primary_key ("publication_number" or "family_id").
+    If `primary_key` is "publication_number", the project is patents-public-data, else (`family_id`) this is the `client`'s
     project
     """
-    assert key in ["publication_number", "family_id"]
 
     return (
         "patents-public-data"
-        if key == "publication_number"
+        if primary_key.value == PrimaryKey.publication_number.value
         else json.loads(Path(credentials).open("r").read()).get("project_id")
     )
 
 
-def get_country_prefix(key: str) -> str:
+def get_country_prefix(primary_key: PrimaryKey) -> str:
     """
     Return a prefix to unnest country field for tables at the family level (else empty)
     """
-    assert key in ["publication_number", "family_id"]
-    return "" if key == "publication_number" else ", UNNEST(country) as country"
+
+    return (
+        ""
+        if primary_key.value == PrimaryKey.publication_number.value
+        else ", UNNEST(country) as country"
+    )
 
 
 def get_country_clause(countries: List[str]) -> str:
@@ -146,16 +149,24 @@ def get_country_clause(countries: List[str]) -> str:
     return f"AND country in ({get_country_string_bq(countries)})" if countries else ""
 
 
-def get_pc_like_clause(flavor: str, pc_list: List[str], sub_group: bool = False):
+def get_pc_like_clause(
+    tech_class: TechClass, pc_list: List[str], sub_group: bool = False
+):
     """
     Return a close to restrict to pc.code which contain at least one of the pc codes in pc_list
     """
-    assert flavor in ["cpc", "ipc"]
     pc_list_ = list(map(lambda x: x.split("/")[0], pc_list)) if sub_group else pc_list
     return (
         "("
         + " OR ".join(
-            set(list(map(lambda x: f'{flavor}.code LIKE "%' + x + '%"', pc_list_)))
+            set(
+                list(
+                    map(
+                        lambda x: f'{tech_class.value}.code LIKE "%' + x + '%"',
+                        pc_list_,
+                    )
+                )
+            )
         )
         + ")"
     )
