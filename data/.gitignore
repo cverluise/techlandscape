@@ -6,3 +6,10 @@
 /candidates_hydrogenstorage_sample.jsonl
 /candidates_naturallanguageprocessing_sample.jsonl
 /candidates_selfdrivingvehicle_sample.jsonl
+/seed_additivemanufacturing.jsonl
+/seed_blockchain.jsonl
+/seed_computervision.jsonl
+/seed_genomeediting.jsonl
+/seed_hydrogenstorage.jsonl
+/seed_naturallanguageprocessing.jsonl
+/seed_selfdrivingvehicle.jsonl

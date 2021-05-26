@@ -1,0 +1,4 @@
+outs:
+- md5: dce16813aa7ceaef437ffc18f8cfbe84
+  size: 726497
+  path: seed_genomeediting.jsonl
