@@ -283,7 +283,7 @@ def get_train_test(
 @app.command()
 def correct_annotations(buggy_file: str, corr_file: str):
     """
-    Return `buggy_file` with corrections from `corr_file` (using `"family_id"` key)
+    Print `buggy_file` with corrections from `corr_file` (using `"family_id"` key) to stdout
 
     Arguments:
          buggy_file: buggy file path
@@ -291,6 +291,7 @@ def correct_annotations(buggy_file: str, corr_file: str):
 
     **Usage:**
     ```python
+    techlandscape utils correct-annotations <buggy-file> <corr-file>
     ```
     """
 
@@ -311,6 +312,27 @@ def correct_annotations(buggy_file: str, corr_file: str):
 
     corr_index = get_corr_index(corr_file)
     update_corrected_lines(buggy_file, corr_index)
+
+
+@app.command()
+def add_accept_text(file):
+    """Print `file` with a human readable `"accept"` field to stdout
+
+    Arguments:
+        file: file path
+
+    **Usage:**
+        ```shell
+        techlandscape utils add-accept-text <file>
+        ```
+    """
+    with open(file, "r") as lines:
+        for line in lines:
+            line = json.loads(line)
+            accepts_ = line["accept"]
+            options_ = [option["text"] for option in line["options"]]
+            line.update({"accept_text": [options_[accept_] for accept_ in accepts_]})
+            typer.echo(json.dumps(line))
 
 
 if __name__ == "__main__":
