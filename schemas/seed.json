@@ -2,11 +2,16 @@
   {
     "mode": "NULLABLE",
     "name": "family_id",
-    "type": "INTEGER"
+    "type": "STRING"
   },
   {
     "mode": "NULLABLE",
     "name": "publication_number",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "expansion_level",
     "type": "STRING"
   },
   {
