@@ -24,8 +24,8 @@ stages:
       md5: eeab8291cc7a14b57e30da26a85a5aeb
       size: 2126
     - path: configs/candidates_culturedmeat.yaml
-      md5: 31dcf89cb993ad8621e0ddebd07e649a
-      size: 1215
+      md5: ce3ba5ce63b2b1a9977854d9d9605969
+      size: 1047
     - path: configs/candidates_genomeediting.yaml
       md5: c02cebad4bed285d17c0adc02ea07139
       size: 1051
