@@ -315,23 +315,32 @@ def correct_annotations(buggy_file: str, corr_file: str):
 
 
 @app.command()
-def add_accept_text(file):
-    """Print `file` with a human readable `"accept"` field to stdout
+def add_practical_fields(file):
+    """Print `file` with human readable `"accept"` and `"expansion_level"` fields to stdout
 
     Arguments:
         file: file path
 
     **Usage:**
         ```shell
-        techlandscape utils add-accept-text <file>
+        techlandscape utils add-practical-fields <file>
         ```
     """
     with open(file, "r") as lines:
         for line in lines:
             line = json.loads(line)
+            # human readable accept
             accepts_ = line["accept"]
             options_ = [option["text"] for option in line["options"]]
             line.update({"accept_text": [options_[accept_] for accept_ in accepts_]})
+            # expansion_level
+            answer_ = line.get("answer")
+            expansion_level_ = (
+                "SEED"
+                if answer_ == "accept"
+                else ("ANTISEED-manual" if answer_ == "reject" else None)
+            )
+            line.update({"expansion_level": expansion_level_})
             typer.echo(json.dumps(line))
 
 
