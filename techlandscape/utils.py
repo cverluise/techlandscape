@@ -12,6 +12,9 @@ from sklearn.model_selection import train_test_split
 from techlandscape.lib import ISO2CNT
 from techlandscape.decorators import timer
 from techlandscape.exception import SmallSeed, SMALL_SEED_MSG
+import typer
+
+app = typer.Typer()
 
 ok = "\u2713"
 not_ok = "\u2717"
@@ -264,3 +267,40 @@ def get_train_test(
         X, y, test_size=test_size, random_state=random_state
     )
     return texts_train, texts_test, y_train, y_test
+
+
+@app.command()
+def correct_annotations(buggy_file: str, corr_file: str):
+    """
+    Return `buggy_file` with corrections from `corr_file` (using `"family_id"` key)
+
+    Arguments:
+         buggy_file: buggy file path
+         corr_file: correction file path
+
+    **Usage:**
+    ```python
+    ```
+    """
+
+    def get_corr_index(corr_file):
+        corr_index = {}
+        with open(corr_file, "r") as lines:
+            for line in lines:
+                line = json.loads(line)
+                corr_index.update({line["family_id"]: line})
+        return corr_index
+
+    def update_corrected_lines(buggy_file, corr_index):
+        with open(buggy_file, "r") as lines:
+            for line in lines:
+                line = json.loads(line)
+                line.update(corr_index.get(line["family_id"], line))
+                typer.echo(json.dumps(line))
+
+    corr_index = get_corr_index(corr_file)
+    update_corrected_lines(buggy_file, corr_index)
+
+
+if __name__ == "__main__":
+    app()
