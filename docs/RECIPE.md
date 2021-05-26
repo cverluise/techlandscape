@@ -22,7 +22,7 @@ prodigy textcat.option SEED_${TECHNOLOGY} data/candidates_${TECHNOLOGY}_sample.j
 ```shell
 
 # prep seed file
-ls data/seed_*.jsonl | parallel 'mv {} {}.tmp && techlandscape utils add-accept-text {}.tmp >> {}'
+ls data/seed_*.jsonl | parallel 'mv {} {}.tmp && techlandscape utils add-practical-fields {}.tmp >> {}'
 rm data/seed_*.jsonl.tmp
 
 # load to bq
