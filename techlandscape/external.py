@@ -9,7 +9,7 @@ app = typer.Typer()
 def get_patents_family(
     destination_table: str, credentials: Path, verbose: bool = False
 ):
-    """Emulate `patents-public-data.patents.publications` table at *family* level"""
+    """Emulate `patents-public-data.patents.publications` table at *family_id* level"""
     query = f"""
      WITH pub AS (
     SELECT
