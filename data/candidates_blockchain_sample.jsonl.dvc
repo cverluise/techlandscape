@@ -1,4 +1,4 @@
 outs:
-- md5: 48d5bf09d3f1b5e04961d92a4cd6b8ec
+- md5: 86fa1f3beda8122adc5dfde2c3e39898
   path: candidates_blockchain_sample.jsonl
-  size: 7395058
+  size: 3355645
