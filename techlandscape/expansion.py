@@ -11,6 +11,7 @@ from techlandscape.enumerators import (
 app = typer.Typer()
 
 
+@app.command()
 def get_seed_pc_freq(
     tech_class: TechClass,
     table_ref: str,
@@ -324,7 +325,6 @@ def get_citation_expansion(
         - `citation_kind`: "back", "for"
         - `primary_key`:  "publication_number", "family_id"
     """
-    assert citation_kind in ["back", "for"]
 
     dataset = (
         "patents"
@@ -361,7 +361,7 @@ def get_citation_expansion(
     )
     SELECT 
       DISTINCT({primary_key.value}),
-      "{'-'.join([expansion_level.value, citation_kind.upper()])}" AS expansion_level
+      "{'-'.join([expansion_level.value, citation_kind.value.upper()])}" AS expansion_level
     FROM
       expansion{query_suffix}      
     """

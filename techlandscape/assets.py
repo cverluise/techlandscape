@@ -23,8 +23,8 @@ def get_publications_family(
         patentcity external get-publications-family <your-table> <your-credentials>
         ```
 
-    !!! attention
-        It takes up to 10 minutes to complete
+    !!! note
+        It takes up to 2 minutes to complete
 
     """
     query = f"""
