@@ -13,6 +13,7 @@ from techlandscape.lib import ISO2CNT
 from techlandscape.decorators import timer
 from techlandscape.exception import SmallSeed, SMALL_SEED_MSG
 from techlandscape.enumerators import PrimaryKey, TechClass
+from smart_open import open
 
 app = typer.Typer()
 
@@ -342,6 +343,62 @@ def add_practical_fields(file):
             )
             line.update({"expansion_level": expansion_level_})
             typer.echo(json.dumps(line))
+
+
+@app.command()
+def flatten_nested_vars(file: Path, nested_vars: str):
+    """Print `file` with flattened `nested_vars` to stdout
+
+    Arguments:
+        file: file path
+        nested_vars: comma-separated list of nested variables to be flattened
+
+    !!! info
+        This is useful to enable BQ absorption of nested fields as NULLABLE fields (rather than REPEATED).
+    """
+
+    def flatten_nested_field(nested_field: dict) -> List[dict]:
+        """Return a REPEATED field as a NULLABLE field
+
+        **Example:**
+            ```raw
+            I: {"publication_number":["CN-105537038-B","US-9846376-B2"]}
+            O: [{"publication_number":"CN-105537038-B"},{"publication_number":"US-9846376-B2"}]
+            ```
+        """
+        out = []
+        for key, values in nested_field.items():
+            for value in values:
+                out += [{key: value}]
+        return out
+
+    def flatten_nested_var(nested_var: list) -> list:
+        """Return a var with REPEATED nested fields as a var with NULLABLE nested fields
+
+        !!! warning
+            only one field supported so far
+        """
+        if len(nested_var) == 0:
+            out = []
+        elif len(nested_var) == 1:
+            out = flatten_nested_field(nested_var[0])
+        else:
+            raise ValueError(f"Too many fields (only 1 field supported): {nested_var}")
+        return out
+
+    nested_vars = nested_vars.split(",")
+    with open(file, "r") as lines:
+        for line in lines:
+            try:
+                line = json.loads(line)
+                for nested_var in nested_vars:
+                    line.update({nested_var: flatten_nested_var(line.get(nested_var))})
+                typer.echo(json.dumps(line))
+            except json.decoder.JSONDecodeError as e:
+                typer.secho(
+                    "\n".join([e.__str__(), line]), err=True, color=typer.colors.YELLOW
+                )
+                pass
 
 
 if __name__ == "__main__":
