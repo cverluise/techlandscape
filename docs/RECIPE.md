@@ -35,10 +35,12 @@ cd data && ls seed_*.jsonl | parallel 'bq load --source_format NEWLINE_DELIMITED
 techlandscape assets get-publications-family patentcity.patents.publications credentials_bq.json
 
 # fix REPEATED instead of NULLABLE nested field 
+gsutil -m rm "gs://tmp/publications_*.jsonl.gz"
 bq extract --destination_format NEWLINE_DELIMITED_JSON --compression GZIP patentcity:patents.publications "gs://tmp/publications_*.jsonl.gz" 
 STAGE_FOLDER=""
 gsutil -m cp "gs://tmp/publications_*.jsonl.gz" $STAGE_FOLDER
-ls $STAGE_FOLDER/publications_*.jsonl.gz | parallel --eta 'mv {} {.}.tmp.gz && techlandscape utils flatten-nested-vars {.}.tmp.gz cpc,ipc,citation,cited_by >> {.} && gzip {.}'
+ls ${STAGE_FOLDER}/publications_*.jsonl.gz | parallel --eta 'mv {} {.}.tmp.gz && techlandscape utils flatten-nested-vars {.}.tmp.gz cpc,ipc,citation,cited_by >> {.} && gzip {.}'
+gsutil -m cp "${STAGE_FOLDER}/publications_*.jsonl.gz" gs://tmp/
 bq rm patentcity.patents.publications
-bq load --source_format NEWLINE_DELIMITED_JSON --replace --max_bad_records 1000 --ignore_unknown_values patentcity:patents.publications "gs://tmp/publications_*.jsonl.gz" schemas/publications_familyid.json
+bq load --source_format NEWLINE_DELIMITED_JSON --replace --max_bad_records 1000 patentcity:patents.publications "gs://tmp/publications_*.jsonl.gz" schemas/publications_familyid.json
 ```
