@@ -20,7 +20,7 @@ def get_publications_family(
 
     **Usage:**
         ```shell
-        patentcity external get-publications-family <your-table> <your-credentials>
+        techlandscape assets get-publications-family <your-table> <your-credentials>
         ```
 
     !!! note
