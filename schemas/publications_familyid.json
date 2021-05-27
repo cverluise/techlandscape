@@ -47,7 +47,7 @@
       "fields": [
         {
           "mode": "NULLABLE",
-          "name": "publication_number",
+          "name": "family_id",
           "type": "STRING"
         }
       ],
@@ -59,7 +59,7 @@
       "fields": [
         {
           "mode": "NULLABLE",
-          "name": "publication_number",
+          "name": "family_id",
           "type": "STRING"
         }
       ],

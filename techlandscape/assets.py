@@ -63,27 +63,45 @@ def get_publications_family(
             family_id ),
           cit AS (
           SELECT
-            family_id,
-            [STRUCT(SPLIT(STRING_AGG(DISTINCT(citation.publication_number))) AS publication_number)] AS citation
-          FROM
-            `patents-public-data.patents.publications` AS p,
-            UNNEST(citation) AS citation
-          GROUP BY
-            family_id ),
-          gpr AS (
-          SELECT
-            family_id,
-            [STRUCT(SPLIT(STRING_AGG(DISTINCT(cited_by.publication_number))) AS publication_number)] AS cited_by,
-            ANY_VALUE(abstract) AS abstract
-          FROM
-            `patents-public-data.google_patents_research.publications` AS p,
-            UNNEST(cited_by) AS cited_by
-          LEFT JOIN
-            crossover
-          ON
-            p.publication_number = crossover.publication_number
-          GROUP BY
-            family_id )
+              p.family_id,
+              [STRUCT(SPLIT(STRING_AGG(DISTINCT(crossover.family_id))) AS family_id)] AS citation
+            FROM
+              `patents-public-data.patents.publications` AS p,
+              UNNEST(citation) AS citation
+              LEFT JOIN 
+                crossover 
+                ON citation.publication_number = crossover.publication_number
+            GROUP BY
+              p.family_id),
+            tmp_gpr AS (
+              SELECT
+                family_id,
+                SPLIT(STRING_AGG(DISTINCT(cited_by.publication_number))) AS cited_by_publication_number,
+                ANY_VALUE(abstract) AS abstract
+              FROM
+                `patents-public-data.google_patents_research.publications` AS p,
+                UNNEST(cited_by) AS cited_by
+              LEFT JOIN
+                crossover
+              ON
+                p.publication_number = crossover.publication_number
+              GROUP BY
+                family_id),
+              gpr AS (
+              SELECT
+                tmp_gpr.family_id,
+                ANY_VALUE(abstract) AS abstract,
+                [STRUCT(SPLIT(STRING_AGG(DISTINCT(crossover.family_id))) AS family_id)] AS cited_by
+                #SPLIT(STRING_AGG(DISTINCT(cited_by_publication_number))) AS publication_number)] AS cited_by
+            FROM
+              tmp_gpr,
+              UNNEST(cited_by_publication_number) AS cited_by_publication_number
+            LEFT JOIN
+              crossover
+            ON
+              cited_by_publication_number = crossover.publication_number
+            GROUP BY
+              tmp_gpr.family_id)
         SELECT
           fam.family_id,
           pub.* EXCEPT(family_id),
