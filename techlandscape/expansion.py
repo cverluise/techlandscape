@@ -11,54 +11,59 @@ from techlandscape.enumerators import (
 app = typer.Typer()
 
 
-@app.command()
 def get_seed_pc_freq(
+    primary_key: PrimaryKey,
     tech_class: TechClass,
     table_ref: str,
     destination_table: str,
     credentials: Path,
-    primary_key: PrimaryKey = PrimaryKey.publication_number,
+    verbose: bool = False,
     **kwargs,
 ):
     """
     Return the frequency of patent classes in the seed
 
     Arguments:
+        primary_key:
         tech_class:
         table_ref:
         destination_table:
         credentials:
-        primary_key:
+        verbose:
         **kwargs:
 
     **Usage:**
 
     """
 
-    project_id = get_project_id(primary_key.value, credentials)
+    project_id = get_project_id(primary_key, credentials)
 
     query = f"""
     WITH tmp AS (
-          SELECT
-            tmp.{primary_key.value},
-            STRING_AGG(DISTINCT({tech_class.value}.code)) AS {tech_class.value},
-            FROM
-              `{project_id}.patents.publications` AS p,
-              `{table_ref}` AS tmp,
-              UNNEST({tech_class.value}) AS {tech_class.value}
-            WHERE
-              p.{primary_key.value}=tmp.{primary_key.value}
-          GROUP BY
-            {primary_key.value}#, publication_year
-            ),
-            total AS (SELECT COUNT({primary_key.value}) as count FROM
-                `{table_ref}`
-            )
-    SELECT
+        SELECT
+          tmp.{primary_key.value},
+          {tech_class.value}.code AS {tech_class.value}
+          FROM
+            `{project_id}.patents.publications` AS p,
+            `{table_ref}` AS tmp,
+            UNNEST({tech_class.value}) AS {tech_class.value}
+          WHERE
+            p.{primary_key.value}=tmp.{primary_key.value}
+            and tmp.expansion_level = "SEED"
+        )
+        ,
+        total AS (
+        SELECT 
+          COUNT({primary_key.value}) as count
+        FROM
+          `{table_ref}`
+        WHERE expansion_level = "SEED"
+        )
+        SELECT
           {tech_class.value},
-          count(SPLIT({tech_class.value}, ",")) as n_{tech_class.value},
+          count({tech_class.value}) as n_{tech_class.value},
           total.count as n_patents,
-          COUNT(SPLIT({tech_class.value}, ","))/total.count as freq
+          count({tech_class.value})/total.count as freq
         FROM
           tmp,
           total
@@ -68,10 +73,12 @@ def get_seed_pc_freq(
         ORDER BY
           freq DESC 
     """
-    get_bq_job_done(query, destination_table, credentials, **kwargs)
+
+    get_bq_job_done(query, destination_table, credentials, verbose=verbose, **kwargs)
 
 
 def get_universe_pc_freq(
+    primary_key: PrimaryKey,
     tech_class: TechClass,
     table_ref: str,
     destination_table: str,
@@ -83,6 +90,7 @@ def get_universe_pc_freq(
     and p75 of the publication_year of patents in the seed.
 
     Arguments:
+        primary_key
         tech_class:
         table_ref:
         destination_table:
@@ -93,18 +101,19 @@ def get_universe_pc_freq(
     """
     # TODO unrestricted time span option?
     # Support family_id level?
+    project_id = get_project_id(primary_key, credentials)
 
     query = f"""
     WITH
       tmp AS (
       SELECT
-        tmp.publication_number,
-        ROUND(p.publication_date/10000, 0) AS publication_year
+        tmp.{primary_key.value},
+        CAST(p.publication_date/10000 AS INT64) AS publication_year
       FROM
         {table_ref} AS tmp,
-        `patents-public-data.patents.publications` AS p
+        `{project_id}.patents.publications` AS p
       WHERE
-        p.publication_number=tmp.publication_number
+        p.{primary_key.value}=tmp.{primary_key.value}
         AND tmp.expansion_level="SEED"),
       stats AS (
       SELECT
@@ -116,9 +125,9 @@ def get_universe_pc_freq(
         FROM
           tmp)),
           total as (SELECT
-          count(publication_number) as count
+          count({primary_key.value}) as count
       FROM
-      `patents-public-data.patents.publications` AS p,
+      `{project_id}.patents.publications` AS p,
       stats
     WHERE
       publication_date BETWEEN stats.p25*10000
@@ -129,7 +138,7 @@ def get_universe_pc_freq(
       total.count as n_patents,
       COUNT({tech_class.value}.code)/total.count as freq
     FROM
-      `patents-public-data.patents.publications` AS p,
+      `{project_id}.patents.publications` AS p,
       UNNEST({tech_class.value}) AS {tech_class.value},
       stats,
       total
@@ -189,24 +198,24 @@ def get_seed_pc_odds(
 
 
 def get_pc_expansion(
+    primary_key: PrimaryKey,
     tech_class: TechClass,
     n_pc: int,
     table_ref: str,
     destination_table: str,
     credentials: Path,
-    primary_key: PrimaryKey = PrimaryKey.publication_number,
     **kwargs,
 ):
     """
     Expand the seed "along" the pc dimension for patent classes with large odds in
 
     Arguments:
+        primary_key:
         tech_class:
         n_pc:
         table_ref:
         destination_table:
         credentials:
-        primary_key:
         **kwargs:
 
     **Usage:**
@@ -249,13 +258,14 @@ def get_pc_expansion(
 
 
 def get_full_pc_expansion(
+    primary_key: PrimaryKey,
     tech_class: TechClass,
     n_pc: int,
     table_ref: str,
+    destination_table: str,
     staging_dataset: str,
     credentials: Path,
     precomputed: bool = False,
-    primary_key: PrimaryKey = PrimaryKey.publication_number,
     **kwargs,
 ):
     """Compute (or use precomputed) seed pc odds and expand along the pc dimension.
@@ -264,6 +274,7 @@ def get_full_pc_expansion(
         tech_class:
         n_pc:
         table_ref:
+        destination_table:
         staging_dataset:
         credentials:
         precomputed:
@@ -272,18 +283,19 @@ def get_full_pc_expansion(
 
     **Usage:**
     """
-    name = table_ref.split(".")[-1]
+    name = table_ref.split(".")[-1].replace("seed_", "")
 
     if not precomputed:
         get_seed_pc_freq(
+            primary_key,
             tech_class,
             table_ref,
             f"{staging_dataset}.{name}_seed_{tech_class.value}_freq",
             credentials,
-            primary_key,
             verbose=False,
         )
         get_universe_pc_freq(
+            primary_key,
             tech_class,
             table_ref,
             f"{staging_dataset}.{name}_universe_{tech_class.value}_freq",
@@ -296,40 +308,46 @@ def get_full_pc_expansion(
             f"{staging_dataset}.{name}_universe_{tech_class.value}_freq",
             f"{staging_dataset}.{name}_seed_{tech_class.value}_odds",
             credentials,
-            # primary_key,
             verbose=False,
         )
     get_pc_expansion(
+        primary_key,
         tech_class,
         n_pc,
         f"{staging_dataset}.{name}_seed_{tech_class.value}_odds",
-        table_ref,
+        destination_table,
         credentials,
-        primary_key,
         **kwargs,
     )
 
 
 def get_citation_expansion(
+    primary_key: PrimaryKey,
     citation_kind: CitationKind,
     expansion_level: CitationExpansionLevel,
     table_ref: str,
     credentials: Path,
-    primary_key: PrimaryKey = PrimaryKey.publication_number,
     **kwargs,
 ):
     """
     Expand "along" the citation dimension, either backward or forward
 
-    Values:
-        - `citation_kind`: "back", "for"
-        - `primary_key`:  "publication_number", "family_id"
+    Arguments:
+        primary_key:
+        citation_kind:
+        expansion_level:
+        table_ref:
+        credentials:
+        **kwargs:
+
+    **Usage:**
     """
 
     dataset = (
-        "patents"
-        if citation_kind.value == CitationKind.backward.value
-        else "google_patents_research"
+        "google_patents_research"
+        if citation_kind.value == CitationKind.forward.value
+        and primary_key.value == PrimaryKey.publication_number.value
+        else "patents"
     )
     expansion_level_clause = (
         'AND expansion_level in ("SEED", "PC")'
