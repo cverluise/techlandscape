@@ -1,0 +1,75 @@
+[
+    {
+      "mode": "NULLABLE",
+      "name": "family_id",
+      "type": "STRING"
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "publication_date",
+      "type": "INTEGER"
+    },
+    {
+      "mode": "REPEATED",
+      "name": "publication_number",
+      "type": "STRING"
+    },
+    {
+      "mode": "REPEATED",
+      "name": "country_code",
+      "type": "STRING"
+    },
+  {
+    "fields": [
+      {
+        "mode": "NULLABLE",
+        "name": "code",
+        "type": "STRING"
+      }
+    ],
+    "mode": "REPEATED",
+    "name": "cpc",
+    "type": "RECORD"
+  },
+    {
+      "fields": [
+        {
+          "mode": "NULLABLE",
+          "name": "code",
+          "type": "STRING"
+        }
+      ],
+      "mode": "REPEATED",
+      "name": "ipc",
+      "type": "RECORD"
+    },
+    {
+      "fields": [
+        {
+          "mode": "NULLABLE",
+          "name": "publication_number",
+          "type": "STRING"
+        }
+      ],
+      "mode": "REPEATED",
+      "name": "citation",
+      "type": "RECORD"
+    },
+    {
+      "fields": [
+        {
+          "mode": "NULLABLE",
+          "name": "publication_number",
+          "type": "STRING"
+        }
+      ],
+      "mode": "REPEATED",
+      "name": "cited_by",
+      "type": "RECORD"
+    },
+    {
+      "mode": "NULLABLE",
+      "name": "abstract",
+      "type": "STRING"
+    }
+  ]
