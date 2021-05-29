@@ -19,3 +19,8 @@ class CitationKind(Enum):
 class CitationExpansionLevel(Enum):
     L1 = "L1"
     L2 = "L2"
+
+
+class OverlapAnalysisKind(Enum):
+    pairwise = "pairwise"
+    batch = "batch"
