@@ -2,9 +2,13 @@ vars:
   - bq:
       project: patentcity
       dataset: techdiffusion
+      staging_dataset: stage
+      robustness_dataset: robustness
       credentials: credentials_bq.json
   - gs:
       tmp: gs://tmp
+  - expansion:
+      niter: 10
 
 stages:
   candidates:
@@ -23,3 +27,35 @@ stages:
       - configs/candidates_culturedmeat.yaml
       - configs/candidates_hydrogenstorage.yaml
       - configs/candidates_selfdrivingvehicle.yaml
+
+  load-annotated-seed:
+    cmd: |
+      # prep seed file
+      ls data/seed_*.jsonl | parallel 'mv {} {}.tmp && techlandscape utils add-practical-fields {}.tmp >> {}'
+      rm data/seed_*.jsonl.tmp
+      # load to bq
+      cd data && ls seed_*.jsonl | parallel 'bq load --source_format NEWLINE_DELIMITED_JSON --replace --ignore_unknown_values --max_bad_records 1000 --autodetect ${bq.project}:${bq.dataset}.{.} {} ../schemas/seed.json' && cd ../
+    deps:
+      - schemas/seed.json
+      - data/seed_additivemanufacturing.jsonl
+      - data/seed_computervision.jsonl
+      - data/seed_hydrogenstorage.jsonl
+      - data/seed_selfdrivingvehicle.jsonl
+      - data/seed_blockchain.jsonl
+      - data/seed_genomeediting.jsonl
+      - data/seed_naturallanguageprocessing.jsonl
+
+  expansion-robustness:
+    foreach:
+      - .5
+      - .7
+      - .9
+    do:
+      cmd: |
+        # clean expansion datasets
+        bq ls --max_results 9999 "${bq.project}:${bq.staging_dataset}" | grep expansion | awk '{print $1}' | parallel 'bq rm -f ${bq.project}:${bq.staging_dataset}.{}'
+        bq ls --max_results 9999 "${bq.project}:${bq.robustness_dataset}" | grep expansion | awk '{print $1}' | parallel 'bq rm -f ${bq.project}:${bq.robustness_dataset}.{}'
+        # generate expansions and analyses
+        parallel --eta 'techlandscape expansion get-expansion family_id cpc ${bq.project}.${bq.dataset}.seed_{2} patentcity.${bq.robustness_dataset}.{1}_expansion_{2} patentcity.stage ${bq.credentials} --random-share ${item}' ::: $(pwgen 5 ${expansion.niter}) ::: $(cat lib/technology.txt)
+        parallel --eta 'techlandscape robustness get-overlap-analysis {} batch ${bq.credentials} --summary --destination outs/expansion_{}_batchrobustness${item}.csv' ::: $(cat lib/technology.txt)
+        parallel --eta 'techlandscape robustness get-overlap-analysis {} pairwise ${bq.credentials} --summary --destination outs/expansion_{}_pairwiserobustness${item}.csv'  ::: $(cat lib/technology.txt)

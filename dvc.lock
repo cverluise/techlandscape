@@ -38,3 +38,30 @@ stages:
     - path: configs/candidates_selfdrivingvehicle.yaml
       md5: 1d727347882f4a013b9d6fab50ecb201
       size: 2591
+  expansion-robustness@0.9:
+    cmd: "dvc exp run -f clean-expansion-datasets\nparallel --eta 'techlandscape expansion\
+      \ get-expansion family_id cpc patentcity.techdiffusion.seed_{2} patentcity.robustness.{1}_expansion_{2}\
+      \ patentcity.stage credentials_bq.json --random-share 0.9' ::: $(pwgen 5 10)\
+      \ ::: $(cat lib/technology.txt)\nparallel --eta 'techlandscape robustness get-overlap-analysis\
+      \ {} batch credentials_bq.json --summary --destination outs/expansion_{}_batchrobustness0.9.csv'\
+      \ ::: $(cat lib/technology.txt)\nparallel --eta 'techlandscape robustness get-overlap-analysis\
+      \ {} pairwise credentials_bq.json --summary --destination outs/expansion_{}pairwiserobustness0.9.csv'\
+      \  ::: $(cat lib/technology.txt)\n"
+  expansion-robustness@0.5:
+    cmd: "dvc exp run -f clean-expansion-datasets\nparallel --eta 'techlandscape expansion\
+      \ get-expansion family_id cpc patentcity.techdiffusion.seed_{2} patentcity.robustness.{1}_expansion_{2}\
+      \ patentcity.stage credentials_bq.json --random-share 0.5' ::: $(pwgen 5 10)\
+      \ ::: $(cat lib/technology.txt)\nparallel --eta 'techlandscape robustness get-overlap-analysis\
+      \ {} batch credentials_bq.json --summary --destination outs/expansion_{}_batchrobustness0.5.csv'\
+      \ ::: $(cat lib/technology.txt)\nparallel --eta 'techlandscape robustness get-overlap-analysis\
+      \ {} pairwise credentials_bq.json --summary --destination outs/expansion_{}pairwiserobustness0.5.csv'\
+      \  ::: $(cat lib/technology.txt)\n"
+  expansion-robustness@0.7:
+    cmd: "dvc exp run -f clean-expansion-datasets\nparallel --eta 'techlandscape expansion\
+      \ get-expansion family_id cpc patentcity.techdiffusion.seed_{2} patentcity.robustness.{1}_expansion_{2}\
+      \ patentcity.stage credentials_bq.json --random-share 0.7' ::: $(pwgen 5 10)\
+      \ ::: $(cat lib/technology.txt)\nparallel --eta 'techlandscape robustness get-overlap-analysis\
+      \ {} batch credentials_bq.json --summary --destination outs/expansion_{}_batchrobustness0.7.csv'\
+      \ ::: $(cat lib/technology.txt)\nparallel --eta 'techlandscape robustness get-overlap-analysis\
+      \ {} pairwise credentials_bq.json --summary --destination outs/expansion_{}pairwiserobustness0.7.csv'\
+      \  ::: $(cat lib/technology.txt)\n"
