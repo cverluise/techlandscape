@@ -4,7 +4,9 @@ from typing import List
 from itertools import combinations, repeat
 import typer
 from techlandscape.utils import get_bq_client
-from techlandscape.enumerators import OverlapAnalysisKind
+from techlandscape.enumerators import OverlapAnalysisKind, OverlapAnalysisAxis
+from glob import glob
+import pandas as pd
 
 app = typer.Typer()
 
@@ -177,19 +179,78 @@ def get_overlap_analysis(
     if kind == OverlapAnalysisKind.pairwise:
         if summary:
             overlap_analysis.get_pairwise_overlap_ratios()
-            res, index = overlap_analysis.pairwise_overlap_ratios.describe(), True
+            res, index, header = (
+                overlap_analysis.pairwise_overlap_ratios.describe(),
+                True,
+                False,
+            )
         else:
             overlap_analysis.get_pairwise_overlap_analysis()
-            res, index = overlap_analysis.pairwise_overlap_analysis, False
+            res, index, header = overlap_analysis.pairwise_overlap_analysis, False, True
     else:
         if summary:
             overlap_analysis.get_batch_overlap_analysis()
-            res, index = overlap_analysis.batch_overlap_ratios.describe(), True
+            res, index, header = (
+                overlap_analysis.batch_overlap_ratios.describe(),
+                True,
+                False,
+            )
         else:
             overlap_analysis.get_batch_overlap_analysis()
-            res, index = overlap_analysis.batch_overlap_ratios, False
+            res, index, header = overlap_analysis.batch_overlap_ratios, False, True
     destination = destination if destination else sys.stdout
-    res.to_csv(destination, index=index)
+    res.to_csv(destination, index=index, header=header)
+
+
+@app.command()
+def wrap_overlap_analysis(
+    path: str,
+    axis: OverlapAnalysisAxis,
+    destination: str = None,
+    markdown: bool = False,
+):
+    """
+    Wrap overlap analysis based on csv output of  `get_overlap_analysis`
+
+    Arguments:
+        path: path of the files with results to be wrapped (wildcard enablec)
+        axis: axis of the main analysis
+        destination: saving file path (print to stdout in None)
+        markdown: whether to return as md or csv table
+
+    **Usage:**
+        ```shell
+        techlandscape robustness wrap-overlap-analysis "outs/expansion_*robustness*.csv" technologies --markdown
+        ```
+    """
+    files = glob(path)
+
+    get_technology = lambda f: f.split("_")[1]
+    get_config = lambda f: f.split("_")[2].replace(".csv", "")
+
+    technologies = sorted(set([get_technology(f) for f in files]))
+    configs = sorted(set([get_config(f) for f in files]))
+
+    for e in eval(axis.value):
+        files_ = [f for f in files if e in f]
+        tmp = pd.DataFrame()
+        for file in files_:
+            name = (
+                get_config(file)
+                if axis == OverlapAnalysisAxis.technologies
+                else get_technology(file)
+            )
+            tmp = tmp.append(pd.read_csv(file, names=["var", name]).set_index("var").T)
+        tmp.index.name = (
+            "technologies" if axis == OverlapAnalysisAxis.configs else "configs"
+        )
+        tmp = tmp.sort_index().round(2)
+        out = destination if destination else sys.stdout
+        if markdown:
+            typer.echo(f"\n\n## {e}\n")
+            tmp.to_markdown(out)
+        else:
+            tmp.to_csv(out)
 
 
 if __name__ == "__main__":

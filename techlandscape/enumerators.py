@@ -24,3 +24,8 @@ class CitationExpansionLevel(Enum):
 class OverlapAnalysisKind(Enum):
     pairwise = "pairwise"
     batch = "batch"
+
+
+class OverlapAnalysisAxis(Enum):
+    technologies = "technologies"
+    configs = "configs"
