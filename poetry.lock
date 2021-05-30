@@ -937,6 +937,17 @@ catalogue = ">=2.0.1,<2.1.0"
 
 [[package]]
 category = "main"
+description = "Pretty-print tabular data"
+name = "tabulate"
+optional = false
+python-versions = "*"
+version = "0.8.9"
+
+[package.extras]
+widechars = ["wcwidth"]
+
+[[package]]
+category = "main"
 description = "TensorBoard lets you watch Tensors Flow"
 name = "tensorboard"
 optional = false
@@ -1173,7 +1184,7 @@ python-versions = "*"
 version = "1.12.1"
 
 [metadata]
-content-hash = "3c4bfcd40fbfc103069fab1f32ecbbc5b6e0260ceb5f4141049062641ccda663"
+content-hash = "e87a852ffea131d6f326966b03c18e344386a922ded1857a29a1cd06fc4c59d5"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -1924,6 +1935,10 @@ srsly = [
     {file = "srsly-2.4.0-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:e9da4e425e754ce3eafbc5aea73af4c60e5a700f454be720ee2349cf4f59a8dd"},
     {file = "srsly-2.4.0-cp39-cp39-win_amd64.whl", hash = "sha256:d49461cd7f4a6461fe850cf9cae24e1f415d64c73fdcbe8f45a1d9c53caf7d5d"},
     {file = "srsly-2.4.0.tar.gz", hash = "sha256:e29730be53015970e4a59050e8e9f9be44d762108a617df56c9dfc981b515ab7"},
+]
+tabulate = [
+    {file = "tabulate-0.8.9-py3-none-any.whl", hash = "sha256:d7c013fe7abbc5e491394e10fa845f8f32fe54f8dc60c6622c6cf482d25d47e4"},
+    {file = "tabulate-0.8.9.tar.gz", hash = "sha256:eb1d13f25760052e8931f2ef80aaf6045a6cceb47514db8beab24cded16f13a7"},
 ]
 tensorboard = [
     {file = "tensorboard-2.4.1-py3-none-any.whl", hash = "sha256:7b8c53c396069b618f6f276ec94fc45d17e3282d668979216e5d30be472115e4"},
