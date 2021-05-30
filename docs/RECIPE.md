@@ -8,7 +8,8 @@
 dvc repro candidates
 ````
 
-> :information_source: The annotation sample is randomly drawn from all candidates defined by the config file. Do not expect the exact same outs if you run it twice.
+!!! info
+    The annotation sample is randomly drawn from all candidates defined by the config file. Do not expect the exact same outs if you run it twice.
 
 ### Label sample
 
@@ -20,13 +21,9 @@ prodigy textcat.option SEED_${TECHNOLOGY} data/candidates_${TECHNOLOGY}_sample.j
 ### Load annotated SEED
 
 ```shell
-
-# prep seed file
-ls data/seed_*.jsonl | parallel 'mv {} {}.tmp && techlandscape utils add-practical-fields {}.tmp >> {}'
-rm data/seed_*.jsonl.tmp
-
-# load to bq
-cd data && ls seed_*.jsonl | parallel 'bq load --source_format NEWLINE_DELIMITED_JSON --replace --ignore_unknown_values --max_bad_records 1000 --autodetect patentcity:techdiffusion.{.} {} ../schemas/seed.json' && cd ../
+dvc unprotect data/seed*.jsonl
+dvc repro load-annotated-seed
+dvc add data/seed*.jsonl
 ```
 
 ### Build publications table at family_id level
@@ -43,4 +40,12 @@ ls ${STAGE_FOLDER}/publications_*.jsonl.gz | parallel --eta 'mv {} {.}.tmp.gz &&
 gsutil -m cp "${STAGE_FOLDER}/publications_*.jsonl.gz" gs://tmp/
 bq rm patentcity.patents.publications
 bq load --source_format NEWLINE_DELIMITED_JSON --replace --max_bad_records 1000 patentcity:patents.publications "gs://tmp/publications_*.jsonl.gz" schemas/publications_familyid.json
+```
+
+### Expansion iteration and robustness analysis
+
+```shell
+dvc unprotect outs/expansion_*robustness*.csv
+dvc repro -f expansion-robustness
+dvc add outs/expansion_*robustness*.csv
 ```
