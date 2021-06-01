@@ -22,6 +22,23 @@ import typer
 
 
 class DataLoader:
+    """
+    Load data (train, test)
+
+    Arguments:
+        config: config file path
+
+    **Usage:**
+        ```python
+        from techlandscape.model import DataLoader
+        data_loader = DataLoader("configs/model_cnn.yaml")
+        data_loader.load_data()
+
+        # check examples
+        data_loader.text_train
+        ```
+    """
+
     text_train = None
     text_test = None
     y_train = None
@@ -64,6 +81,23 @@ class DataLoader:
 
 
 class TextVectorizer(DataLoader):
+    """
+    Vectorize data
+
+    Arguments:
+        config: config file path
+
+    **Usage:**
+        ```python
+        from techlandscape.model import TextVectorizer
+        text_loader = TextVectorizer("configs/model_cnn.yaml")
+        text_loader.vectorize_text()
+
+        # check examples
+        text_loader.x_train
+        ```
+    """
+
     tokenizer = None
     vectorizer = None
     selector = None
@@ -77,8 +111,10 @@ class TextVectorizer(DataLoader):
         self.model_architecture = self.cfg["model"]["architecture"]
 
     def _fit_ngram_vectorizer(self):
-        """Fit n-gram vectorizer.
-        Doc: https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html"""
+        """Fit n-gram vectorizer
+
+        !!! info
+            Doc: https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html"""
         if self.vectorizer is None:
             kwargs = {
                 k: self.cfg["tok2vec"][k]
@@ -96,8 +132,10 @@ class TextVectorizer(DataLoader):
             typer.secho(f"vectorizer already fitted", color=typer.colors.YELLOW)
 
     def _fit_ngram_feature_selector(self):
-        """Fit feature selector.
-        Doc: https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectKBest.html"""
+        """Fit feature selector
+
+        !!! info
+            Doc: https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectKBest.html"""
         if self.selector is None:
             self.selector = SelectKBest(
                 f_classif, k=min(self.cfg["tok2vec"]["top_k"], self.x_train.shape[1])
@@ -106,8 +144,10 @@ class TextVectorizer(DataLoader):
             typer.secho(f"selector already fitted", color=typer.colors.YELLOW)
 
     def _fit_sequence_tokenizer(self):
-        """Fit text tokenizer.
-        Doc: https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer"""
+        """Fit text tokenizer
+
+        !!! info
+            Doc: https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer"""
         if self.tokenizer is None:
             # Create vocabulary with training texts.
             self.tokenizer = text.Tokenizer(num_words=self.cfg["tok2vec"]["top_k"])
@@ -206,18 +246,31 @@ class TextVectorizer(DataLoader):
 
 class ModelBuilder(TextVectorizer):
     """
-        V0 based on https://developers.google.com/machine-learning/guides/text-classification/
-        Other useful resources https://realpython.com/python-keras-text-classification/
-        On CNN http://www.joshuakim.io/understanding-how-convolutional-neural-network-cnn-perform
-        -text-classification-with-word-embeddings/
+    Build model
+
+    Arguments:
+        config: config file path
+
+    **Usage:**
+        ```python
+        from techlandscape.model import ModelBuilder
+        model_builder = ModelBuilder("configs/model_cnn.yaml")
+        model_builder.build_model()
+
+        # check model
+        model_builder.model.summary()
+        ```
+
+    !!! info "Resources"
+        [Google ML Guide on text-classification](https://developers.google.com/machine-learning/guides/text-classification/)
+        [Keras text-classification](https://realpython.com/python-keras-text-classification/)
+        [Understanding CNN](http://www.joshuakim.io/understanding-how-convolutional-neural-network-cnn-perform-text-classification-with-word-embeddings/)
     """
 
     model = None
 
     def __init__(self, config: Path):
         super().__init__(config)
-        self.vectorize_text()
-        self.input_shape = self.x_train.shape[1:]
 
     def _build_mlp(self):  # -> models.Sequential
         """
@@ -225,6 +278,8 @@ class ModelBuilder(TextVectorizer):
         """
 
         # Init model
+        self.vectorize_text()  # we need to trigger it now to get x_train to determine the input shape
+        self.input_shape = self.x_train.shape[1:]
         self.model = models.Sequential()
         self.model.add(
             Dropout(
@@ -312,15 +367,34 @@ class ModelBuilder(TextVectorizer):
 
 
 class ModelCompiler(ModelBuilder):
+    """
+    Compile model
+
+    Arguments:
+        config: config file path
+
+    **Usage:**
+        ```python
+        from techlandscape.model import ModelCompiler
+        model_compiler = ModelCompiler("configs/model_cnn.yaml")
+        model_compiler.compile_model()
+
+        # check model, e.g. loss
+        model_compiler.model.loss
+        ```
+    """
+
+    optimizer = None
+
     def __init__(self, config: Path):
         super().__init__(config)
-        self.optimizer = Adam(
-            lr=float(self.cfg["training"]["optimizer"]["learning_rate"])
-        )
 
     def compile_model(self, embedding_matrix: dict = None):
         """Compile model. Use config file to instantiate training components."""
         self.build_model(embedding_matrix)
+        self.optimizer = Adam(
+            lr=float(self.cfg["training"]["optimizer"]["learning_rate"])
+        )
         self.model.compile(
             optimizer=self.optimizer,
             loss=self.cfg["training"]["optimizer"]["loss"],
@@ -333,8 +407,31 @@ class ModelCompiler(ModelBuilder):
 
 
 class ModelFitter(ModelCompiler):
+    """
+    Fit model
+
+    Arguments:
+        config: config file path
+
+    **Usage:**
+        ```python
+        from techlandscape.model import ModelFitter
+        model_fitter = ModelFitter("configs/model_cnn.yaml")
+        model_fitter.fit_model()
+
+        # check model, e.g. history
+        model_fitter.model.history
+        ```
+    """
+
+    callbacks = None
+
     def __init__(self, config: Path):
         super().__init__(config)
+
+    def fit_model(self):
+        """Fit model"""
+        self.compile_model()
         self.callbacks = [
             EarlyStopping(
                 monitor=self.cfg["training"]["callbacks"]["monitor"],
@@ -342,9 +439,6 @@ class ModelFitter(ModelCompiler):
             )
         ]
 
-    def fit_model(self):
-        """Fit model"""
-        self.compile_model()
         if not self.model.history:
             self.model.fit(
                 self.x_train,
@@ -364,11 +458,34 @@ class ModelFitter(ModelCompiler):
 
 
 class Model(ModelFitter):
+    """Main model class (data + model architecture + training)
+
+    Arguments:
+        config: config file path
+        filepath: saving model directory
+
+    **Usage:**
+        ```python
+        from techlandscape.model import Model
+        model = Model("configs/model_cnn.yaml", "models/default_cnn/")
+        model.fit_model()
+        model.save()
+
+        # check model, e.g. history
+        model_fitter.model.history
+        ```
+    """
+
     def __init__(self, config: Path, filepath: Path):
         super().__init__(config)
         self.filepath = filepath
 
     def save(self):
         if not self.model.history:
-            self.fit_model()
-        self.model.save(self.filepath)
+            typer.secho(
+                "No fitted model yet, cannot save. Run self.fit_model() and try again.",
+                err=True,
+                color=typer.colors.RED,
+            )
+        else:
+            self.model.save(self.filepath)
