@@ -15,138 +15,193 @@ from keras.layers import (
 )
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
-from techlandscape.utils import get_config
+from techlandscape.utils import get_config, ok, not_ok
 from techlandscape.exception import UnknownModel, UNKNOWN_MODEL_MSG
-
-
-# TODO
-#   improve using self as of ModelBuilder
-#   Check working properly (as of textVectorizer for cnn, MLP ok)
+from techlandscape.enumerators import SupportedModels
+import typer
 
 
 class DataLoader:
+    text_train = None
+    text_test = None
+    y_train = None
+    y_test = None
+
     def __init__(self, config: Path):
         self.cfg = get_config(config)
         self.train_path = Path(self.cfg["data"]["train"])
         self.test_path = Path(self.cfg["data"]["test"])
-        self.text_train = None
-        self.text_test = None
-        self.y_train = None
-        self.y_test = None
 
     @staticmethod
-    def get_data(path: Path, var: str):
+    def _get_data(path: Path, var: str):
         return [
             json.loads(line)[var] for line in path.open("r").read().split("\n") if line
         ]
 
     def load_data(self):
-        self.text_train = self.get_data(self.train_path, "text")
-        self.text_test = self.get_data(self.test_path, "text")
-        self.y_train = np.array(self.get_data(self.train_path, "is_seed"))
-        self.y_test = np.array(self.get_data(self.test_path, "is_seed"))
-
-        return self
+        """Load data. Expect a jsonl file where each row at least two fields: 'text' and 'is_seed'."""
+        if any(
+            map(
+                lambda x: x is None,
+                [self.text_train, self.text_test, self.y_train, self.y_test],
+            )
+        ):
+            self.text_train = self._get_data(self.train_path, "text")
+            self.text_test = self._get_data(self.test_path, "text")
+            self.y_train = np.array(self._get_data(self.train_path, "is_seed"))
+            self.y_test = np.array(self._get_data(self.test_path, "is_seed"))
+            typer.secho(f"{ok}Data loaded", color=typer.colors.GREEN)
+        else:
+            typer.secho("Data already populated", color=typer.colors.YELLOW)
+        typer.secho(
+            f"{ok}{len(self.text_train)} examples loaded in training set",
+            color=typer.colors.BLUE,
+        )
+        typer.secho(
+            f"{ok}{len(self.text_test)} examples loaded in test set",
+            color=typer.colors.BLUE,
+        )
 
 
 class TextVectorizer(DataLoader):
+    tokenizer = None
+    vectorizer = None
+    selector = None
+    num_features = None
+    x_train = None
+    x_test = None
+    max_length = None
+
     def __init__(self, config: Path):
         super().__init__(config)
         self.model_architecture = self.cfg["model"]["architecture"]
-        self.tokenizer = None
-        self.vectorizer = None
-        self.selector = None
-        self.num_features = None
-        self.x_train = None
-        self.x_test = None
 
-    def fit_ngram_vectorizer(self):
-        kwargs = {
-            k: self.cfg["tok2vec"][k]
-            for k in [
-                "ngram_range",
-                "dtype",
-                "strip_accents",
-                "decode_error",
-                "analyzer",
-                "min_df",
-            ]
-        }
-        self.vectorizer = TfidfVectorizer(**kwargs).fit(self.text_train)
-        return self
+    def _fit_ngram_vectorizer(self):
+        """Fit n-gram vectorizer.
+        Doc: https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html"""
+        if self.vectorizer is None:
+            kwargs = {
+                k: self.cfg["tok2vec"][k]
+                for k in [
+                    "ngram_range",
+                    "dtype",
+                    "strip_accents",
+                    "decode_error",
+                    "analyzer",
+                    "min_df",
+                ]
+            }
+            self.vectorizer = TfidfVectorizer(**kwargs).fit(self.text_train)
+        else:
+            typer.secho(f"vectorizer already fitted", color=typer.colors.YELLOW)
 
-    def fit_ngram_feature_selector(self):
-        self.selector = SelectKBest(
-            f_classif, k=min(self.cfg["tok2vec"]["top_k"], self.x_train.shape[1])
-        ).fit(self.x_train, self.y_train)
-        return self
+    def _fit_ngram_feature_selector(self):
+        """Fit feature selector.
+        Doc: https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.SelectKBest.html"""
+        if self.selector is None:
+            self.selector = SelectKBest(
+                f_classif, k=min(self.cfg["tok2vec"]["top_k"], self.x_train.shape[1])
+            ).fit(self.x_train, self.y_train)
+        else:
+            typer.secho(f"selector already fitted", color=typer.colors.YELLOW)
 
-    def fit_sequence_tokenizer(self):
-        # Create vocabulary with training texts.
-        tokenizer = text.Tokenizer(num_words=self.cfg["tok2vec"]["top_k"])
-        self.tokenizer = tokenizer.fit_on_texts(self.text_train)
-        return self
+    def _fit_sequence_tokenizer(self):
+        """Fit text tokenizer.
+        Doc: https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/text/Tokenizer"""
+        if self.tokenizer is None:
+            # Create vocabulary with training texts.
+            self.tokenizer = text.Tokenizer(num_words=self.cfg["tok2vec"]["top_k"])
+            self.tokenizer.fit_on_texts(self.text_train)
+        else:
+            typer.secho(f"tokenizer already fitted", color=typer.colors.YELLOW)
 
-    def get_ngrams(self):
+    def _get_ngrams(self):
         """
         Return sparse matrices where 1 row corresponds to the tf-idf representation of a document with
-        the number of columns corresponding to the card of the (ngram) vocabulary.
-        Nb: Used in the MLP model only
+        the number of columns corresponding to the cardinal of the (ngram) vocabulary.
+        Note: Used in the MLP model only
         """
-        self.load_data()
-        self.fit_ngram_vectorizer()
+        if any(
+            map(
+                lambda x: x is None,
+                [self.vectorizer, self.selector, self.x_train, self.x_test],
+            )
+        ):
+            self.load_data()
+            self._fit_ngram_vectorizer()
 
-        # Learn vocabulary from training texts and vectorize training texts.
-        self.x_train = self.vectorizer.transform(self.text_train)
-        # Vectorize test texts.
-        self.x_test = self.vectorizer.transform(self.text_test)
+            # Learn vocabulary from training texts and vectorize training texts.
+            self.x_train = self.vectorizer.transform(self.text_train)
+            # Vectorize test texts.
+            self.x_test = self.vectorizer.transform(self.text_test)
 
-        # Find top 'k' vectorized features.
-        self.fit_ngram_feature_selector()
+            # Find top 'k' vectorized features.
+            self._fit_ngram_feature_selector()
 
-        # Keep only top k features
-        self.x_train = self.selector.transform(self.x_train).astype("float32")
-        self.x_test = self.selector.transform(self.x_test).astype("float32")
+            # Keep only top k features
+            self.x_train = self.selector.transform(self.x_train).astype("float32")
+            self.x_test = self.selector.transform(self.x_test).astype("float32")
 
-        return self
+        else:
+            typer.secho(
+                f"Data already ngramed. See self.x_train and self.x_test",
+                color=typer.colors.YELLOW,
+            )
 
-    def get_sequences(self):
+    def _get_sequences(self):
         """
         Return the padded sequence of texts (train & test) with indices mapping to vocabulary (0 reserved for empty)
         and the related word-index mapping.
+        Note: Used in the CNN model only
         """
-        self.load_data()
-        self.fit_sequence_tokenizer()
-        self.num_features = min(
-            len(self.tokenizer.word_index) + 1, self.cfg["tok2vec"]["top_k"]
-        )
+        if any(
+            map(
+                lambda x: x is None,
+                [
+                    self.x_train,
+                    self.x_test,
+                    self.tokenizer,
+                    self.num_features,
+                    self.max_length,
+                ],
+            )
+        ):
+            self.load_data()
+            self._fit_sequence_tokenizer()
+            self.num_features = min(
+                len(self.tokenizer.word_index) + 1, self.cfg["tok2vec"]["top_k"]
+            )
 
-        # Vectorize training and test texts.
-        self.x_train = self.tokenizer.texts_to_sequences(self.text_train)
-        self.x_test = self.tokenizer.texts_to_sequences(self.text_test)
+            # Vectorize training and test texts.
+            self.x_train = self.tokenizer.texts_to_sequences(self.text_train)
+            self.x_test = self.tokenizer.texts_to_sequences(self.text_test)
 
-        # Get max sequence length.
-        max_length = len(max(self.x_train, key=len))
-        # TODO: Very sensitive to outliers. Trimming above p90 might be more appropriate.
-        if max_length > self.cfg["tok2vec"]["max_length"]:
-            max_length = self.cfg["tok2vec"]["max_length"]
+            # Get max sequence length.
+            self.max_length = len(max(self.x_train, key=len))
+            # TODO: Very sensitive to outliers. Trimming above p90 might be more appropriate.
+            if self.max_length > self.cfg["tok2vec"]["max_length"]:
+                self.max_length = self.cfg["tok2vec"]["max_length"]
 
-        # Fix sequence length to max value. Sequences shorter than the length are
-        # padded in the beginning and sequences longer are truncated
-        # at the beginning.
-        self.x_train = sequence.pad_sequences(self.x_train, maxlen=max_length)
-        self.x_test = sequence.pad_sequences(self.x_test, maxlen=max_length)
-        return self
+            # Fix sequence length to max value. Sequences shorter than the length are
+            # padded in the beginning and sequences longer are truncated
+            # at the beginning.
+            self.x_train = sequence.pad_sequences(self.x_train, maxlen=self.max_length)
+            self.x_test = sequence.pad_sequences(self.x_test, maxlen=self.max_length)
+        else:
+            typer.secho(
+                "Sequences already populated. See self.x_train and self.x_test",
+                color=typer.colors.YELLOW,
+            )
 
     def vectorize_text(self):
         """Return vectorized texts (train and test)"""
         if self.model_architecture == "cnn":
-            self.get_sequences()
+            self._get_sequences()
         elif self.model_architecture == "mlp":
-            self.get_ngrams()
+            self._get_ngrams()
         else:
-            UnknownModel(UNKNOWN_MODEL_MSG)
-        return self
+            raise UnknownModel(UNKNOWN_MODEL_MSG)
+        typer.secho(f"{ok}Text vectorized", color=typer.colors.GREEN)
 
 
 class ModelBuilder(TextVectorizer):
@@ -157,19 +212,21 @@ class ModelBuilder(TextVectorizer):
         -text-classification-with-word-embeddings/
     """
 
+    model = None
+
     def __init__(self, config: Path):
         super().__init__(config)
-        self.x_train, self.x_test = self.vectorize_text()
+        self.vectorize_text()
         self.input_shape = self.x_train.shape[1:]
 
-    def build_mlp(self):  # -> models.Sequential
+    def _build_mlp(self):  # -> models.Sequential
         """
-        Return a Multi layer perceptron Keras model
+        Instantiate a Multi layer perceptron Keras model
         """
 
         # Init model
-        model = models.Sequential()
-        model.add(
+        self.model = models.Sequential()
+        self.model.add(
             Dropout(
                 rate=self.cfg["model"]["dropout_rate"], input_shape=self.input_shape
             )
@@ -177,24 +234,20 @@ class ModelBuilder(TextVectorizer):
 
         # Add mlp layers
         for _ in range(self.cfg["model"]["layers"] - 1):
-            model.add(Dense(units=self.cfg["model"]["units"], activation="relu"))
-            model.add(Dropout(rate=self.cfg["model"]["dropout_rate"]))
+            self.model.add(Dense(units=self.cfg["model"]["units"], activation="relu"))
+            self.model.add(Dropout(rate=self.cfg["model"]["dropout_rate"]))
 
         # Binary classification + output ~ proba
-        model.add(Dense(units=1, activation="sigmoid"))
-        return model
+        self.model.add(Dense(units=1, activation="sigmoid"))
 
-    def build_cnn(self, embedding_matrix: dict = None):  # -> models.Sequential
+    def _build_cnn(self, embedding_matrix: dict = None):  # -> models.Sequential
         """
-        Return a CNN model with <blocks> Convolution-Pooling pair layers.
+        Instantiate a CNN model with <blocks> Convolution-Pooling pair layers.
         """
-        # TODO input_shape and num_features should be inferred or declared
-        #  input_shape: shape of input to the model.
-        #  num_features: number of words (number of columns in embedding input).
 
-        model = models.Sequential()
+        self.model = models.Sequential()
         if self.cfg["model"]["use_pretrained_embedding"]:
-            model.add(
+            self.model.add(
                 Embedding(
                     input_dim=self.num_features,
                     output_dim=self.cfg["model"]["embedding_dim"],
@@ -204,7 +257,7 @@ class ModelBuilder(TextVectorizer):
                 )
             )
         else:
-            model.add(
+            self.model.add(
                 Embedding(
                     input_dim=self.num_features,
                     output_dim=self.cfg["model"]["embedding_dim"],
@@ -212,8 +265,8 @@ class ModelBuilder(TextVectorizer):
                 )
             )
         for _ in range(self.cfg["model"]["blocks"] - 1):
-            model.add(Dropout(rate=self.cfg["model"]["dropout_rate"]))
-            model.add(
+            self.model.add(Dropout(rate=self.cfg["model"]["dropout_rate"]))
+            self.model.add(
                 Conv1D(
                     filters=self.cfg["model"]["filters"],
                     kernel_size=self.cfg["model"]["kernel_size"],
@@ -222,9 +275,9 @@ class ModelBuilder(TextVectorizer):
                     padding="same",
                 )
             )
-            model.add(MaxPooling1D(pool_size=self.cfg["model"]["pool_size"]))
+            self.model.add(MaxPooling1D(pool_size=self.cfg["model"]["pool_size"]))
 
-        model.add(
+        self.model.add(
             Conv1D(
                 filters=self.cfg["model"]["filters"] * 2,
                 kernel_size=self.cfg["model"]["kernel_size"],
@@ -233,38 +286,53 @@ class ModelBuilder(TextVectorizer):
                 padding="same",
             )
         )
-        model.add(GlobalAveragePooling1D())
-        model.add(Dropout(rate=self.cfg["model"]["dropout_rate"]))
-        model.add(Dense(1, activation="sigmoid"))
-        return model
+        self.model.add(GlobalAveragePooling1D())
+        self.model.add(Dropout(rate=self.cfg["model"]["dropout_rate"]))
+        self.model.add(Dense(1, activation="sigmoid"))
 
     def build_model(self, embedding_matrix: dict = None):
-        assert self.cfg["model"]["architecture"] in ["mlp", "cnn"]
-        if self.cfg["model"]["architecture"] == "mlp":
-            model = self.build_mlp()
-        elif self.cfg["model"]["architecture"] == "cnn":
-            model = self.build_cnn(embedding_matrix)
+        """
+        Instantiate model based on config file
+        """
+        assert self.cfg["model"]["architecture"] in SupportedModels._member_names_
+        if not self.model:
+            if self.cfg["model"]["architecture"] == SupportedModels.mlp.value:
+                self._build_mlp()
+            elif self.cfg["model"]["architecture"] == SupportedModels.cnn.value:
+                # TODO handle embedding matrix properly
+                self._build_cnn(embedding_matrix)
+            else:
+                raise UnknownModel(UNKNOWN_MODEL_MSG)
+            typer.secho(
+                f"{ok}Model built (see self.model.summary() for details)",
+                color=typer.colors.GREEN,
+            )
         else:
-            raise UnknownModel(UNKNOWN_MODEL_MSG)
-        return model
+            typer.secho("Model already built", color=typer.colors.YELLOW)
 
 
 class ModelCompiler(ModelBuilder):
     def __init__(self, config: Path):
         super().__init__(config)
-        self.optimizer = Adam(lr=self.cfg["training"]["optimizer"]["learning_rate"])
+        self.optimizer = Adam(
+            lr=float(self.cfg["training"]["optimizer"]["learning_rate"])
+        )
 
     def compile_model(self, embedding_matrix: dict = None):
-        model = self.build_model(embedding_matrix)
-        model.compile(
+        """Compile model. Use config file to instantiate training components."""
+        self.build_model(embedding_matrix)
+        self.model.compile(
             optimizer=self.optimizer,
             loss=self.cfg["training"]["optimizer"]["loss"],
             metrics=self.cfg["training"]["optimizer"]["metrics"],
         )
-        return model
+        typer.secho(
+            f"{ok}Model compiled (see self.model.summary() for details)",
+            color=typer.colors.GREEN,
+        )
 
 
-class ModelTrainer(ModelCompiler):
+class ModelFitter(ModelCompiler):
     def __init__(self, config: Path):
         super().__init__(config)
         self.callbacks = [
@@ -274,18 +342,33 @@ class ModelTrainer(ModelCompiler):
             )
         ]
 
-    def train_model(self):
-        # TODO find a way to keep track of history -> do it with self
-        model = self.compile_model()
-        model.fit(
-            self.x_train,
-            self.y_train,
-            epochs=self.cfg["training"]["epochs"],
-            callbacks=self.callbacks,
-            validation_data=(self.x_test, self.y_test),
-            verbose=self.cfg["logger"]["verbose"],
-            batch_size=self.cfg["training"]["batch_size"],
-        )
-        return model
+    def fit_model(self):
+        """Fit model"""
+        self.compile_model()
+        if not self.model.history:
+            self.model.fit(
+                self.x_train,
+                self.y_train,
+                epochs=self.cfg["training"]["epochs"],
+                callbacks=self.callbacks,
+                validation_data=(self.x_test, self.y_test),
+                verbose=self.cfg["logger"]["verbose"],
+                batch_size=self.cfg["training"]["batch_size"],
+            )
+            typer.secho(f"{ok}Model trained", color=typer.colors.GREEN)
+        else:
+            # Alternative: clear session (keras.backend.clear_session()) and retrain
+            typer.secho(f"Model already trained", color=typer.colors.YELLOW)
 
     # TODO save model & config file in folder
+
+
+class Model(ModelFitter):
+    def __init__(self, config: Path, filepath: Path):
+        super().__init__(config)
+        self.filepath = filepath
+
+    def save(self):
+        if not self.model.history:
+            self.fit_model()
+        self.model.save(self.filepath)
