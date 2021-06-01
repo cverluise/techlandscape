@@ -29,3 +29,8 @@ class OverlapAnalysisKind(Enum):
 class OverlapAnalysisAxis(Enum):
     technologies = "technologies"
     configs = "configs"
+
+
+class SupportedModels(Enum):
+    mlp = "mlp"
+    cnn = "cnn"
