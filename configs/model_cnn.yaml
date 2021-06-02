@@ -16,14 +16,14 @@ model:
   pool_size: 3 # 3, factor by which to downscale input at MaxPooling layer
   use_pretrained_embedding: False # False, true if pre-trained
   is_embedding_trainable: False # False, true if embedding trainable
+  optimizer:
+    learning_rate: 1e-3
+    loss: binary_crossentropy
+    metrics: [ "accuracy" ]
 
 training:
   epochs: 100
   batch_size: 64
-  optimizer:
-    learning_rate: 1e-3
-    loss: binary_crossentropy
-    metrics: ["accuracy"]
   callbacks:
     monitor: val_loss
     patience: 2

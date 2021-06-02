@@ -392,13 +392,11 @@ class ModelCompiler(ModelBuilder):
     def compile_model(self, embedding_matrix: dict = None):
         """Compile model. Use config file to instantiate training components."""
         self.build_model(embedding_matrix)
-        self.optimizer = Adam(
-            lr=float(self.cfg["training"]["optimizer"]["learning_rate"])
-        )
+        self.optimizer = Adam(lr=float(self.cfg["model"]["optimizer"]["learning_rate"]))
         self.model.compile(
             optimizer=self.optimizer,
-            loss=self.cfg["training"]["optimizer"]["loss"],
-            metrics=self.cfg["training"]["optimizer"]["metrics"],
+            loss=self.cfg["model"]["optimizer"]["loss"],
+            metrics=self.cfg["model"]["optimizer"]["metrics"],
         )
         typer.secho(
             f"{ok}Model compiled (see self.model.summary() for details)",

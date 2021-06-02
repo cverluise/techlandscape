@@ -16,14 +16,14 @@ model:
   layers: 1 # [1,2] number of hidden layers -1. If 1, no hidden layer -> standard logistic
   units: 64  # number of units per hidden layer.
   dropout_rate: .2 # [0,0.2], fraction of the input units to drop.
+  optimizer:
+    learning_rate: 1e-3
+    loss: binary_crossentropy
+    metrics: [ "accuracy" ]
 
 training:
   epochs: 100
   batch_size: 64
-  optimizer:
-    learning_rate: 1e-3
-    loss: binary_crossentropy
-    metrics: ["accuracy"]
   callbacks:
     monitor: val_loss
     patience: 2
