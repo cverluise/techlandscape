@@ -470,9 +470,6 @@ class Model(ModelFitter):
         model = Model("configs/model_cnn.yaml", "models/default_cnn/")
         model.fit_model()
         model.save()
-
-        # check model, e.g. history
-        model_fitter.model.history
         ```
     """
 
