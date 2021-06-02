@@ -1,0 +1,69 @@
+site_name: techLandscape
+site_description: Technology landscape
+site_author: Cyril Verluise
+#site_url:
+#repo_url: https://github.com/cverluise/patentcity
+
+##### Nav #####
+nav:
+  - About: index.md
+#  - Data: DATA.md
+  - Guides:
+      - Models: MODELS.md
+      - Recipes: RECIPE.md
+      - Robustness: ROBUSTNESS.md
+#  - API:
+#      - brew: API_BREW.md
+#      - eval: API_EVAL.md
+#      - geo: API_GEO.md
+#      - io: API_IO.md
+#      - search: API_SEARCH.md
+  - License:
+    - Code: LICENSE_CODE.md
+    - Data: LICENSE_DATA.md
+
+
+##### Theme #####
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+  palette:
+    primary: teal
+    accent: teal
+
+markdown_extensions:
+  - attr_list
+  - admonition
+  - pymdownx.details
+  - codehilite
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.details
+  - pymdownx.tabbed
+  - pymdownx.highlight:
+      use_pygments: true
+  - toc:
+      permalink: true
+
+##### Plugins #####
+plugins:
+  - mkdocstrings:
+      default_handler: python
+      watch:
+        - techlandscape
+  - search:
+      lang: en
+
+##### Footer #####
+extra:
+  social:
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/cyrilverluise
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/cyril-verluise-80184347/
+    - icon: fontawesome/brands/github
+      link: https://cverluise.github.io/PatCit/
