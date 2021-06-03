@@ -139,7 +139,7 @@ def get_country_prefix(primary_key: PrimaryKey) -> str:
     return (
         ""
         if primary_key.value == PrimaryKey.publication_number.value
-        else ", UNNEST(country) as country"
+        else ", UNNEST(country_code) as country_code"
     )
 
 
