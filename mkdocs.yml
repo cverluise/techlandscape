@@ -12,12 +12,12 @@ nav:
       - Models: MODELS.md
       - Recipes: RECIPE.md
       - Robustness: ROBUSTNESS.md
-#  - API:
-#      - brew: API_BREW.md
-#      - eval: API_EVAL.md
-#      - geo: API_GEO.md
-#      - io: API_IO.md
-#      - search: API_SEARCH.md
+  - API:
+      - assets: API_ASSETS.md
+      - candidates: API_CANDIDATES.md
+      - expansion: API_EXPANSION.md
+#      - antiseed: API_ANTISEED.md
+      - robustness: API_ROBUSTNESS.md
   - License:
     - Code: LICENSE_CODE.md
     - Data: LICENSE_DATA.md
