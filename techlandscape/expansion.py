@@ -7,6 +7,7 @@ from techlandscape.enumerators import (
     CitationKind,
     CitationExpansionLevel,
 )
+from techlandscape.antiseed import get_af_antiseed
 
 app = typer.Typer()
 
@@ -62,7 +63,7 @@ def get_seed_pc_freq(
 
     Arguments:
         primary_key: table primary key
-        tech_class: technical class considered
+        tech_class: technological class considered
         table_ref: expansion table (project.dataset.table)
         destination_table: query results destination table (project.dataset.table)
         credentials: BQ credentials file path
@@ -127,7 +128,7 @@ def get_universe_pc_freq(
 
     Arguments:
         primary_key: table primary key
-        tech_class: technical class considered
+        tech_class: technological class considered
         table_ref: expansion table (project.dataset.table)
         destination_table: query results destination table (project.dataset.table)
         credentials: BQ credentials file path
@@ -202,7 +203,7 @@ def get_seed_pc_odds(
     Return the odds of patent classes in seed compared to the universe of patents
 
     Arguments:
-        tech_class: technical class considered
+        tech_class: technological class considered
         table_seed: pc freq seed table (project.dataset.table)
         table_universe: pc freq universe table (project.dataset.table)
         destination_table: query results destination table (project.dataset.table)
@@ -247,7 +248,7 @@ def get_pc_expansion(
 
     Arguments:
         primary_key: table primary key
-        tech_class: technical class considered
+        tech_class: technological class considered
         n_pc: nb most important pc for pc expansion
         table_ref: pc odds table (project.dataset.table)
         destination_table: query results destination table (project.dataset.table)
@@ -308,7 +309,7 @@ def get_full_pc_expansion(
 
     Arguments:
         primary_key: table primary key
-        tech_class: technical class considered
+        tech_class: technological class considered
         n_pc: nb most important pc for pc expansion
         table_ref: expansion table (project.dataset.table)
         destination_table: query results destination table (project.dataset.table)
@@ -504,6 +505,48 @@ def get_full_citation_expansion(
     )
 
 
+def get_af_antiseed(
+    primary_key: PrimaryKey,
+    size_antiseed: int,
+    table_ref: str,
+    destination_table: str,
+    credentials: Path,
+    **kwargs,
+):
+    """
+    Return the anti-seed a la Abood and Feltenberger (2018)
+
+    Arguments:
+        primary_key: table primary key
+        size_antiseed: size of the antiseed a la AF
+        table_ref: expansion table (project.dataset.table)
+        destination_table: query results destination table (project.dataset.table)
+        credentials: credentials file path
+        **kwargs: key worded args passed to bigquery.QueryJobConfig
+
+    **Usage:**
+        ```shell
+        ```
+    """
+    project_id = get_project_id(primary_key, credentials)
+    query = f"""SELECT
+    DISTINCT(r.{primary_key.value}) AS {primary_key.value},
+      "ANTISEED-AF" AS expansion_level
+    FROM
+      `{project_id}.patents.publications` AS r #country_prefix
+    LEFT OUTER JOIN
+      {table_ref} AS tmp
+    ON
+      r.{primary_key.value} = tmp.{primary_key.value}
+     #country_clause
+    ORDER BY
+      RAND()
+    LIMIT
+      {size_antiseed}
+    """
+    get_bq_job_done(query, destination_table, credentials, **kwargs)
+
+
 @app.command()
 def get_expansion(
     primary_key: PrimaryKey,
@@ -512,6 +555,7 @@ def get_expansion(
     destination_table: str,
     staging_dataset: str,
     credentials: Path,
+    size_antiseed: int = 0,
     random_share: float = None,
     precomputed: bool = False,
     n_pc: int = 50,
@@ -521,14 +565,21 @@ def get_expansion(
 
     Arguments:
         primary_key: table primary key
-        tech_class: technical class considered
+        tech_class: technological class considered
         table_ref: seed table (project.dataset.table)
         destination_table: query results destination table (project.dataset.table)
         staging_dataset: intermediary table staging dataset (project.dataset)
         credentials: BQ credentials file path
-        random_share:
+        size_antiseed: size of the antiseed a la AF
+        random_share: share of the seed randomly drawn and used for the expansion
         precomputed: True if pc odds pre-computed
         n_pc: nb most important pc for pc expansion
+
+    **Usage:**
+        ```shell
+        TECH="additivemanufacturing"
+        techlandscape expansion get-expansion family_id cpc patentcity.techdiffusion.seed_${TECH} patentcity.techdiffusion.expansion_${TECH} patentcity.stage credentials_bq.json
+        ```
     """
 
     get_seed(
@@ -577,6 +628,15 @@ def get_expansion(
         destination_table,
         credentials,
         write_disposition="WRITE_TRUNCATE",
+        verbose=False,
+    )
+    get_af_antiseed(
+        primary_key,
+        size_antiseed,
+        destination_table,
+        destination_table,
+        credentials,
+        write_disposition="WRITE_APPEND",
         verbose=False,
     )
 
