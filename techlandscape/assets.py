@@ -131,7 +131,7 @@ def get_publications_family(
 
 
 @app.command()
-def get_wgp_pubnum(
+def _get_wgp_pubnum(
     flavor,
     table_wgp: str,
     table_tls211: str,
