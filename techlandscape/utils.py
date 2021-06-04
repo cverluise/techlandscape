@@ -4,6 +4,7 @@ import json
 import typer
 import pandas as pd
 import yaml
+import numpy as np
 from pathlib import Path
 from typing import List, Tuple, Any
 from google.cloud import bigquery
@@ -391,6 +392,67 @@ def flatten_nested_vars(file: Path, nested_vars: str):
                     "\n".join([e.__str__(), line]), err=True, color=typer.colors.YELLOW
                 )
                 pass
+
+
+@app.command()
+def train_test_split(
+    file: Path,
+    train: Path,
+    test: Path,
+    test_ratio: float = 0.2,
+    seed_share: float = 1,
+    balanced: bool = True,
+    random_seed: int = None,
+):
+    """
+    Return the shuffled train/test sets saved to `train`, `test`. If balanced is true, the input data is pre-processed
+    to make it balanced (seed=1/3, antiseed_manual=1/3 and antiseed_AF=1/3).
+
+    Arguments:
+        file: training data source file path
+        train: train set saving file path
+        test: test set saving file path
+        test_ratio: share of the balanced training set dedicated to the test set
+        seed_share: share of the seed to be randomly drawn. nb: other strata of the balanced training set are affected by this choice du to balancing
+        balanced: whether the input training data should be balanced or not
+        random_seed: random seed
+
+    **Usage:**
+        ```shell
+        techlandscape utils train-test-split data/training_additivemanufacturing.jsonl train_additivemanufacturing.jsonl test_additivemanufacturing.jsonl
+        ```
+
+    """
+    random.seed(random_seed)
+    with file.open("r") as lines:
+        seed, antiseed_manual, antiseed_af = [], [], []
+        for line in lines:
+            line = json.loads(line)
+            expansion_level = line.get("expansion_level")
+            if expansion_level == "SEED":
+                seed += [line]
+            elif expansion_level == "ANTISEED-manual":
+                antiseed_manual += [line]
+            elif expansion_level == "ANTISEED-AF":
+                antiseed_af += [line]
+            else:
+                typer.secho(f"{line}", err=True, color=typer.colors.YELLOW)
+        if balanced:
+            size_seed = int(np.ceil(len(seed) * seed_share))
+            seed = random.sample(seed, k=size_seed)
+            antiseed_manual = random.sample(antiseed_manual, k=size_seed)
+            antiseed_af = random.sample(antiseed_af, k=size_seed)
+        egs = [*seed, *antiseed_manual, *antiseed_af]
+        random.shuffle(egs)
+
+        split = int(np.ceil(len(egs) * test_ratio))
+        egs_test, egs_train = egs[:split], egs[split:]
+        with test.open("w") as fout:
+            for eg in egs_test:
+                fout.write(json.dumps(eg) + "\n")
+        with train.open("w") as fout:
+            for eg in egs_train:
+                fout.write(json.dumps(eg) + "\n")
 
 
 if __name__ == "__main__":
