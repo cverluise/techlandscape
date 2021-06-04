@@ -77,7 +77,8 @@ def get_publications_family(
               SELECT
                 family_id,
                 SPLIT(STRING_AGG(DISTINCT(cited_by.publication_number))) AS cited_by_publication_number,
-                ANY_VALUE(abstract) AS abstract
+                CONCAT(ANY_VALUE(title), "\\n", ANY_VALUE(abstract)) AS abstract
+                #ANY_VALUE(abstract) AS abstract
               FROM
                 `patents-public-data.google_patents_research.publications` AS p,
                 UNNEST(cited_by) AS cited_by
