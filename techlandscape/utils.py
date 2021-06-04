@@ -76,14 +76,6 @@ def iso2cnt(ent_list: List[str], flavor: str) -> List[str]:
     return res
 
 
-def format_table_ref_for_bq(table_ref: bigquery.table.TableReference) -> str:
-    """
-    Return the table_ref as string formated for bq queries. E.g `brv-patent.tech_landscape.tmp`
-    """
-    # TODO deprecate
-    return f"`{table_ref.project}.{table_ref.dataset_id}.{table_ref.table_id}`"
-
-
 def get_country_string_bq(iso_list: List[str], to_cnt: bool = True) -> str:
     """
     Return the list of countries of interest in a bq compatible format (e.g. '"AP","AU","CA",...')
