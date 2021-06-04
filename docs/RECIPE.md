@@ -38,7 +38,7 @@ STAGE_FOLDER=""
 gsutil -m cp "gs://tmp/publications_*.jsonl.gz" $STAGE_FOLDER
 ls ${STAGE_FOLDER}/publications_*.jsonl.gz | parallel --eta 'mv {} {.}.tmp.gz && techlandscape utils flatten-nested-vars {.}.tmp.gz cpc,ipc,citation,cited_by >> {.} && gzip {.}'
 gsutil -m cp "${STAGE_FOLDER}/publications_*.jsonl.gz" gs://tmp/
-bq rm patentcity.patents.publications
+bq rm patentcity:patents.publications
 bq load --source_format NEWLINE_DELIMITED_JSON --replace --max_bad_records 1000 patentcity:patents.publications "gs://tmp/publications_*.jsonl.gz" schemas/publications_familyid.json
 ```
 
