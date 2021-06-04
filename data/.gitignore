@@ -20,3 +20,5 @@
 /training_hydrogenstorage.jsonl
 /training_naturallanguageprocessing.jsonl
 /training_selfdrivingvehicle.jsonl
+/test_additivemanufacturing.jsonl
+/train_additivemanufacturing.jsonl
