@@ -10,35 +10,6 @@ app = typer.Typer()
 
 @monitor
 @app.command()
-def load_file_to_bq(
-    seed_file: Path,
-    destination: str,
-    credentials: Path,
-    write_disposition: str = "WRITE_TRUNCATE",
-    source_format: str = "NEWLINE_DELIMITED_JSON",
-    autodetect: bool = True,
-    **kwargs,
-):
-    """
-    Load file to BigQuery. Mainly a bigquery.client.load_table_from_file wrapper.
-    """
-    seed_file = Path(seed_file)
-    client = get_bq_client(credentials)
-    job_config = bigquery.LoadJobConfig(
-        write_disposition=write_disposition,
-        source_format=source_format,
-        autodetect=autodetect,
-        **kwargs,
-    )
-    client.load_table_from_file(
-        seed_file.open("rb"), destination=destination, job_config=job_config
-    ).result()
-    typer.secho(f"{ok}File saved to {destination}", fg=typer.colors.GREEN)
-
-
-@timer
-@monitor
-@app.command()
 def get_expansion_table(
     flavor: str, table_ref: str, countries: List[str], credentials: Path
 ):
