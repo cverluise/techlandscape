@@ -391,6 +391,14 @@ numpy = ">=1.7"
 six = "*"
 
 [[package]]
+category = "main"
+description = "A high performance persistent bloom filter"
+name = "hydra"
+optional = false
+python-versions = "*"
+version = "2.5"
+
+[[package]]
 category = "dev"
 description = "File identification library for Python"
 name = "identify"
@@ -1377,7 +1385,7 @@ python-versions = "*"
 version = "1.12.1"
 
 [metadata]
-content-hash = "b9d04a5359dfce877c263f2934e637307abeac3a3c537fe767eec68a99ca857e"
+content-hash = "d01b140e322a6b26d36de98e64d32c10e36f7ce04a697c70e5f30e330c2d19ee"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -1664,6 +1672,9 @@ h5py = [
     {file = "h5py-2.10.0-cp38-cp38-win32.whl", hash = "sha256:6ef7ab1089e3ef53ca099038f3c0a94d03e3560e6aff0e9d6c64c55fb13fc681"},
     {file = "h5py-2.10.0-cp38-cp38-win_amd64.whl", hash = "sha256:769e141512b54dee14ec76ed354fcacfc7d97fea5a7646b709f7400cf1838630"},
     {file = "h5py-2.10.0.tar.gz", hash = "sha256:84412798925dc870ffd7107f045d7659e60f5d46d1c70c700375248bf6bf512d"},
+]
+hydra = [
+    {file = "Hydra-2.5.tar.gz", hash = "sha256:247091b9c279c77686ea995f0f07070a28870c1942959b1474ad57076074384a"},
 ]
 identify = [
     {file = "identify-1.6.1-py2.py3-none-any.whl", hash = "sha256:ec4698722b9a8a6f2aa5f9ff9cc687956494f0ba734941659ad7f018cf457e44"},
