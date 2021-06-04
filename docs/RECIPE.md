@@ -49,3 +49,12 @@ dvc unprotect outs/expansion_*robustness*.csv
 dvc repro -f expansion-robustness
 dvc add outs/expansion_*robustness*.csv
 ```
+
+### Training data
+
+```shell
+cat lib/technology.txt | parallel --eta 'techlandscape io get-training-data family_id patentcity.techdiffusion.seed_{} patentcity.techdiffusion.expansion_{} 400 patentcity.techdiffusion.training_{} credentials_bq.json'
+gsutil -m rm "gs://tmp/training_*.jsonl" 
+cat lib/technology.txt | parallel --eta 'bq extract --destination_format NEWLINE_DELIMITED_JSON patentcity:techdiffusion.training_{} "gs://tmp/training_{}.jsonl" '
+gsutil -m cp "gs://tmp/training_*.jsonl" data/
+```
