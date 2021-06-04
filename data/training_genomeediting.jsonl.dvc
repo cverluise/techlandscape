@@ -1,0 +1,4 @@
+outs:
+- md5: 175a4d67bc6ac8f43186b71e1e13eff1
+  size: 837527
+  path: training_genomeediting.jsonl
