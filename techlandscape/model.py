@@ -65,8 +65,12 @@ class DataLoader:
         ):
             self.text_train = self._get_data(self.train_path, "text")
             self.text_test = self._get_data(self.test_path, "text")
-            self.y_train = np.array(self._get_data(self.train_path, "is_seed"))
-            self.y_test = np.array(self._get_data(self.test_path, "is_seed"))
+            self.y_train = np.array(self._get_data(self.train_path, "is_seed")).astype(
+                int
+            )
+            self.y_test = np.array(self._get_data(self.test_path, "is_seed")).astype(
+                int
+            )
             typer.secho(f"{ok}Data loaded", color=typer.colors.GREEN)
         else:
             typer.secho("Data already populated", color=typer.colors.YELLOW)
@@ -299,6 +303,8 @@ class ModelBuilder(TextVectorizer):
         """
         Instantiate a CNN model with <blocks> Convolution-Pooling pair layers.
         """
+        self.vectorize_text()  # we need to trigger it now to get x_train to determine the input shape
+        self.input_shape = self.x_train.shape[1:]
 
         self.model = models.Sequential()
         if self.cfg["model"]["use_pretrained_embedding"]:
