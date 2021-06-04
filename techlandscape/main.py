@@ -6,6 +6,7 @@ from techlandscape import (
     errors,
     assets,
     utils,
+    io,
 )
 import typer
 
@@ -18,6 +19,7 @@ app.add_typer(robustness.app, name="robustness")
 app.add_typer(errors.app, name="model.errors")
 app.add_typer(assets.app, name="assets")
 app.add_typer(utils.app, name="utils")
+app.add_typer(io.app, name="io")
 
 if __name__ == "__main__":
     app()
