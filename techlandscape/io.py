@@ -47,6 +47,7 @@ def get_training_data(
       SELECT
         {primary_key.value},
         expansion_level,
+        CAST(expansion_level="SEED" AS INT64) AS is_seed,
         STRUCT(CAST(expansion_level="SEED" AS INT64) AS SEED,
           CAST(expansion_level LIKE "ANTISEED%" AS INT64) AS NOT_SEED) AS cats,
         text
@@ -55,9 +56,10 @@ def get_training_data(
       WHERE
         expansion_level LIKE "%SEED%"),
       random AS (
-        SELECT
+    SELECT
       r.{primary_key.value} AS {primary_key.value},
       "ANTISEED-AF" AS expansion_level,
+      CAST(0 AS INT64) AS is_seed,
       STRUCT(0 AS SEED,
         1 AS NOT_SEED) AS cats,
       abstract AS text
