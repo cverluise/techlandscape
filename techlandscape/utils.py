@@ -450,9 +450,11 @@ def train_test_split(
         with test.open("w") as fout:
             for eg in egs_test:
                 fout.write(json.dumps(eg) + "\n")
+            typer.secho(f"{ok}{test} saved", color=typer.colors.GREEN)
         with train.open("w") as fout:
             for eg in egs_train:
                 fout.write(json.dumps(eg) + "\n")
+            typer.secho(f"{ok}{train} saved", color=typer.colors.GREEN)
 
 
 if __name__ == "__main__":
