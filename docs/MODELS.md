@@ -190,5 +190,5 @@ Name| Description | Recommended values |Type
 ??? example
     ```yaml
     logger:
-    verbose: 2 
+      verbose: 2 
     ```
