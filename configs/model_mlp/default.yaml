@@ -1,0 +1,43 @@
+# @package _group_
+data:
+  train:
+  test:
+
+tok2vec:
+  ngram_range: [1,2]
+  top_k: 5000
+  dtype: float32
+  strip_accents: unicode
+  decode_error: replace
+  analyzer: word
+  min_df: 2
+
+model:
+  architecture: mlp
+  layers: 1
+  units: 64
+  dropout_rate: .2
+  optimizer:
+    learning_rate: 1e-3
+    loss: binary_crossentropy
+
+training:
+  epochs: 100
+  batch_size: 64
+  callbacks:
+    early_stopping:
+      active: False
+      monitor: val_loss
+      patience: 2
+    save_best_only:
+      active: True
+      monitor: val_loss
+      verbose: 0
+
+logger:
+    verbose: 0
+    tensorboard:
+      active: True
+      logdir:
+
+out:

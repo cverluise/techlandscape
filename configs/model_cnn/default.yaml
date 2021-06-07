@@ -1,0 +1,44 @@
+# @package _global_
+data:
+  train: data/train_additivemanufacturing.jsonl
+  test: data/test_additivemanufacturing.jsonl
+
+tok2vec:
+  max_length: 250
+  top_k: 5000
+
+model:
+  architecture: cnn
+  blocks: 2
+  filters: 64
+  dropout_rate: .2
+  embedding_dim: 100
+  kernel_size: 5
+  pool_size: 3
+  use_pretrained_embedding: False
+  is_embedding_trainable: False
+  optimizer:
+    learning_rate: 1e-3
+    loss: binary_crossentropy
+
+training:
+  epochs: 100
+  batch_size: 64
+  callbacks:
+    early_stopping:
+      active: False
+      monitor: val_loss
+      patience: 2
+    save_best_only:
+      active: True
+      monitor: val_loss
+      verbose: 0
+
+
+logger:
+    verbose: 0
+    tensorboard:
+      active: True
+      logdir:
+
+out:

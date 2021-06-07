@@ -1,3 +1,4 @@
+import keras.metrics
 import numpy as np
 import json
 from pathlib import Path
@@ -18,7 +19,12 @@ from keras.callbacks import EarlyStopping
 from techlandscape.utils import get_config, ok, not_ok
 from techlandscape.exception import UnknownModel, UNKNOWN_MODEL_MSG
 from techlandscape.enumerators import SupportedModels
+from omegaconf import DictConfig, OmegaConf
 import typer
+import hydra
+import tensorboard
+
+app = typer.Typer()
 
 
 class DataLoader:
@@ -31,8 +37,13 @@ class DataLoader:
     **Usage:**
         ```python
         from techlandscape.model import DataLoader
-        data_loader = DataLoader("configs/model_cnn.yaml")
-        data_loader.load_data()
+        from techlandscape.utils import get_config
+
+        cfg = get_config("configs/model_cnn/default.yaml")
+        cfg.update({"data": {"train": "your-train.jsonl", "test": "your-test.jsonl"}, "out": "your-save-dir"})
+
+        data_loader = DataLoader(cfg)
+        data_loader.load()
 
         # check examples
         data_loader.text_train
@@ -44,10 +55,10 @@ class DataLoader:
     y_train = None
     y_test = None
 
-    def __init__(self, config: Path):
-        self.cfg = get_config(config)
-        self.train_path = Path(self.cfg["data"]["train"])
-        self.test_path = Path(self.cfg["data"]["test"])
+    def __init__(self, config: DictConfig):
+        self.cfg = config
+        self.train_path = Path(hydra.utils.get_original_cwd()) / Path(self.cfg["data"]["train"])
+        self.test_path = Path(hydra.utils.get_original_cwd()) / Path(self.cfg["data"]["test"])
 
     @staticmethod
     def _get_data(path: Path, var: str):
@@ -55,13 +66,13 @@ class DataLoader:
             json.loads(line)[var] for line in path.open("r").read().split("\n") if line
         ]
 
-    def load_data(self):
+    def load(self):
         """Load data. Expect a jsonl file where each row at least two fields: 'text' and 'is_seed'."""
         if any(
-            map(
-                lambda x: x is None,
-                [self.text_train, self.text_test, self.y_train, self.y_test],
-            )
+                map(
+                    lambda x: x is None,
+                    [self.text_train, self.text_test, self.y_train, self.y_test],
+                )
         ):
             self.text_train = self._get_data(self.train_path, "text")
             self.text_test = self._get_data(self.test_path, "text")
@@ -94,8 +105,13 @@ class TextVectorizer(DataLoader):
     **Usage:**
         ```python
         from techlandscape.model import TextVectorizer
-        text_loader = TextVectorizer("configs/model_cnn.yaml")
-        text_loader.vectorize_text()
+        from techlandscape.utils import get_config
+
+        cfg = get_config("configs/model_cnn/default.yaml")
+        cfg.update({"data": {"train": "your-train.jsonl", "test": "your-test.jsonl"}, "out": "your-save-dir"})
+
+        text_loader = TextVectorizer(cfg)
+        text_loader.vectorize()
 
         # check examples
         text_loader.x_train
@@ -110,7 +126,7 @@ class TextVectorizer(DataLoader):
     x_test = None
     max_length = None
 
-    def __init__(self, config: Path):
+    def __init__(self, config: DictConfig):
         super().__init__(config)
         self.model_architecture = self.cfg["model"]["architecture"]
 
@@ -166,12 +182,12 @@ class TextVectorizer(DataLoader):
         Note: Used in the MLP model only
         """
         if any(
-            map(
-                lambda x: x is None,
-                [self.vectorizer, self.selector, self.x_train, self.x_test],
-            )
+                map(
+                    lambda x: x is None,
+                    [self.vectorizer, self.selector, self.x_train, self.x_test],
+                )
         ):
-            self.load_data()
+            self.load()
             self._fit_ngram_vectorizer()
 
             # Learn vocabulary from training texts and vectorize training texts.
@@ -199,18 +215,18 @@ class TextVectorizer(DataLoader):
         Note: Used in the CNN model only
         """
         if any(
-            map(
-                lambda x: x is None,
-                [
-                    self.x_train,
-                    self.x_test,
-                    self.tokenizer,
-                    self.num_features,
-                    self.max_length,
-                ],
-            )
+                map(
+                    lambda x: x is None,
+                    [
+                        self.x_train,
+                        self.x_test,
+                        self.tokenizer,
+                        self.num_features,
+                        self.max_length,
+                    ],
+                )
         ):
-            self.load_data()
+            self.load()
             self._fit_sequence_tokenizer()
             self.num_features = min(
                 len(self.tokenizer.word_index) + 1, self.cfg["tok2vec"]["top_k"]
@@ -237,7 +253,7 @@ class TextVectorizer(DataLoader):
                 color=typer.colors.YELLOW,
             )
 
-    def vectorize_text(self):
+    def vectorize(self):
         """Return vectorized texts (train and test)"""
         if self.model_architecture == "cnn":
             self._get_sequences()
@@ -258,8 +274,13 @@ class ModelBuilder(TextVectorizer):
     **Usage:**
         ```python
         from techlandscape.model import ModelBuilder
-        model_builder = ModelBuilder("configs/model_cnn.yaml")
-        model_builder.build_model()
+        from techlandscape.utils import get_config
+
+        cfg = get_config("configs/model_cnn/default.yaml")
+        cfg.update({"data": {"train": "your-train.jsonl", "test": "your-test.jsonl"}, "out": "your-save-dir"})
+
+        model_builder = ModelBuilder(cfg)
+        model_builder.build()
 
         # check model
         model_builder.model.summary()
@@ -273,7 +294,7 @@ class ModelBuilder(TextVectorizer):
 
     model = None
 
-    def __init__(self, config: Path):
+    def __init__(self, config: DictConfig):
         super().__init__(config)
 
     def _build_mlp(self):  # -> models.Sequential
@@ -282,7 +303,7 @@ class ModelBuilder(TextVectorizer):
         """
 
         # Init model
-        self.vectorize_text()  # we need to trigger it now to get x_train to determine the input shape
+        self.vectorize()  # we need to trigger it now to get x_train to determine the input shape
         self.input_shape = self.x_train.shape[1:]
         self.model = models.Sequential()
         self.model.add(
@@ -303,7 +324,7 @@ class ModelBuilder(TextVectorizer):
         """
         Instantiate a CNN model with <blocks> Convolution-Pooling pair layers.
         """
-        self.vectorize_text()  # we need to trigger it now to get x_train to determine the input shape
+        self.vectorize()  # we need to trigger it now to get x_train to determine the input shape
         self.input_shape = self.x_train.shape[1:]
 
         self.model = models.Sequential()
@@ -351,7 +372,7 @@ class ModelBuilder(TextVectorizer):
         self.model.add(Dropout(rate=self.cfg["model"]["dropout_rate"]))
         self.model.add(Dense(1, activation="sigmoid"))
 
-    def build_model(self, embedding_matrix: dict = None):
+    def build(self, embedding_matrix: dict = None):
         """
         Instantiate model based on config file
         """
@@ -382,8 +403,13 @@ class ModelCompiler(ModelBuilder):
     **Usage:**
         ```python
         from techlandscape.model import ModelCompiler
-        model_compiler = ModelCompiler("configs/model_cnn.yaml")
-        model_compiler.compile_model()
+        from techlandscape.utils import get_config
+
+        cfg = get_config("configs/model_cnn/default.yaml")
+        cfg.update({"data": {"train": "your-train.jsonl", "test": "your-test.jsonl"}, "out": "your-save-dir"})
+
+        model_compiler = ModelCompiler(cfg)
+        model_compiler.compile()
 
         # check model, e.g. loss
         model_compiler.model.loss
@@ -392,17 +418,17 @@ class ModelCompiler(ModelBuilder):
 
     optimizer = None
 
-    def __init__(self, config: Path):
+    def __init__(self, config: DictConfig):
         super().__init__(config)
 
-    def compile_model(self, embedding_matrix: dict = None):
+    def compile(self, embedding_matrix: dict = None):
         """Compile model. Use config file to instantiate training components."""
-        self.build_model(embedding_matrix)
+        self.build(embedding_matrix)
         self.optimizer = Adam(lr=float(self.cfg["model"]["optimizer"]["learning_rate"]))
         self.model.compile(
             optimizer=self.optimizer,
             loss=self.cfg["model"]["optimizer"]["loss"],
-            metrics=self.cfg["model"]["optimizer"]["metrics"],
+            metrics=[keras.metrics.BinaryAccuracy(), keras.metrics.Precision(), keras.metrics.Recall()],
         )
         typer.secho(
             f"{ok}Model compiled (see self.model.summary() for details)",
@@ -420,28 +446,46 @@ class ModelFitter(ModelCompiler):
     **Usage:**
         ```python
         from techlandscape.model import ModelFitter
-        model_fitter = ModelFitter("configs/model_cnn.yaml")
-        model_fitter.fit_model()
+        from techlandscape.utils import get_config
+
+        cfg = get_config("configs/model_cnn/default.yaml")
+        cfg.update({"data": {"train": "your-train.jsonl", "test": "your-test.jsonl"}, "out": "your-save-dir"})
+
+        model_fitter = ModelFitter(cfg)
+        model_fitter.fit()
 
         # check model, e.g. history
         model_fitter.model.history
         ```
     """
 
-    callbacks = None
+    logdir = None
+    filepath_best = None
+    callbacks = []
 
-    def __init__(self, config: Path):
+    def __init__(self, config: DictConfig):
         super().__init__(config)
 
-    def fit_model(self):
+    def fit(self):
         """Fit model"""
-        self.compile_model()
-        self.callbacks = [
-            EarlyStopping(
-                monitor=self.cfg["training"]["callbacks"]["monitor"],
-                patience=self.cfg["training"]["callbacks"]["patience"],
-            )
-        ]
+        self.compile()
+        if self.cfg["training"]["callbacks"]["early_stopping"]["active"]:
+            self.callbacks += [
+                EarlyStopping(
+                    monitor=self.cfg["training"]["callbacks"]["early_stopping"]["monitor"],
+                    patience=self.cfg["training"]["callbacks"]["early_stopping"]["patience"],
+                    restore_best_weights=True
+                )
+            ]
+        if self.cfg["training"]["callbacks"]["save_best_only"]["active"]:
+            self.filepath_best = Path(hydra.utils.get_original_cwd()) / Path(self.cfg["out"]) / Path("model-best")
+            self.callbacks += [keras.callbacks.ModelCheckpoint(filepath=self.filepath_best,
+                                                               monitor=self.cfg["training"]["callbacks"]["save_best_only"]["monitor"],
+                                                               save_best_only=True,
+                                                               verbose=self.cfg["training"]["callbacks"]["save_best_only"]["verbose"])]
+        if self.cfg["logger"]["tensorboard"]["active"]:
+            self.logdir = Path(hydra.utils.get_original_cwd()) / Path(self.cfg["logger"]["tensorboard"]["logdir"])
+            self.callbacks += [keras.callbacks.TensorBoard(self.logdir)]
 
         if not self.model.history:
             self.model.fit(
@@ -458,28 +502,31 @@ class ModelFitter(ModelCompiler):
             # Alternative: clear session (keras.backend.clear_session()) and retrain
             typer.secho(f"Model already trained", color=typer.colors.YELLOW)
 
-    # TODO save model & config file in folder
-
 
 class Model(ModelFitter):
     """Main model class (data + model architecture + training)
 
     Arguments:
-        config: config file path
+        config: config
         filepath: saving model directory
 
     **Usage:**
         ```python
         from techlandscape.model import Model
-        model = Model("configs/model_cnn.yaml", "models/default_cnn/")
-        model.fit_model()
+        from techlandscape.utils import get_config
+
+        cfg = get_config("configs/model_cnn/default.yaml")
+        cfg.update({"data": {"train": "your-train.jsonl", "test": "your-test.jsonl"}, "out": "your-save-dir"})
+
+        model = Model(cfg)
+        model.fit()
         model.save()
         ```
     """
 
-    def __init__(self, config: Path, filepath: Path):
+    def __init__(self, config: DictConfig):
         super().__init__(config)
-        self.filepath = filepath
+        self.filepath = Path(hydra.utils.get_original_cwd()) / Path(self.cfg["out"])
 
     def save(self):
         if not self.model.history:
@@ -490,3 +537,19 @@ class Model(ModelFitter):
             )
         else:
             self.model.save(self.filepath)
+
+
+@hydra.main(config_path="../configs")
+def train(cfg: DictConfig) -> None:
+    """
+    Train and save mode
+    """
+    model = Model(config=cfg)
+    model.fit()
+    # model.save()
+    # breakpoint()
+    Path(model.filepath / Path("config.yaml")).open("w").write(OmegaConf.to_yaml(model.cfg))
+
+
+if __name__ == "__main__":
+    train()
