@@ -26,7 +26,9 @@ plotly = "^4.14.3"
 tabulate = "^0.8.9"
 mkdocs-material = "^7.1.6"
 mkdocstrings = "^0.15.1"
-hydra = "^2.5"
+omegaconf = "^2.0.6"
+hydra-core = "^1.0.6"
+tensorboard = "^2.5.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
