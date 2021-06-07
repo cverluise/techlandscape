@@ -8,14 +8,14 @@ tok2vec:
 
 model:
   architecture: cnn
-  blocks: 2 # [1,2,3], number of Convolution-Pooling pairs
-  filters: 64 # [64,128], the dimensionality of the output space (i.e. the number of output filters in the convolution)
-  dropout_rate: .2 # [0,0.2], percentage of input to drop at Dropout Layer.
-  embedding_dim: 100 # 100, dimension of the embedding vectors (reco between 50 and 200)
-  kernel_size: 5 # [3,5,7], length of the 1D convolution window
-  pool_size: 3 # 3, factor by which to downscale input at MaxPooling layer
-  use_pretrained_embedding: False # False, true if pre-trained
-  is_embedding_trainable: False # False, true if embedding trainable
+  blocks: 2
+  filters: 64
+  dropout_rate: .2
+  embedding_dim: 100
+  kernel_size: 5
+  pool_size: 3
+  use_pretrained_embedding: False
+  is_embedding_trainable: False
   optimizer:
     learning_rate: 1e-3
     loss: binary_crossentropy
@@ -29,4 +29,4 @@ training:
     patience: 2
 
 logger:
-    verbose: 2  # Logs once per epoch.
+    verbose: 2
