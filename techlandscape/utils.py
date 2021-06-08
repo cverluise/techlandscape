@@ -457,5 +457,9 @@ def train_test_split(
             typer.secho(f"{ok}{train} saved", color=typer.colors.GREEN)
 
 
+def get_project_root() -> Path:
+    return Path(__file__).parent.parent
+
+
 if __name__ == "__main__":
     app()
