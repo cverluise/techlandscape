@@ -440,7 +440,10 @@ def train_test_split(
         if balanced:
             size_seed = int(np.ceil(len(seed) * seed_share))
             seed = random.sample(seed, k=size_seed)
-            antiseed_manual = random.sample(antiseed_manual, k=size_seed)
+            try:
+                antiseed_manual = random.sample(antiseed_manual, k=size_seed)
+            except ValueError:  # case where there are not enough antiseed-manual examples
+                pass
             antiseed_af = random.sample(antiseed_af, k=size_seed)
         egs = [*seed, *antiseed_manual, *antiseed_af]
         random.shuffle(egs)
