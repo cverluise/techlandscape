@@ -29,6 +29,7 @@ mkdocstrings = "^0.15.1"
 omegaconf = "^2.0.6"
 hydra-core = "^1.0.6"
 tensorboard = "^2.5.0"
+hydra = "^2.5"
 
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"

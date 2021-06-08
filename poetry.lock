@@ -400,6 +400,14 @@ six = "*"
 
 [[package]]
 category = "main"
+description = "A high performance persistent bloom filter"
+name = "hydra"
+optional = false
+python-versions = "*"
+version = "2.5"
+
+[[package]]
+category = "main"
 description = "A framework for elegantly configuring complex applications"
 name = "hydra-core"
 optional = false
@@ -1452,7 +1460,7 @@ docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "pytest-enabler", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [metadata]
-content-hash = "eb1872ce0f17e0bd5ad81d55add466b02836a9b687d08da63cb7497588c2bb24"
+content-hash = "39997c12a0eef42595056a7a2228d8b0a506be17395e100884e741971a0fa3bd"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -1742,6 +1750,9 @@ h5py = [
     {file = "h5py-2.10.0-cp38-cp38-win32.whl", hash = "sha256:6ef7ab1089e3ef53ca099038f3c0a94d03e3560e6aff0e9d6c64c55fb13fc681"},
     {file = "h5py-2.10.0-cp38-cp38-win_amd64.whl", hash = "sha256:769e141512b54dee14ec76ed354fcacfc7d97fea5a7646b709f7400cf1838630"},
     {file = "h5py-2.10.0.tar.gz", hash = "sha256:84412798925dc870ffd7107f045d7659e60f5d46d1c70c700375248bf6bf512d"},
+]
+hydra = [
+    {file = "Hydra-2.5.tar.gz", hash = "sha256:247091b9c279c77686ea995f0f07070a28870c1942959b1474ad57076074384a"},
 ]
 hydra-core = [
     {file = "hydra-core-1.0.6.tar.gz", hash = "sha256:be5fe119eb41ada20c82835b153b956781de7e2506670ba942f7453b2e850950"},
