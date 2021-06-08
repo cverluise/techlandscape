@@ -83,10 +83,13 @@ The model component defines the model's architecture, hyper-parameters and optim
      Name| Description | Recommended values|Type
     ---|---|---|---
     `architecture`  | High level model architecture family name. | `"mlp"` |`"mlp"`
-    `layers`        | Number of hidden layers. Nb: if 0, then logistic regression. | `0`, `1`, `2`, `4` |`int`
+    `layers`        | Number of hidden layers. Nb: if 1, then logistic regression. | `1`, `2`, `4` |`int`
     `units`         | Number of units per hidden layer. | `16`, `32`, `64` |`int`
     `dropout_rate`  | Fraction of the input units to drop. | `0`, `0.2` |`float`  
     
+    !!! note
+        Dropout is applied to hidden layers only.
+
     ??? example
         ```yaml
         model:
