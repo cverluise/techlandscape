@@ -1,12 +1,12 @@
-import keras.metrics
 import numpy as np
 import json
 from pathlib import Path
-from keras.preprocessing import sequence, text
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectKBest, f_classif
-from keras import models
-from keras.layers import (
+import tensorflow as tf
+from tensorflow.keras.preprocessing import sequence, text
+from tensorflow.keras import models
+from tensorflow.keras.layers import (
     Dense,
     Dropout,
     Embedding,
@@ -14,15 +14,14 @@ from keras.layers import (
     MaxPooling1D,
     GlobalAveragePooling1D,
 )
-from keras.optimizers import Adam
-from keras.callbacks import EarlyStopping
-from techlandscape.utils import get_config, ok, not_ok
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping
+from techlandscape.utils import get_config, ok, not_ok, get_project_root
 from techlandscape.exception import UnknownModel, UNKNOWN_MODEL_MSG
 from techlandscape.enumerators import SupportedModels
 from omegaconf import DictConfig, OmegaConf
 import typer
 import hydra
-import tensorboard
 
 app = typer.Typer()
 
@@ -57,8 +56,8 @@ class DataLoader:
 
     def __init__(self, config: DictConfig):
         self.cfg = config
-        self.train_path = Path(hydra.utils.get_original_cwd()) / Path(self.cfg["data"]["train"])
-        self.test_path = Path(hydra.utils.get_original_cwd()) / Path(self.cfg["data"]["test"])
+        self.train_path = get_project_root() / Path(self.cfg["data"]["train"])  # Path(hydra.utils.get_original_cwd())
+        self.test_path = get_project_root() / Path(self.cfg["data"]["test"])  # Path(hydra.utils.get_original_cwd())
 
     @staticmethod
     def _get_data(path: Path, var: str):
@@ -306,11 +305,12 @@ class ModelBuilder(TextVectorizer):
         self.vectorize()  # we need to trigger it now to get x_train to determine the input shape
         self.input_shape = self.x_train.shape[1:]
         self.model = models.Sequential()
-        self.model.add(
-            Dropout(
-                rate=self.cfg["model"]["dropout_rate"], input_shape=self.input_shape
-            )
-        )
+        # self.model.add(
+        #     Dropout(
+        #         rate=self.cfg["model"]["dropout_rate"], input_shape=self.input_shape
+        #     )
+        # )
+        ## No dropout layer because of this *** issue: https://github.com/tensorflow/tensorflow/issues/25980
 
         # Add mlp layers
         for _ in range(self.cfg["model"]["layers"] - 1):
@@ -428,7 +428,7 @@ class ModelCompiler(ModelBuilder):
         self.model.compile(
             optimizer=self.optimizer,
             loss=self.cfg["model"]["optimizer"]["loss"],
-            metrics=[keras.metrics.BinaryAccuracy(), keras.metrics.Precision(), keras.metrics.Recall()],
+            metrics=[tf.keras.metrics.BinaryAccuracy(), tf.keras.metrics.Precision(), tf.keras.metrics.Recall()],
         )
         typer.secho(
             f"{ok}Model compiled (see self.model.summary() for details)",
@@ -466,6 +466,12 @@ class ModelFitter(ModelCompiler):
     def __init__(self, config: DictConfig):
         super().__init__(config)
 
+    @staticmethod
+    def _convert_sparse_matrix_to_sparse_tensor(X):
+        coo = X.tocoo()
+        indices = np.mat([coo.row, coo.col]).transpose()
+        return tf.SparseTensor(indices, coo.data, coo.shape)
+
     def fit(self):
         """Fit model"""
         self.compile()
@@ -478,16 +484,24 @@ class ModelFitter(ModelCompiler):
                 )
             ]
         if self.cfg["training"]["callbacks"]["save_best_only"]["active"]:
-            self.filepath_best = Path(hydra.utils.get_original_cwd()) / Path(self.cfg["out"]) / Path("model-best")
-            self.callbacks += [keras.callbacks.ModelCheckpoint(filepath=self.filepath_best,
-                                                               monitor=self.cfg["training"]["callbacks"]["save_best_only"]["monitor"],
-                                                               save_best_only=True,
-                                                               verbose=self.cfg["training"]["callbacks"]["save_best_only"]["verbose"])]
+            self.filepath_best = get_project_root() / Path(self.cfg["out"]) / Path("model-best")
+            self.callbacks += [tf.keras.callbacks.ModelCheckpoint(filepath=self.filepath_best,
+                                                                  monitor=
+                                                                  self.cfg["training"]["callbacks"]["save_best_only"][
+                                                                      "monitor"],
+                                                                  save_best_only=True,
+                                                                  verbose=
+                                                                  self.cfg["training"]["callbacks"]["save_best_only"][
+                                                                      "verbose"])]
         if self.cfg["logger"]["tensorboard"]["active"]:
-            self.logdir = Path(hydra.utils.get_original_cwd()) / Path(self.cfg["logger"]["tensorboard"]["logdir"])
-            self.callbacks += [keras.callbacks.TensorBoard(self.logdir)]
+            self.logdir = get_project_root() / Path(self.cfg["logger"]["tensorboard"]["logdir"])
+            self.callbacks += [tf.keras.callbacks.TensorBoard(self.logdir)]
 
         if not self.model.history:
+            if self.model_architecture == "mlp":
+                self.x_train = tf.sparse.reorder(self._convert_sparse_matrix_to_sparse_tensor(self.x_train))
+                self.x_test = tf.sparse.reorder(self._convert_sparse_matrix_to_sparse_tensor(self.x_test))
+
             self.model.fit(
                 self.x_train,
                 self.y_train,
@@ -526,7 +540,7 @@ class Model(ModelFitter):
 
     def __init__(self, config: DictConfig):
         super().__init__(config)
-        self.filepath = Path(hydra.utils.get_original_cwd()) / Path(self.cfg["out"])
+        self.filepath = get_project_root() / Path(self.cfg["out"])
 
     def save(self):
         if not self.model.history:
@@ -546,8 +560,6 @@ def train(cfg: DictConfig) -> None:
     """
     model = Model(config=cfg)
     model.fit()
-    # model.save()
-    # breakpoint()
     Path(model.filepath / Path("config.yaml")).open("w").write(OmegaConf.to_yaml(model.cfg))
 
 
