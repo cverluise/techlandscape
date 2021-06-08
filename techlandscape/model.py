@@ -56,8 +56,12 @@ class DataLoader:
 
     def __init__(self, config: DictConfig):
         self.cfg = config
-        self.train_path = get_project_root() / Path(self.cfg["data"]["train"])  # Path(hydra.utils.get_original_cwd())
-        self.test_path = get_project_root() / Path(self.cfg["data"]["test"])  # Path(hydra.utils.get_original_cwd())
+        self.train_path = get_project_root() / Path(
+            self.cfg["data"]["train"]
+        )  # Path(hydra.utils.get_original_cwd())
+        self.test_path = get_project_root() / Path(
+            self.cfg["data"]["test"]
+        )  # Path(hydra.utils.get_original_cwd())
 
     @staticmethod
     def _get_data(path: Path, var: str):
@@ -68,10 +72,10 @@ class DataLoader:
     def load(self):
         """Load data. Expect a jsonl file where each row at least two fields: 'text' and 'is_seed'."""
         if any(
-                map(
-                    lambda x: x is None,
-                    [self.text_train, self.text_test, self.y_train, self.y_test],
-                )
+            map(
+                lambda x: x is None,
+                [self.text_train, self.text_test, self.y_train, self.y_test],
+            )
         ):
             self.text_train = self._get_data(self.train_path, "text")
             self.text_test = self._get_data(self.test_path, "text")
@@ -79,11 +83,14 @@ class DataLoader:
                 int
             )
             try:
-                self.y_test = np.array(self._get_data(self.test_path, "is_seed")).astype(
-                    int
-                )
+                self.y_test = np.array(
+                    self._get_data(self.test_path, "is_seed")
+                ).astype(int)
             except KeyError:
-                typer.secho("No output variable in test. You can still vectorize the data.", color=typer.colors.YELLOW)
+                typer.secho(
+                    "No output variable in test. You can still vectorize the data.",
+                    color=typer.colors.YELLOW,
+                )
                 pass
             typer.secho(f"{ok}Data loaded", color=typer.colors.GREEN)
         else:
@@ -191,10 +198,10 @@ class TextVectorizer(DataLoader):
         Note: Used in the MLP model only
         """
         if any(
-                map(
-                    lambda x: x is None,
-                    [self.vectorizer, self.selector, self.x_train, self.x_test],
-                )
+            map(
+                lambda x: x is None,
+                [self.vectorizer, self.selector, self.x_train, self.x_test],
+            )
         ):
             self.load()
             self._fit_ngram_vectorizer()
@@ -212,8 +219,12 @@ class TextVectorizer(DataLoader):
             self.x_test = self.selector.transform(self.x_test).astype("float32")
 
             # to sparse tensor + reorder
-            self.x_train = tf.sparse.reorder(self._convert_sparse_matrix_to_sparse_tensor(self.x_train))
-            self.x_test = tf.sparse.reorder(self._convert_sparse_matrix_to_sparse_tensor(self.x_test))
+            self.x_train = tf.sparse.reorder(
+                self._convert_sparse_matrix_to_sparse_tensor(self.x_train)
+            )
+            self.x_test = tf.sparse.reorder(
+                self._convert_sparse_matrix_to_sparse_tensor(self.x_test)
+            )
 
         else:
             typer.secho(
@@ -228,16 +239,16 @@ class TextVectorizer(DataLoader):
         Note: Used in the CNN model only
         """
         if any(
-                map(
-                    lambda x: x is None,
-                    [
-                        self.x_train,
-                        self.x_test,
-                        self.tokenizer,
-                        self.num_features,
-                        self.max_length,
-                    ],
-                )
+            map(
+                lambda x: x is None,
+                [
+                    self.x_train,
+                    self.x_test,
+                    self.tokenizer,
+                    self.num_features,
+                    self.max_length,
+                ],
+            )
         ):
             self.load()
             self._fit_sequence_tokenizer()
@@ -442,7 +453,11 @@ class ModelCompiler(ModelBuilder):
         self.model.compile(
             optimizer=self.optimizer,
             loss=self.cfg["model"]["optimizer"]["loss"],
-            metrics=[tf.keras.metrics.BinaryAccuracy(), tf.keras.metrics.Precision(), tf.keras.metrics.Recall()],
+            metrics=[
+                tf.keras.metrics.BinaryAccuracy(),
+                tf.keras.metrics.Precision(),
+                tf.keras.metrics.Recall(),
+            ],
         )
         typer.secho(
             f"{ok}Model compiled (see self.model.summary() for details)",
@@ -492,23 +507,35 @@ class ModelFitter(ModelCompiler):
         if self.cfg["training"]["callbacks"]["early_stopping"]["active"]:
             self.callbacks += [
                 EarlyStopping(
-                    monitor=self.cfg["training"]["callbacks"]["early_stopping"]["monitor"],
-                    patience=self.cfg["training"]["callbacks"]["early_stopping"]["patience"],
-                    restore_best_weights=True
+                    monitor=self.cfg["training"]["callbacks"]["early_stopping"][
+                        "monitor"
+                    ],
+                    patience=self.cfg["training"]["callbacks"]["early_stopping"][
+                        "patience"
+                    ],
+                    restore_best_weights=True,
                 )
             ]
         if self.cfg["training"]["callbacks"]["save_best_only"]["active"]:
-            self.filepath_best = get_project_root() / Path(self.cfg["out"]) / Path("model-best")
-            self.callbacks += [tf.keras.callbacks.ModelCheckpoint(filepath=self.filepath_best,
-                                                                  monitor=
-                                                                  self.cfg["training"]["callbacks"]["save_best_only"][
-                                                                      "monitor"],
-                                                                  save_best_only=True,
-                                                                  verbose=
-                                                                  self.cfg["training"]["callbacks"]["save_best_only"][
-                                                                      "verbose"])]
+            self.filepath_best = (
+                get_project_root() / Path(self.cfg["out"]) / Path("model-best")
+            )
+            self.callbacks += [
+                tf.keras.callbacks.ModelCheckpoint(
+                    filepath=self.filepath_best,
+                    monitor=self.cfg["training"]["callbacks"]["save_best_only"][
+                        "monitor"
+                    ],
+                    save_best_only=True,
+                    verbose=self.cfg["training"]["callbacks"]["save_best_only"][
+                        "verbose"
+                    ],
+                )
+            ]
         if self.cfg["logger"]["tensorboard"]["active"]:
-            self.logdir = get_project_root() / Path(self.cfg["logger"]["tensorboard"]["logdir"])
+            self.logdir = get_project_root() / Path(
+                self.cfg["logger"]["tensorboard"]["logdir"]
+            )
             self.callbacks += [tf.keras.callbacks.TensorBoard(self.logdir)]
 
         if not self.model.history:
@@ -567,13 +594,21 @@ class Model(ModelFitter):
             self.model.save(self.filepath)
 
     def save_config(self):
-        Path(self.filepath / Path("config.yaml")).open("w").write(OmegaConf.to_yaml(self.cfg))
+        Path(self.filepath / Path("config.yaml")).open("w").write(
+            OmegaConf.to_yaml(self.cfg)
+        )
 
     def save_meta(self):
         with Path(self.filepath / Path("meta.json")).open("w") as fout:
             fout.write(
-                json.dumps({"performance": self.model.evaluate(self.x_test, self.y_test, return_dict=True, verbose=0)},
-                           indent=2)
+                json.dumps(
+                    {
+                        "performance": self.model.evaluate(
+                            self.x_test, self.y_test, return_dict=True, verbose=0
+                        )
+                    },
+                    indent=2,
+                )
             )
 
 

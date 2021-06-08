@@ -22,9 +22,7 @@ def fig_wrapper(
         - `norm_axis`: 0, 1
     """
 
-    def _prep_data(
-        df: pd.DataFrame, groups: List, func: callable, norm_axis: int
-    ):
+    def _prep_data(df: pd.DataFrame, groups: List, func: callable, norm_axis: int):
         """
         Return `df` grouped by `groups` with values aggregated by `func` (e.g. len for count,
         sum for sum, etc) and normalized along the `norm_axis` st/nd.
@@ -68,9 +66,7 @@ def fig_wrapper(
         tmp,
         x=groups[0],
         y=y,
-        color_discrete_sequence=COLOR_SEQUENCE
-        if len(groups) == 2
-        else COLOR_UNIQUE,
+        color_discrete_sequence=COLOR_SEQUENCE if len(groups) == 2 else COLOR_UNIQUE,
         **kwargs
     )
 

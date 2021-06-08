@@ -15,13 +15,13 @@ app = typer.Typer()
 
 @app.command()
 def get_training_data(
-        primary_key: PrimaryKey,
-        seed_table: str,
-        expansion_table: str,
-        af_antiseed_size: int,
-        destination_table: str,
-        credentials: Path,
-        verbose: bool = False,
+    primary_key: PrimaryKey,
+    seed_table: str,
+    expansion_table: str,
+    af_antiseed_size: int,
+    destination_table: str,
+    credentials: Path,
+    verbose: bool = False,
 ) -> None:
     """
     Return training data
@@ -86,13 +86,14 @@ def get_training_data(
 
 @monitor
 @app.command()
-def get_expansion(primary_key: PrimaryKey,
-                  table_ref: str,
-                  destination_table: str,
-                  credentials: Path,
-                  sample_size: int = None,
-                  verbose: bool = False
-                  ) -> None:
+def get_expansion(
+    primary_key: PrimaryKey,
+    table_ref: str,
+    destination_table: str,
+    credentials: Path,
+    sample_size: int = None,
+    verbose: bool = False,
+) -> None:
     """
     Return (a sample of) the expansion table
 

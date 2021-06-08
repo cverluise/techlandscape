@@ -3,10 +3,12 @@ from pathlib import Path
 from typing import List
 from itertools import combinations, repeat
 import typer
-from techlandscape.utils import get_bq_client
+from techlandscape.utils import get_bq_client, get_config, ok, not_ok
 from techlandscape.enumerators import OverlapAnalysisKind, OverlapAnalysisAxis
+from techlandscape.model import TextVectorizer
 from glob import glob
 import pandas as pd
+import tensorflow as tf
 
 app = typer.Typer()
 
@@ -220,7 +222,7 @@ def wrap_overlap_analysis(
 
     **Usage:**
         ```shell
-        techlandscape robustness wrap-overlap-analysis "outs/expansion_*robustness*.csv" technologies --markdown
+        techlandscape robustness wrap-overlap-analysis "outs/expansion_*robustness*.csv" --markdown
         ```
     """
     files = glob(path)
@@ -251,6 +253,75 @@ def wrap_overlap_analysis(
             tmp.to_markdown(out)
         else:
             tmp.to_csv(out)
+
+
+@app.command()
+def get_prediction_analysis(models: str, data: str, destination: Path = None):
+    get_technology = lambda x: x.split("/")[-2].split("_")[0]
+    get_architecture = lambda x: x.split("/")[-2].split("_")[-1]
+    models = glob(models)
+    for i, model_ in enumerate(models):
+        technology = get_technology(model_)
+        architecture = get_architecture(model_)
+        model = tf.keras.models.load_model(model_)
+        cfg = get_config(Path(model_).parent / Path("config.yaml"))
+
+        cfg["data"]["test"] = data
+
+        text_vectorizer = TextVectorizer(cfg)
+        text_vectorizer.vectorize()
+
+        pred = model.predict(text_vectorizer.x_test)
+        if i == 0:
+            out = pd.DataFrame(pred, columns=[model_])
+        else:
+            out = out.merge(
+                pd.DataFrame(pred, columns=[model_]), left_index=True, right_index=True
+            )
+        filename = f"classification_{technology}_robustness_{architecture}.csv"
+        out.to_csv(Path(destination) / Path(filename))
+        typer.secho(f"{ok}{Path(destination) / Path(filename)} saved")
+
+
+@app.command()
+def wrap_prediction_analysis(path: str, markdown: bool = True):
+    get_technology = lambda x: x.split("/")[1].split("_")[1]
+    get_architecture = lambda x: x.split("/")[1].split("_")[-1]
+    files = glob(path)
+    for file in files:
+        technology = get_technology(file)
+        architecture = get_architecture(file)
+
+        tmp = pd.read_csv(file, index_col=0)
+        dispersion = tmp.std(axis=1).describe().rename("std_score").copy()
+
+        for col in tmp.columns:
+            tmp[col] = tmp[col].apply(lambda x: 1 if x > 0.5 else 0)
+        tmp["vote"] = tmp.sum(1)
+        tmp = (
+            tmp.groupby("vote")
+            .count()
+            .max(1)
+            .to_frame()
+            .reset_index()
+            .prod(1)
+            .rename("nb_positives")
+            .to_frame()
+        )
+        tmp["share_positives"] = tmp["nb_positives"] / tmp["nb_positives"].sum()
+        tmp = tmp[::-1]
+        tmp["cumshare_positives"] = tmp["share_positives"].cumsum()
+        tmp.index.name = "nb_models"
+        consensus = tmp.copy()
+
+        if markdown:
+            typer.echo(f"## {technology} - {architecture}\n")
+            typer.echo("### Score dispersion\n")
+            typer.echo(dispersion.round(3).to_markdown() + "\n")
+            typer.echo("### Models consensus\n")
+            typer.echo(consensus.round(3).to_markdown())
+        else:
+            typer.secho(f"{not_ok}csv not supported yet", err=True)
 
 
 if __name__ == "__main__":
