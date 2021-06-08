@@ -572,6 +572,7 @@ def train(cfg: DictConfig) -> None:
     model.fit()
     model.save_meta()
     model.save_config()
+    # no need to save the model itself, the checkpoint takes care of saving the best only
 
 
 if __name__ == "__main__":
