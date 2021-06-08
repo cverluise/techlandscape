@@ -78,9 +78,13 @@ class DataLoader:
             self.y_train = np.array(self._get_data(self.train_path, "is_seed")).astype(
                 int
             )
-            self.y_test = np.array(self._get_data(self.test_path, "is_seed")).astype(
-                int
-            )
+            try:
+                self.y_test = np.array(self._get_data(self.test_path, "is_seed")).astype(
+                    int
+                )
+            except KeyError:
+                typer.secho("No output variable in test. You can still vectorize the data.", color=typer.colors.YELLOW)
+                pass
             typer.secho(f"{ok}Data loaded", color=typer.colors.GREEN)
         else:
             typer.secho("Data already populated", color=typer.colors.YELLOW)
@@ -128,6 +132,12 @@ class TextVectorizer(DataLoader):
     def __init__(self, config: DictConfig):
         super().__init__(config)
         self.model_architecture = self.cfg["model"]["architecture"]
+
+    @staticmethod
+    def _convert_sparse_matrix_to_sparse_tensor(x):
+        coo = x.tocoo()
+        indices = np.mat([coo.row, coo.col]).transpose()
+        return tf.SparseTensor(indices, coo.data, coo.shape)
 
     def _fit_ngram_vectorizer(self):
         """Fit n-gram vectorizer
@@ -200,6 +210,10 @@ class TextVectorizer(DataLoader):
             # Keep only top k features
             self.x_train = self.selector.transform(self.x_train).astype("float32")
             self.x_test = self.selector.transform(self.x_test).astype("float32")
+
+            # to sparse tensor + reorder
+            self.x_train = tf.sparse.reorder(self._convert_sparse_matrix_to_sparse_tensor(self.x_train))
+            self.x_test = tf.sparse.reorder(self._convert_sparse_matrix_to_sparse_tensor(self.x_test))
 
         else:
             typer.secho(
@@ -466,11 +480,11 @@ class ModelFitter(ModelCompiler):
     def __init__(self, config: DictConfig):
         super().__init__(config)
 
-    @staticmethod
-    def _convert_sparse_matrix_to_sparse_tensor(X):
-        coo = X.tocoo()
-        indices = np.mat([coo.row, coo.col]).transpose()
-        return tf.SparseTensor(indices, coo.data, coo.shape)
+    # @staticmethod
+    # def _convert_sparse_matrix_to_sparse_tensor(X):
+    #     coo = X.tocoo()
+    #     indices = np.mat([coo.row, coo.col]).transpose()
+    #     return tf.SparseTensor(indices, coo.data, coo.shape)
 
     def fit(self):
         """Fit model"""
@@ -498,9 +512,9 @@ class ModelFitter(ModelCompiler):
             self.callbacks += [tf.keras.callbacks.TensorBoard(self.logdir)]
 
         if not self.model.history:
-            if self.model_architecture == "mlp":
-                self.x_train = tf.sparse.reorder(self._convert_sparse_matrix_to_sparse_tensor(self.x_train))
-                self.x_test = tf.sparse.reorder(self._convert_sparse_matrix_to_sparse_tensor(self.x_test))
+            # if self.model_architecture == "mlp":
+            #     self.x_train = tf.sparse.reorder(self._convert_sparse_matrix_to_sparse_tensor(self.x_train))
+            #     self.x_test = tf.sparse.reorder(self._convert_sparse_matrix_to_sparse_tensor(self.x_test))
 
             self.model.fit(
                 self.x_train,
