@@ -552,6 +552,16 @@ class Model(ModelFitter):
         else:
             self.model.save(self.filepath)
 
+    def save_config(self):
+        Path(self.filepath / Path("config.yaml")).open("w").write(OmegaConf.to_yaml(self.cfg))
+
+    def save_meta(self):
+        with Path(self.filepath / Path("meta.json")).open("w") as fout:
+            fout.write(
+                json.dumps({"performance": self.model.evaluate(self.x_test, self.y_test, return_dict=True, verbose=0)},
+                           indent=2)
+            )
+
 
 @hydra.main(config_path="../configs")
 def train(cfg: DictConfig) -> None:
@@ -560,7 +570,8 @@ def train(cfg: DictConfig) -> None:
     """
     model = Model(config=cfg)
     model.fit()
-    Path(model.filepath / Path("config.yaml")).open("w").write(OmegaConf.to_yaml(model.cfg))
+    model.save_meta()
+    model.save_config()
 
 
 if __name__ == "__main__":
