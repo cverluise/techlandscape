@@ -15,13 +15,13 @@ app = typer.Typer()
 
 @app.command()
 def get_training_data(
-    primary_key: PrimaryKey,
-    seed_table: str,
-    expansion_table: str,
-    af_antiseed_size: int,
-    destination_table: str,
-    credentials: Path,
-    verbose: bool = False,
+        primary_key: PrimaryKey,
+        seed_table: str,
+        expansion_table: str,
+        af_antiseed_size: int,
+        destination_table: str,
+        credentials: Path,
+        verbose: bool = False,
 ) -> None:
     """
     Return training data
@@ -85,50 +85,60 @@ def get_training_data(
 
 
 @monitor
-@app.command(deprecated=True)
-def get_expansion_table(
-    flavor: str, table_ref: str, countries: List[str], credentials: Path
-):
+@app.command()
+def get_expansion(primary_key: PrimaryKey,
+                  table_ref: str,
+                  destination_table: str,
+                  credentials: Path,
+                  sample_size: int = None,
+                  verbose: bool = False
+                  ) -> None:
     """
-    Return the expansion(publication_number, expansion_level, abstract)
-    `flavor` in ['*expansion', '*seed']
-    """
-    # TODO refacto
-    #  - remove seed option
-    #  - save to BQ stage and then extract using standard bq extract | gsutil cp workflow
-    assert flavor in ["*expansion", "*seed"]
+    Return (a sample of) the expansion table
 
-    expansion_level_clause = "" if flavor == "*seed" else "NOT"
-    country_clause = (
-        ""
-        if flavor == "*seed"
-        else (
-            f"AND r.country in ({get_country_string_bq(countries)})"
-            if countries
-            else ""
-        )
-    )
+    Arguments:
+        primary_key: table primary key
+        table_ref: expansion table
+        destination_table: destination table
+        credentials: credentials file path
+        sample_size: size of the sample (if None, then we extract all)
+        verbose: verbosity
+
+    **Usage:**
+        ```
+        techlandscape io get-expansion family_id <table-ref> <destination-table> credentials_bq.json --sample-size 10000
+        ```
+    """
+    project_id = get_project_id(primary_key, credentials)
+    sample_clause = f"LIMIT {sample_size}" if sample_size else ""
 
     query = f"""
+    WITH
+      expansion AS (
+      SELECT
+        *
+      FROM
+        `{table_ref}` AS expansion  # patentcity.techdiffusion.expansion_additivemanufacturing
+      WHERE
+        expansion_level NOT LIKE "%SEED%" )
     SELECT
-      tmp.publication_number,
-      tmp.expansion_level,
-      abstract
+      expansion.*,
+      p.abstract AS text
     FROM
-      `patents-public-data.google_patents_research.publications` as r,
-      {table_ref} as tmp
+      expansion
+    LEFT JOIN
+      `{project_id}.patents.publications` AS p
+    ON
+      expansion.{primary_key.value} = p.{primary_key.value}
     WHERE
-      r.publication_number=tmp.publication_number
-      {country_clause}
-      AND abstract is not NULL
-      AND abstract!=''
-      AND expansion_level {expansion_level_clause} LIKE "%SEED%"
-    GROUP BY
-      publication_number, expansion_level, abstract  
+      p.abstract IS NOT NULL
+      AND p.abstract != ""
+      AND p.abstract != "\\n"
+      AND p.abstract != "\\n\\n"
+    ORDER BY RAND()  
+    {sample_clause}
     """
-
-    client = get_bq_client(credentials)
-    return client.query(query).to_dataframe()
+    get_bq_job_done(query, destination_table, credentials, verbose=verbose)
 
 
 if __name__ == "__main__":
