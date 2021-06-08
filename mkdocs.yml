@@ -11,7 +11,7 @@ nav:
   - Guides:
       - Models: MODELS.md
       - Recipes: RECIPE.md
-      - Robustness: ROBUSTNESS.md
+      - Robustness: ROBUSTNESS_EXPANSION.md
   - API:
       - assets: API_ASSETS.md
       - candidates: API_CANDIDATES.md
