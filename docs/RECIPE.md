@@ -58,3 +58,17 @@ gsutil -m rm "gs://tmp/training_*.jsonl"
 cat lib/technology.txt | parallel --eta 'bq extract --destination_format NEWLINE_DELIMITED_JSON patentcity:techdiffusion.training_{} "gs://tmp/training_{}.jsonl" '
 gsutil -m cp "gs://tmp/training_*.jsonl" data/
 ```
+
+### Prediction robustness
+
+```shell
+parallel --eta 'techlandscape utils train-test-split data/training_{1}.jsonl data/train_{1}_{2}.jsonl data/test_{1}_{2}.jsonl' ::: $(cat lib/technology.txt) ::: $(pwgen 5 10)
+parallel --eta 'python techlandscape/model.py +model_{3}=default data.train=data/train_{1}_{2}.jsonl data.test=data/test_{1}_{2}.jsonl out=models/{1}_{2}_{3} logger.tensorboard.logdir=models/{1}_{2}_{3}/log' ::: $(cat lib/technology.txt) ::: $(ls data/test_*.jsonl | cut -d_ -f3 | cut -d. -f1 | sort -u) ::: cnn mlp
+cat lib/technology.txt | parallel --eta 'techlandscape io get-expansion family_id patentcity.techdiffusion.expansion_{} patentcity.stage.expansion_{}_sample credentials_bq.json --sample-size 10000'
+gsutil -m rm "gs://tmp/expansion_*_sample.jsonl.gz"
+cat lib/technology.txt | parallel --eta 'bq extract --destination_format NEWLINE_DELIMITED_JSON --compression GZIP patentcity:stage.expansion_{}_sample "gs://tmp/expansion_{}_sample.jsonl.gz"'
+gsutil -m cp "gs://tmp/expansion_*_sample.jsonl.gz" data/ 
+
+parallel --eta 'techlandscape robustness get-prediction-analysis "models/{1}_*_{2}/model-best" data/expansion_{1}_sample.jsonl --destination outs/' ::: $(cat lib/technology.txt) ::: $(cat lib/model.txt)
+techlandscape robustness wrap-prediction-analysis "outs/classification_*.csv" >> docs/ROBUSTNESS_MODEL.md 
+```
