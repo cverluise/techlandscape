@@ -371,7 +371,7 @@ def models_performance(
 
     **Usage:**
         ```shell
-        technlandscape robustness "models/additivemanufacturing_*_cnn/model-best/meta.json" --markdown --title "additivemanufacturing - cnn"
+        techlandscape robustness models-performance "models/additivemanufacturing_*_cnn/model-best/meta.json" --markdown --title "additivemanufacturing - cnn"
         ```
     """
     files = glob(path)
