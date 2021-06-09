@@ -160,3 +160,10 @@
 /train_selfdrivingvehicle_eip3O.jsonl
 /train_selfdrivingvehicle_nal1V.jsonl
 /train_selfdrivingvehicle_ox9eV.jsonl
+/expansion_additivemanufacturing_sample.jsonl
+/expansion_blockchain_sample.jsonl
+/expansion_computervision_sample.jsonl
+/expansion_genomeediting_sample.jsonl
+/expansion_hydrogenstorage_sample.jsonl
+/expansion_naturallanguageprocessing_sample.jsonl
+/expansion_selfdrivingvehicle_sample.jsonl

@@ -1,0 +1,4 @@
+outs:
+- md5: 35c675409b31417cc023f3a33b7d186f
+  size: 8363211
+  path: expansion_additivemanufacturing_sample.jsonl

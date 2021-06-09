@@ -1,0 +1,4 @@
+outs:
+- md5: 3cee50d18d0d3c033129149f42f4d241
+  size: 8321024
+  path: expansion_genomeediting_sample.jsonl
