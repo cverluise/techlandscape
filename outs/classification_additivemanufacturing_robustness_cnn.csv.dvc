@@ -1,0 +1,4 @@
+outs:
+- md5: 09d4b99cccc9fb7805776a0e5ea09247
+  size: 1199425
+  path: classification_additivemanufacturing_robustness_cnn.csv
