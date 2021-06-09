@@ -6,6 +6,7 @@ credentials*
 dev*.py 
 bin/ExtractCPCCounts.py
 outputs/
+site/*
 
 # Large files
 deleteme/*
