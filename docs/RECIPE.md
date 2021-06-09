@@ -70,5 +70,6 @@ cat lib/technology.txt | parallel --eta 'bq extract --destination_format NEWLINE
 gsutil -m cp "gs://tmp/expansion_*_sample.jsonl.gz" data/ 
 
 parallel --eta 'techlandscape robustness get-prediction-analysis "models/{1}_*_{2}/model-best" data/expansion_{1}_sample.jsonl --destination outs/' ::: $(cat lib/technology.txt) ::: $(cat lib/model.txt)
-techlandscape robustness wrap-prediction-analysis "outs/classification_*.csv" >> docs/ROBUSTNESS_MODEL.md 
+techlandscape robustness wrap-prediction-analysis "outs/classification_*.csv" >> docs/ROBUSTNESS_MODEL.md
+parallel --eta -j1 'techlandscape robustness models-performance "models/{1}_*_{2}/model-best/meta.json" --markdown --title "{1} - {2}"' ::: $(cat lib/technology.txt) ::: $(cat lib/model.txt) >> docs/MODELS_PERFORMANCE.md 
 ```
