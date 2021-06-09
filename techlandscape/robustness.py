@@ -257,6 +257,20 @@ def wrap_overlap_analysis(
 
 @app.command()
 def get_prediction_analysis(models: str, data: str, destination: Path = None):
+    """
+    Return a csv file with predicted scores on `data` for all models matching the `models` pattern.
+
+    Arguments:
+        models: model folder path (wildcard enabled)
+        data: data file path
+        destination: destination file path
+
+    **Usage:**
+        ```shell
+        techlandscape robustness get-prediction-analysis "models/additivemanufacturing_*_cnn/model-best" data/expansion_additivemanufacturing_sample.jsonl --destination outs/
+        # will be saved as classification_additivemanufacturing_robustness_cnn.csv
+        ```
+    """
     get_technology = lambda x: x.split("/")[-2].split("_")[0]
     get_architecture = lambda x: x.split("/")[-2].split("_")[-1]
     models = glob(models)
@@ -264,7 +278,7 @@ def get_prediction_analysis(models: str, data: str, destination: Path = None):
         technology = get_technology(model_)
         architecture = get_architecture(model_)
         model = tf.keras.models.load_model(model_)
-        cfg = get_config(Path(model_).parent / Path("config.yaml"))
+        cfg = get_config(Path(model_) / Path("config.yaml"))
 
         cfg["data"]["test"] = data
 
@@ -285,9 +299,25 @@ def get_prediction_analysis(models: str, data: str, destination: Path = None):
 
 @app.command()
 def wrap_prediction_analysis(path: str, markdown: bool = True):
+    """
+    Wrap prediction analysis
+
+    Arguments:
+        path: prediction analysis file path (wildcard enabled)
+        markdown: whether to output wrapped analysis as markdown or csv
+
+    !!! attention
+        csv not supported yet
+
+    **Usage:**
+        ```shell
+        techlandscape robustness wrap-prediction-analysis outs/classification_additivemanufacturing_robustness_cnn.csv
+        ```
+    """
     get_technology = lambda x: x.split("/")[1].split("_")[1]
-    get_architecture = lambda x: x.split("/")[1].split("_")[-1]
+    get_architecture = lambda x: x.split("/")[1].split("_")[-1].split(".")[0]
     files = glob(path)
+    files = sorted(files)
     for file in files:
         technology = get_technology(file)
         architecture = get_architecture(file)
