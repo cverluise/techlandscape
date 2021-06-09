@@ -1,0 +1,4 @@
+outs:
+- md5: f94b9569e1e1d4c77a011ab82fc395c2
+  size: 162327
+  path: test_genomeediting_CoeB3.jsonl

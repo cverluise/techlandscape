@@ -1,0 +1,4 @@
+outs:
+- md5: e84a219a91cf27f050e070f88b556cb8
+  size: 606574
+  path: train_genomeediting_CoeB3.jsonl

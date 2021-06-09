@@ -1,0 +1,4 @@
+outs:
+- md5: 1d10e1d1208f4319b71490dbd4938615
+  size: 654770
+  path: train_additivemanufacturing_ox9eV.jsonl

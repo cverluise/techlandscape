@@ -1,0 +1,4 @@
+outs:
+- md5: ca6bf8e5d3b6c31d2e313973e7f7aa5a
+  size: 606022
+  path: train_genomeediting_Yei1E.jsonl

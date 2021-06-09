@@ -1,0 +1,4 @@
+outs:
+- md5: b510c159e8acaf5a6207384e63462faa
+  size: 610812
+  path: train_genomeediting_Rie5o.jsonl

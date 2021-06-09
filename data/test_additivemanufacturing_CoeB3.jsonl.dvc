@@ -1,0 +1,4 @@
+outs:
+- md5: 57af20db7f6e835ae48e7616287b14b4
+  size: 171050
+  path: test_additivemanufacturing_CoeB3.jsonl

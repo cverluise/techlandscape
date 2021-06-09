@@ -1,0 +1,4 @@
+outs:
+- md5: b20841d1162aa32bddf6e02e31d2b41f
+  size: 653870
+  path: train_additivemanufacturing_CoeB3.jsonl

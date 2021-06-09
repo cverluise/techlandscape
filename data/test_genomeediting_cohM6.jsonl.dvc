@@ -1,0 +1,4 @@
+outs:
+- md5: 9cdaf76359bbfb2f7e5b52b5e47b822c
+  size: 150103
+  path: test_genomeediting_cohM6.jsonl
