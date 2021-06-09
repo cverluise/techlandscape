@@ -1,14 +1,16 @@
 import sys
+import json
+import typer
+import pandas as pd
+import tensorflow as tf
 from pathlib import Path
 from typing import List
 from itertools import combinations, repeat
-import typer
 from techlandscape.utils import get_bq_client, get_config, ok, not_ok
 from techlandscape.enumerators import OverlapAnalysisKind, OverlapAnalysisAxis
 from techlandscape.model import TextVectorizer
 from glob import glob
-import pandas as pd
-import tensorflow as tf
+
 
 app = typer.Typer()
 
@@ -345,13 +347,55 @@ def wrap_prediction_analysis(path: str, markdown: bool = True):
         consensus = tmp.copy()
 
         if markdown:
-            typer.echo(f"## {technology} - {architecture}\n")
+            typer.echo(f"\n## {technology} - {architecture}\n")
             typer.echo("### Score dispersion\n")
             typer.echo(dispersion.round(3).to_markdown() + "\n")
             typer.echo("### Models consensus\n")
             typer.echo(consensus.round(3).to_markdown())
         else:
             typer.secho(f"{not_ok}csv not supported yet", err=True)
+
+
+@app.command()
+def models_performance(
+    path: str, markdown: bool = True, destination: str = None, title: str = None
+):
+    """
+    Summarize models performance and save to csv/ print to stdout
+
+    Arguments:
+        path: path of the meta.json (wildcard enabled)
+        markdown: whether the output should be printed to stdout as md or saved to `destination`
+        destination: destination file path (used if `--no-markdown`)
+        title: title of the table (used if `--markdown`)
+
+    **Usage:**
+        ```shell
+        technlandscape robustness "models/additivemanufacturing_*_cnn/model-best/meta.json" --markdown --title "additivemanufacturing - cnn"
+        ```
+    """
+    files = glob(path)
+    get_name = lambda x: x.split("/")[1]
+
+    for i, file in enumerate(files):
+
+        tmp = pd.DataFrame.from_dict(json.loads(Path(file).open("r").read())).rename(
+            columns={"performance": get_name(file)}
+        )
+        if i == 0:
+            out = tmp.copy()
+        else:
+            out = out.merge(tmp, left_index=True, right_index=True)
+    out = out.T
+    out = out[sorted(out.columns)]
+    if len(files) > 1:
+        out = out.describe()
+
+    if markdown:
+        typer.echo(f"\n### {title}\n")
+        typer.echo(f"{out.round(2).to_markdown()}")
+    else:
+        out.to_csv(destination)
 
 
 if __name__ == "__main__":
