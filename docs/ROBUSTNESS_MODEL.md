@@ -1,7 +1,23 @@
+# MODEL ROBUSTNESS
 
-## additivemanufacturing - cnn
+## Question
 
-### Score dispersion
+How random variations in the seed and the antiseed affect the pruning step. 
+
+## Approach
+
+We emulate random variations by iterating over various training/test set randomly drawn from the same set of annotated data. We define a default model architecture, train as many models as training/test sets and compare the predictions of the different models out of sample (10,000) on a common benchmark of families/publications drawn from the expansion set.
+
+Specifically, we look at:
+
+1. moments of the distribution of standard errors of models predictions (std computed at the family/publication level)
+1. models' consensus regarding positive and negative examples 
+
+## Results
+
+### additivemanufacturing - cnn
+
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -14,7 +30,7 @@
 | 75%   |       0.113 |
 | max   |       0.384 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -28,9 +44,9 @@
 |           2 |            536 |             0.104 |                0.884 |
 |           1 |            600 |             0.116 |                1     |
 |           0 |              0 |             0     |                1     |
-## additivemanufacturing - mlp
+### additivemanufacturing - mlp
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -43,7 +59,7 @@
 | 75%   |       0.056 |
 | max   |       0.276 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -58,9 +74,9 @@
 |           2 |            152 |             0.107 |                0.855 |
 |           1 |            206 |             0.145 |                1     |
 |           0 |              0 |             0     |                1     |
-## blockchain - cnn
+### blockchain - cnn
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -73,7 +89,7 @@
 | 75%   |       0.126 |
 | max   |       0.389 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -88,9 +104,9 @@
 |           2 |           1410 |             0.289 |                0.893 |
 |           1 |            522 |             0.107 |                1     |
 |           0 |              0 |             0     |                1     |
-## blockchain - mlp
+### blockchain - mlp
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -103,7 +119,7 @@
 | 75%   |       0.03  |
 | max   |       0.272 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -118,9 +134,9 @@
 |           2 |            122 |             0.136 |                0.802 |
 |           1 |            177 |             0.198 |                1     |
 |           0 |              0 |             0     |                1     |
-## computervision - cnn
+### computervision - cnn
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -133,7 +149,7 @@
 | 75%   |       0.121 |
 | max   |       0.383 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -148,9 +164,9 @@
 |           2 |           2072 |             0.22  |                0.955 |
 |           1 |            420 |             0.045 |                1     |
 |           0 |              0 |             0     |                1     |
-## computervision - mlp
+### computervision - mlp
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -163,7 +179,7 @@
 | 75%   |       0.042 |
 | max   |       0.291 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -178,9 +194,9 @@
 |           2 |            180 |             0.03  |                0.969 |
 |           1 |            184 |             0.031 |                1     |
 |           0 |              0 |             0     |                1     |
-## genomeediting - cnn
+### genomeediting - cnn
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -193,7 +209,7 @@
 | 75%   |       0.023 |
 | max   |       0.329 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -208,9 +224,9 @@
 |           2 |            356 |             0.1   |                0.951 |
 |           1 |            175 |             0.049 |                1     |
 |           0 |              0 |             0     |                1     |
-## genomeediting - mlp
+### genomeediting - mlp
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -223,7 +239,7 @@
 | 75%   |       0.01  |
 | max   |       0.205 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -238,9 +254,9 @@
 |           2 |             48 |             0.062 |                0.96  |
 |           1 |             31 |             0.04  |                1     |
 |           0 |              0 |             0     |                1     |
-## hydrogenstorage - cnn
+### hydrogenstorage - cnn
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -253,7 +269,7 @@
 | 75%   |       0.076 |
 | max   |       0.311 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -268,9 +284,9 @@
 |           2 |             84 |             0.078 |                0.906 |
 |           1 |            102 |             0.094 |                1     |
 |           0 |              0 |             0     |                1     |
-## hydrogenstorage - mlp
+### hydrogenstorage - mlp
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -283,7 +299,7 @@
 | 75%   |       0.03  |
 | max   |       0.257 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -298,9 +314,9 @@
 |           2 |             72 |             0.094 |                0.882 |
 |           1 |             90 |             0.118 |                1     |
 |           0 |              0 |             0     |                1     |
-## naturallanguageprocessing - cnn
+### naturallanguageprocessing - cnn
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -313,7 +329,7 @@
 | 75%   |       0.114 |
 | max   |       0.39  |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -328,9 +344,9 @@
 |           2 |            384 |             0.047 |                0.957 |
 |           1 |            353 |             0.043 |                1     |
 |           0 |              0 |             0     |                1     |
-## naturallanguageprocessing - mlp
+### naturallanguageprocessing - mlp
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -343,7 +359,7 @@
 | 75%   |       0.036 |
 | max   |       0.339 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -358,9 +374,9 @@
 |           2 |            126 |             0.049 |                0.941 |
 |           1 |            153 |             0.059 |                1     |
 |           0 |              0 |             0     |                1     |
-## selfdrivingvehicle - cnn
+### selfdrivingvehicle - cnn
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -373,7 +389,7 @@
 | 75%   |       0.111 |
 | max   |       0.324 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
@@ -388,9 +404,9 @@
 |           2 |           2292 |             0.321 |                0.9   |
 |           1 |            711 |             0.1   |                1     |
 |           0 |              0 |             0     |                1     |
-## selfdrivingvehicle - mlp
+### selfdrivingvehicle - mlp
 
-### Score dispersion
+#### Score dispersion
 
 |       |   std_score |
 |:------|------------:|
@@ -403,7 +419,7 @@
 | 75%   |       0.069 |
 | max   |       0.278 |
 
-### Models consensus
+#### Models consensus
 
 |   nb_models |   nb_positives |   share_positives |   cumshare_positives |
 |------------:|---------------:|------------------:|---------------------:|
