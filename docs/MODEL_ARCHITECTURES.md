@@ -1,4 +1,4 @@
-# MODELS
+# MODEL ARCHITECTURES
 
 A `Model` is made of data, a tok2vec, a model architecture and training specificities. This page documents the built-in models used for the pruning step and how they can be used/parametrized through human-readable config files.
 
