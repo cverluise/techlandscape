@@ -1,14 +1,12 @@
-# ROBUSTNESS
+# EXPANSION ROBUSTNESS
 
-## Expansion
-
-### Question
+## Question
 
 How do random variations in the seed affect the overall expansion? If small variations in the seed (sample uncertainty) largely affect the overall expansion, this raises consistency issues.  
 
 Related question: How to measure robustness of the expansion step?
 
-### Approach 
+## Approach 
 
 We emulate data uncertainty by generating a sequence of random draws in the annotated seed. Then, we can compare the generated expansions and look at how data uncertainty affect the overall expansion. 
 
@@ -17,7 +15,7 @@ Using the generated expansions, we look at two things:
 - pairwise overlap: for all *pairs* of expansions (k in n), we compute the share of families which are in *both* expansions and report moments of the distribution 
 - batch overlap: for all *expansions*, we compute the share of families which are in *all* expansions and report moments of the distribution
 
-### Results
+## Results
 
 Overall, we find that the expansion is robust to data uncertainty, even under particularly conservative conditions. Drawing 10 different random samples of the seed (50% of the seed), the resulting expansions exhibit a median family overlap ranging between 76% and 94%. The median (and other moments) of the overlap distribution grow as the share grows - as expected. 
 
@@ -30,7 +28,7 @@ Overall, we find that the expansion is robust to data uncertainty, even under pa
     techlandscape robustness wrap-overlap-analysis "outs/expansion_*robustness*.csv" technologies --markdown 
     ```
 
-#### additivemanufacturing
+### additivemanufacturing
 
 | configs               |   count |   mean |   std |   min |   25% |   50% |   75% |   max |
 |:----------------------|--------:|-------:|------:|------:|------:|------:|------:|------:|
@@ -41,7 +39,7 @@ Overall, we find that the expansion is robust to data uncertainty, even under pa
 | pairwiserobustness0.7 |      90 |   0.91 |  0.07 |  0.72 |  0.88 |  0.93 |  0.97 |  0.99 |
 | pairwiserobustness0.9 |      90 |   0.95 |  0.06 |  0.75 |  0.91 |  0.99 |  0.99 |  1    |
 
-#### blockchain
+### blockchain
 
 | configs               |   count |   mean |   std |   min |   25% |   50% |   75% |   max |
 |:----------------------|--------:|-------:|------:|------:|------:|------:|------:|------:|
@@ -52,7 +50,7 @@ Overall, we find that the expansion is robust to data uncertainty, even under pa
 | pairwiserobustness0.7 |      90 |   0.98 |  0.01 |  0.96 |  0.97 |  0.98 |  0.98 |  0.99 |
 | pairwiserobustness0.9 |      90 |   0.99 |  0.01 |  0.97 |  0.98 |  0.99 |  0.99 |  1    |
 
-#### computervision
+### computervision
 
 | configs               |   count |   mean |   std |   min |   25% |   50% |   75% |   max |
 |:----------------------|--------:|-------:|------:|------:|------:|------:|------:|------:|
@@ -63,7 +61,7 @@ Overall, we find that the expansion is robust to data uncertainty, even under pa
 | pairwiserobustness0.7 |      90 |   0.95 |  0.02 |  0.91 |  0.94 |  0.96 |  0.96 |  0.98 |
 | pairwiserobustness0.9 |      90 |   0.99 |  0    |  0.98 |  0.99 |  0.99 |  0.99 |  1    |
 
-#### genomeediting
+### genomeediting
 
 | configs               |   count |   mean |   std |   min |   25% |   50% |   75% |   max |
 |:----------------------|--------:|-------:|------:|------:|------:|------:|------:|------:|
@@ -74,7 +72,7 @@ Overall, we find that the expansion is robust to data uncertainty, even under pa
 | pairwiserobustness0.7 |      90 |   0.99 |  0.01 |  0.96 |  0.99 |  0.99 |  0.99 |  1    |
 | pairwiserobustness0.9 |      90 |   0.99 |  0.02 |  0.95 |  0.99 |  0.99 |  1    |  1    |
 
-#### hydrogenstorage
+### hydrogenstorage
 
 | configs               |   count |   mean |   std |   min |   25% |   50% |   75% |   max |
 |:----------------------|--------:|-------:|------:|------:|------:|------:|------:|------:|
@@ -85,7 +83,7 @@ Overall, we find that the expansion is robust to data uncertainty, even under pa
 | pairwiserobustness0.7 |      90 |   0.97 |  0.01 |  0.95 |  0.97 |  0.97 |  0.98 |  0.99 |
 | pairwiserobustness0.9 |      90 |   0.99 |  0.01 |  0.98 |  0.98 |  0.99 |  0.99 |  1    |
 
-#### naturallanguageprocessing
+### naturallanguageprocessing
 
 | configs               |   count |   mean |   std |   min |   25% |   50% |   75% |   max |
 |:----------------------|--------:|-------:|------:|------:|------:|------:|------:|------:|
@@ -96,7 +94,7 @@ Overall, we find that the expansion is robust to data uncertainty, even under pa
 | pairwiserobustness0.7 |      90 |   0.98 |  0.01 |  0.94 |  0.98 |  0.98 |  0.99 |  1    |
 | pairwiserobustness0.9 |      90 |   1    |  0    |  0.99 |  0.99 |  1    |  1    |  1    |
 
-#### selfdrivingvehicle
+### selfdrivingvehicle
 
 | configs               |   count |   mean |   std |   min |   25% |   50% |   75% |   max |
 |:----------------------|--------:|-------:|------:|------:|------:|------:|------:|------:|
