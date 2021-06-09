@@ -1,0 +1,5 @@
+outs:
+- md5: c81a3deb6eda28b22248c2cf3a1d2b11.dir
+  size: 7306585
+  nfiles: 15
+  path: additivemanufacturing_cohM6_cnn

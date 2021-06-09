@@ -1,0 +1,5 @@
+outs:
+- md5: 89b0159044b29d86832b70b05e479fce.dir
+  size: 7306758
+  nfiles: 15
+  path: naturallanguageprocessing_nal1V_cnn

@@ -1,0 +1,5 @@
+outs:
+- md5: f5f408507194a8b74c606c43af1af02c.dir
+  size: 7306019
+  nfiles: 15
+  path: computervision_eip3O_cnn

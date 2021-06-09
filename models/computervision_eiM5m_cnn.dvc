@@ -1,0 +1,5 @@
+outs:
+- md5: c10ff01eff0b388d5e50959184aa9a24.dir
+  size: 7306129
+  nfiles: 15
+  path: computervision_eiM5m_cnn

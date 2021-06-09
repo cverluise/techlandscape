@@ -1,0 +1,5 @@
+outs:
+- md5: 4c33a6d6a472e01c85320bd9d924347e.dir
+  size: 4130001
+  nfiles: 15
+  path: genomeediting_eip3O_mlp

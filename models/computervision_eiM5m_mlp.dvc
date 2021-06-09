@@ -1,0 +1,5 @@
+outs:
+- md5: 1a363b45cd66c60ed17074d3de09d6a8.dir
+  size: 4131005
+  nfiles: 15
+  path: computervision_eiM5m_mlp

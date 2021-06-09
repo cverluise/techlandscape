@@ -1,0 +1,5 @@
+outs:
+- md5: a4b42f03883831c0cc7573295ca44987.dir
+  size: 7306423
+  nfiles: 15
+  path: additivemanufacturing_eip3O_cnn

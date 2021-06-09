@@ -1,0 +1,5 @@
+outs:
+- md5: 1356ea5e81bbdc489538c7493b7a4812.dir
+  size: 4129836
+  nfiles: 15
+  path: naturallanguageprocessing_nal1V_mlp

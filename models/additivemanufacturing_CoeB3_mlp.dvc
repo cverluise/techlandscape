@@ -1,0 +1,5 @@
+outs:
+- md5: 4e17a906c3071a7c41e9977989ab9031.dir
+  size: 4130513
+  nfiles: 15
+  path: additivemanufacturing_CoeB3_mlp

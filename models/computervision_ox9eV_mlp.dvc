@@ -1,0 +1,5 @@
+outs:
+- md5: b6e3bb67811af5eb4837e713cd7f81bd.dir
+  size: 4129744
+  nfiles: 15
+  path: computervision_ox9eV_mlp

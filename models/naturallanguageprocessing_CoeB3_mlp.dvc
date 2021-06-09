@@ -1,0 +1,5 @@
+outs:
+- md5: 6d874d042dd03bcbb571a518b497a5b2.dir
+  size: 4129513
+  nfiles: 15
+  path: naturallanguageprocessing_CoeB3_mlp

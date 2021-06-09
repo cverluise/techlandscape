@@ -1,0 +1,5 @@
+outs:
+- md5: 57e87a6286ecdfa39e82e825c789f501.dir
+  size: 7305781
+  nfiles: 15
+  path: additivemanufacturing_nal1V_cnn

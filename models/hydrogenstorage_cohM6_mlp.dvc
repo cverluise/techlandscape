@@ -1,0 +1,5 @@
+outs:
+- md5: cde3150a8744097fe4080a588fd1b3a5.dir
+  size: 4130065
+  nfiles: 15
+  path: hydrogenstorage_cohM6_mlp

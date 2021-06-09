@@ -1,0 +1,5 @@
+outs:
+- md5: 6153559bd9d77e7971034ebc72f4f162.dir
+  size: 4128638
+  nfiles: 15
+  path: hydrogenstorage_CoeB3_mlp

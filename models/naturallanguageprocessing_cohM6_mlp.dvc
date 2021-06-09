@@ -1,0 +1,5 @@
+outs:
+- md5: 9e5f4010001e4271a1b3f28a4fe4c559.dir
+  size: 4130013
+  nfiles: 15
+  path: naturallanguageprocessing_cohM6_mlp

@@ -1,0 +1,5 @@
+outs:
+- md5: 3eafb4ad4714e74b1b1994d03e66b430.dir
+  size: 4130070
+  nfiles: 15
+  path: genomeediting_CoeB3_mlp

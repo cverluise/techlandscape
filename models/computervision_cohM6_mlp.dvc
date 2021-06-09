@@ -1,0 +1,5 @@
+outs:
+- md5: 58ec37da95718d4f124daa78449c6101.dir
+  size: 4129761
+  nfiles: 15
+  path: computervision_cohM6_mlp

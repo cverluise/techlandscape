@@ -1,0 +1,5 @@
+outs:
+- md5: acae58706269e944df898a80c24239d1.dir
+  size: 4130149
+  nfiles: 15
+  path: selfdrivingvehicle_nal1V_mlp

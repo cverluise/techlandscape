@@ -1,0 +1,5 @@
+outs:
+- md5: dc6ed3eccb22c15b37f2f5210dafc680.dir
+  size: 7306388
+  nfiles: 15
+  path: computervision_nal1V_cnn

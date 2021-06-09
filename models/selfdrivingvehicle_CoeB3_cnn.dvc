@@ -1,0 +1,5 @@
+outs:
+- md5: ba0c2250bb6617891fb958b39cfac500.dir
+  size: 7306293
+  nfiles: 15
+  path: selfdrivingvehicle_CoeB3_cnn

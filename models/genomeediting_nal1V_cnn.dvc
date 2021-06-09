@@ -1,0 +1,5 @@
+outs:
+- md5: bd02b2e635a3b2f706909c32f96aa924.dir
+  size: 7307499
+  nfiles: 15
+  path: genomeediting_nal1V_cnn

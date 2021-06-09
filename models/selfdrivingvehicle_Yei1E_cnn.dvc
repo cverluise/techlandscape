@@ -1,0 +1,5 @@
+outs:
+- md5: e5c2d15dd5265873c3c4f49828021cfa.dir
+  size: 7306146
+  nfiles: 15
+  path: selfdrivingvehicle_Yei1E_cnn

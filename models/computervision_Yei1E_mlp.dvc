@@ -1,0 +1,5 @@
+outs:
+- md5: d4d06b58cfd29721b6025b9e7e89ac1b.dir
+  size: 4129823
+  nfiles: 15
+  path: computervision_Yei1E_mlp

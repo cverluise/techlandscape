@@ -1,0 +1,5 @@
+outs:
+- md5: 8d75642e1e715bbd819337b71d22b9f3.dir
+  size: 7306893
+  nfiles: 15
+  path: computervision_cohM6_cnn

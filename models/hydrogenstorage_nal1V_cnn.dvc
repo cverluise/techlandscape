@@ -1,0 +1,5 @@
+outs:
+- md5: 81ff1377a0f2c7db7d1e7bf7bc6bbebe.dir
+  size: 7307692
+  nfiles: 15
+  path: hydrogenstorage_nal1V_cnn

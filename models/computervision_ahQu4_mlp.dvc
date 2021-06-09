@@ -1,0 +1,5 @@
+outs:
+- md5: 56f866b24112e850fe81a4ef63083e7c.dir
+  size: 4129932
+  nfiles: 15
+  path: computervision_ahQu4_mlp

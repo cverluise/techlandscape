@@ -1,0 +1,5 @@
+outs:
+- md5: f44bcb6f4d73e24459bf6bdd86932f4b.dir
+  size: 7307090
+  nfiles: 15
+  path: computervision_Yei1E_cnn

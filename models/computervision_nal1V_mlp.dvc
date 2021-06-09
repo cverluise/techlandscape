@@ -1,0 +1,5 @@
+outs:
+- md5: a6fc72c52da1badc7552357eb8d94088.dir
+  size: 4130342
+  nfiles: 15
+  path: computervision_nal1V_mlp

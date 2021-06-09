@@ -1,0 +1,5 @@
+outs:
+- md5: c4b895ef44261dc5a1ca0f8e9b3ba49e.dir
+  size: 4130112
+  nfiles: 15
+  path: selfdrivingvehicle_CoeB3_mlp

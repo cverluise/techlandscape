@@ -1,0 +1,5 @@
+outs:
+- md5: 9a9a51ba22b2ee9eefeec2ebd11708bf.dir
+  size: 4129798
+  nfiles: 15
+  path: additivemanufacturing_nal1V_mlp

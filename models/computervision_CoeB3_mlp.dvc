@@ -1,0 +1,5 @@
+outs:
+- md5: ea7f261093f2e4024e1b10a2dcda60bc.dir
+  size: 4129594
+  nfiles: 15
+  path: computervision_CoeB3_mlp

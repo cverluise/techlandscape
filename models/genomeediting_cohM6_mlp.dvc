@@ -1,0 +1,5 @@
+outs:
+- md5: e23b718ffa122813056ac9a81f6904f0.dir
+  size: 4129787
+  nfiles: 15
+  path: genomeediting_cohM6_mlp

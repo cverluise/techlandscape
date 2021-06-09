@@ -1,0 +1,5 @@
+outs:
+- md5: 9fb81a0f80e352c1774bf14110dcc5f1.dir
+  size: 7306743
+  nfiles: 15
+  path: hydrogenstorage_CoeB3_cnn

@@ -1,0 +1,5 @@
+outs:
+- md5: d17041689e5c62b2ead6004239b30dcf.dir
+  size: 7307485
+  nfiles: 15
+  path: computervision_ox9eV_cnn

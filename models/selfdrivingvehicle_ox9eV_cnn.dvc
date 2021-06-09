@@ -1,0 +1,5 @@
+outs:
+- md5: 796e11c8478c8c37a40c5719e39fa23e.dir
+  size: 7306424
+  nfiles: 15
+  path: selfdrivingvehicle_ox9eV_cnn

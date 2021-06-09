@@ -1,0 +1,5 @@
+outs:
+- md5: d761417e702c80c388df5104e17adb53.dir
+  size: 7306172
+  nfiles: 15
+  path: genomeediting_cohM6_cnn

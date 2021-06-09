@@ -1,0 +1,5 @@
+outs:
+- md5: d2bbcf22a03c2b8945b35ef42ec2f438.dir
+  size: 7305094
+  nfiles: 15
+  path: selfdrivingvehicle_ahQu4_cnn

@@ -1,0 +1,5 @@
+outs:
+- md5: 41963e852029afcd92dd81aa5a5c687c.dir
+  size: 7306707
+  nfiles: 15
+  path: computervision_CoeB3_cnn

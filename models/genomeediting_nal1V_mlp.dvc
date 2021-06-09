@@ -1,0 +1,5 @@
+outs:
+- md5: d8aaf68e05d32c535c52c5659107efbe.dir
+  size: 4129676
+  nfiles: 15
+  path: genomeediting_nal1V_mlp

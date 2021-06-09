@@ -1,0 +1,5 @@
+outs:
+- md5: 7ccf838306cd3038704f73e333cff5f2.dir
+  size: 7306087
+  nfiles: 15
+  path: genomeediting_CoeB3_cnn

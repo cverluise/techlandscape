@@ -1,0 +1,5 @@
+outs:
+- md5: 55e57dc627f0691b4c9e4835c2ba71f8.dir
+  size: 4129971
+  nfiles: 15
+  path: hydrogenstorage_nal1V_mlp

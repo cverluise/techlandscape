@@ -1,0 +1,5 @@
+outs:
+- md5: d4d6e7d9812c6ac6c91c48a3a2742e40.dir
+  size: 7307048
+  nfiles: 15
+  path: computervision_ahQu4_cnn

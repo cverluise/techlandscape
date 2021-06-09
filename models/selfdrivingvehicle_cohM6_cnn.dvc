@@ -1,0 +1,5 @@
+outs:
+- md5: ecfd58029ad9cfab4b352663c176f846.dir
+  size: 7306037
+  nfiles: 15
+  path: selfdrivingvehicle_cohM6_cnn

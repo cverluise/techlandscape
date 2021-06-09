@@ -1,0 +1,5 @@
+outs:
+- md5: b267a509629b2beef1b819499d1e1f05.dir
+  size: 4130380
+  nfiles: 15
+  path: computervision_eip3O_mlp
