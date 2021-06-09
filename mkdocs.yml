@@ -2,22 +2,26 @@ site_name: techLandscape
 site_description: Technology landscape
 site_author: Cyril Verluise
 #site_url:
-#repo_url: https://github.com/cverluise/patentcity
+repo_url: https://github.com/cverluise/techlandscape
 
 ##### Nav #####
 nav:
   - About: index.md
 #  - Data: DATA.md
   - Guides:
-      - Models: MODELS.md
       - Recipes: RECIPE.md
-      - Robustness: ROBUSTNESS_EXPANSION.md
+      - Robustness:
+          - Expansion: ROBUSTNESS_EXPANSION.md
+          - Pruning: ROBUSTNESS_MODEL.md
   - API:
       - assets: API_ASSETS.md
       - candidates: API_CANDIDATES.md
       - expansion: API_EXPANSION.md
-#      - antiseed: API_ANTISEED.md
+      - antiseed: API_ANTISEED.md
+      - model: API_MODEL.md
+      - model architectures: API_MODELARCHITECTURES.md
       - robustness: API_ROBUSTNESS.md
+      - io: API_IO.md
   - License:
     - Code: LICENSE_CODE.md
     - Data: LICENSE_DATA.md

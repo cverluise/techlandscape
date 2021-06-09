@@ -44,6 +44,7 @@ Specifically, we look at:
 |           2 |            536 |             0.104 |                0.884 |
 |           1 |            600 |             0.116 |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### additivemanufacturing - mlp
 
 #### Score dispersion
@@ -74,6 +75,7 @@ Specifically, we look at:
 |           2 |            152 |             0.107 |                0.855 |
 |           1 |            206 |             0.145 |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### blockchain - cnn
 
 #### Score dispersion
@@ -104,6 +106,7 @@ Specifically, we look at:
 |           2 |           1410 |             0.289 |                0.893 |
 |           1 |            522 |             0.107 |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### blockchain - mlp
 
 #### Score dispersion
@@ -134,6 +137,7 @@ Specifically, we look at:
 |           2 |            122 |             0.136 |                0.802 |
 |           1 |            177 |             0.198 |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### computervision - cnn
 
 #### Score dispersion
@@ -164,6 +168,7 @@ Specifically, we look at:
 |           2 |           2072 |             0.22  |                0.955 |
 |           1 |            420 |             0.045 |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### computervision - mlp
 
 #### Score dispersion
@@ -194,6 +199,7 @@ Specifically, we look at:
 |           2 |            180 |             0.03  |                0.969 |
 |           1 |            184 |             0.031 |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### genomeediting - cnn
 
 #### Score dispersion
@@ -224,6 +230,7 @@ Specifically, we look at:
 |           2 |            356 |             0.1   |                0.951 |
 |           1 |            175 |             0.049 |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### genomeediting - mlp
 
 #### Score dispersion
@@ -254,6 +261,7 @@ Specifically, we look at:
 |           2 |             48 |             0.062 |                0.96  |
 |           1 |             31 |             0.04  |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### hydrogenstorage - cnn
 
 #### Score dispersion
@@ -284,6 +292,7 @@ Specifically, we look at:
 |           2 |             84 |             0.078 |                0.906 |
 |           1 |            102 |             0.094 |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### hydrogenstorage - mlp
 
 #### Score dispersion
@@ -314,6 +323,7 @@ Specifically, we look at:
 |           2 |             72 |             0.094 |                0.882 |
 |           1 |             90 |             0.118 |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### naturallanguageprocessing - cnn
 
 #### Score dispersion
@@ -344,6 +354,7 @@ Specifically, we look at:
 |           2 |            384 |             0.047 |                0.957 |
 |           1 |            353 |             0.043 |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### naturallanguageprocessing - mlp
 
 #### Score dispersion
@@ -374,6 +385,7 @@ Specifically, we look at:
 |           2 |            126 |             0.049 |                0.941 |
 |           1 |            153 |             0.059 |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### selfdrivingvehicle - cnn
 
 #### Score dispersion
@@ -404,6 +416,7 @@ Specifically, we look at:
 |           2 |           2292 |             0.321 |                0.9   |
 |           1 |            711 |             0.1   |                1     |
 |           0 |              0 |             0     |                1     |
+
 ### selfdrivingvehicle - mlp
 
 #### Score dispersion
