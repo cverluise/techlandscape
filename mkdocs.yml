@@ -13,6 +13,7 @@ nav:
       - Robustness:
           - Expansion: ROBUSTNESS_EXPANSION.md
           - Pruning: ROBUSTNESS_MODEL.md
+          - Performance: MODELS_PERFORMANCE.md
   - API:
       - assets: API_ASSETS.md
       - candidates: API_CANDIDATES.md
