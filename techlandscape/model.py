@@ -581,7 +581,11 @@ class Model(ModelFitter):
 
     def __init__(self, config: DictConfig):
         super().__init__(config)
-        self.filepath = get_project_root() / Path(self.cfg["out"])
+        self.filepath = (
+            self.filepath_best
+            if self.filepath_best
+            else get_project_root() / Path(self.cfg["out"])
+        )
 
     def save(self):
         if not self.model.history:
