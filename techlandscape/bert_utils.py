@@ -1,6 +1,6 @@
 import tensorflow as tf
 from typing import Dict, List, Tuple
-from bert import tokenization
+from techlandscape import bert_tokenization as tokenization
 
 # The functions & classes below can also be found in the bert repo in the
 # `run_classifier.py` file and the bert_for_patents example notebook
