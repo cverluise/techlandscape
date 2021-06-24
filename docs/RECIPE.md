@@ -73,3 +73,18 @@ parallel --eta 'techlandscape robustness get-prediction-analysis "models/{1}_*_{
 techlandscape robustness wrap-prediction-analysis "outs/classification_*.csv" >> docs/ROBUSTNESS_MODEL.md
 parallel --eta -j1 'techlandscape robustness models-performance "models/{1}_*_{2}/model-best/meta.json" --markdown --title "{1} - {2}"' ::: $(cat lib/technology.txt) ::: $(cat lib/model.txt) >> docs/MODELS_PERFORMANCE.md 
 ```
+
+### Bert for patents
+
+```
+# saved model
+curl 'https://storage.googleapis.com/patents-public-data-github/saved_model.zip' --output models/bert_for_patents_saved_model.zip
+unzip models/bert_for_patents_saved_model.zip
+mv temp_dir/raw_out/  models/bert_for_patents_saved_model
+
+# vocabulary
+curl 'https://storage.googleapis.com/patents-public-data-github/bert_for_patents_vocab_39k.txt' --output models/bert_for_patents_vocab_39k.txt
+
+# tokenization
+curl 'https://raw.githubusercontent.com/google-research/bert/master/tokenization.py' --output techlandscape/bert_tokenization.py  
+```
