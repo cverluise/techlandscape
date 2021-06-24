@@ -8,7 +8,7 @@ authors = ["Cyril Verluise <cyril.verluise@gmail.com>"]
 techlandscape = "techlandscape.main:app"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8,<3.9"
 google-cloud = "^0.34.0"
 google-cloud-bigquery = "^1.27.2"
 pandas = "^1.2.2"
