@@ -1,0 +1,4 @@
+outs:
+- md5: e0d93b444ef5613527724c0c5050fe18
+  size: 329241
+  path: bert_for_patents_vocab_39k.txt

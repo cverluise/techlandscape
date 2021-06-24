@@ -1,0 +1,5 @@
+outs:
+- md5: 4e894ec3f8f31fd85a77aee5a8c78f07.dir
+  size: 1387442383
+  nfiles: 5
+  path: bert_for_patents_saved_model
