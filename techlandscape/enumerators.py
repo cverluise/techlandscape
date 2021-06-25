@@ -34,3 +34,4 @@ class OverlapAnalysisAxis(Enum):
 class SupportedModels(Enum):
     mlp = "mlp"
     cnn = "cnn"
+    transformers = "transformers"
