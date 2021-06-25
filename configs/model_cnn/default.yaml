@@ -1,7 +1,7 @@
 # @package _global_
 data:
-  train: data/train_additivemanufacturing.jsonl
-  test: data/test_additivemanufacturing.jsonl
+  train:
+  test:
 
 tok2vec:
   max_length: 250
