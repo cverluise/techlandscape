@@ -2,14 +2,20 @@ import sys
 import json
 import typer
 import pandas as pd
+import numpy as np
 import tensorflow as tf
 from pathlib import Path
 from typing import List
 from itertools import combinations, repeat
 from techlandscape.utils import get_bq_client, get_config, ok, not_ok
-from techlandscape.enumerators import OverlapAnalysisKind, OverlapAnalysisAxis
+from techlandscape.enumerators import (
+    OverlapAnalysisKind,
+    OverlapAnalysisAxis,
+    SupportedModels,
+)
 from techlandscape.model import TextVectorizer
 from glob import glob
+from transformers import TFAutoModelForSequenceClassification
 
 
 app = typer.Typer()
@@ -279,15 +285,21 @@ def get_prediction_analysis(models: str, data: str, destination: Path = None):
     for i, model_ in enumerate(models):
         technology = get_technology(model_)
         architecture = get_architecture(model_)
-        model = tf.keras.models.load_model(model_)
         cfg = get_config(Path(model_) / Path("config.yaml"))
 
+        if cfg["model"]["architecture"] == SupportedModels.transformers.value:
+            model = TFAutoModelForSequenceClassification.from_pretrained(model_)
+        else:
+            model = tf.keras.models.load_model(model_)
         cfg["data"]["test"] = data
 
         text_vectorizer = TextVectorizer(cfg)
         text_vectorizer.vectorize()
 
-        pred = model.predict(text_vectorizer.x_test)
+        pred = model.predict(text_vectorizer.x_test, batch_size=100)
+        if cfg["model"]["architecture"] == SupportedModels.transformers.value:
+            pred = np.argmax(pred["logits"], axis=1)
+
         if i == 0:
             out = pd.DataFrame(pred, columns=[model_])
         else:

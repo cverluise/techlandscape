@@ -16,10 +16,12 @@ from tensorflow.keras.layers import (
 )
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers.schedules import PolynomialDecay
 from techlandscape.utils import get_config, ok, not_ok, get_project_root
 from techlandscape.exception import UnknownModel, UNKNOWN_MODEL_MSG
 from techlandscape.enumerators import SupportedModels
 from omegaconf import DictConfig, OmegaConf
+from transformers import AutoTokenizer, TFAutoModelForSequenceClassification
 import typer
 import hydra
 
@@ -135,6 +137,7 @@ class TextVectorizer(DataLoader):
     x_train = None
     x_test = None
     max_length = None
+    checkpoint = None
 
     def __init__(self, config: DictConfig):
         super().__init__(config)
@@ -277,12 +280,35 @@ class TextVectorizer(DataLoader):
                 color=typer.colors.YELLOW,
             )
 
+    def _tokenize_from_pretrained(self):
+        if not all([self.checkpoint, self.tokenizer, self.x_train, self.x_test]):
+            self.load()
+            self.checkpoint = self.cfg["model"]["checkpoint"]
+            self.tokenizer = AutoTokenizer.from_pretrained(self.checkpoint)
+            self.x_train = dict(
+                self.tokenizer(
+                    self.text_train, padding=True, truncation=True, return_tensors="tf"
+                )
+            )
+            self.x_test = dict(
+                self.tokenizer(
+                    self.text_test, padding=True, truncation=True, return_tensors="tf"
+                )
+            )
+        else:
+            typer.secho(
+                "Sequences already tokenized. See self.x_train and self.x_test",
+                color=typer.colors.YELLOW,
+            )
+
     def vectorize(self):
         """Return vectorized texts (train and test)"""
-        if self.model_architecture == "cnn":
+        if self.model_architecture == SupportedModels.cnn.value:
             self._get_sequences()
-        elif self.model_architecture == "mlp":
+        elif self.model_architecture == SupportedModels.mlp.value:
             self._get_ngrams()
+        elif self.model_architecture == SupportedModels.transformers.value:
+            self._tokenize_from_pretrained()
         else:
             raise UnknownModel(UNKNOWN_MODEL_MSG)
         typer.secho(f"{ok}Text vectorized", color=typer.colors.GREEN)
@@ -401,13 +427,18 @@ class ModelBuilder(TextVectorizer):
         """
         Instantiate model based on config file
         """
-        assert self.cfg["model"]["architecture"] in SupportedModels._member_names_
+        assert self.model_architecture in SupportedModels._member_names_
         if not self.model:
-            if self.cfg["model"]["architecture"] == SupportedModels.mlp.value:
+            if self.model_architecture == SupportedModels.mlp.value:
                 self._build_mlp()
-            elif self.cfg["model"]["architecture"] == SupportedModels.cnn.value:
+            elif self.model_architecture == SupportedModels.cnn.value:
                 # TODO handle embedding matrix properly
                 self._build_cnn(embedding_matrix)
+            elif self.model_architecture == SupportedModels.transformers.value:
+                self.vectorize()
+                self.model = TFAutoModelForSequenceClassification.from_pretrained(
+                    self.checkpoint
+                )
             else:
                 raise UnknownModel(UNKNOWN_MODEL_MSG)
             typer.secho(
@@ -448,17 +479,42 @@ class ModelCompiler(ModelBuilder):
 
     def compile(self, embedding_matrix: dict = None):
         """Compile model. Use config file to instantiate training components."""
-        self.build(embedding_matrix)
-        self.optimizer = Adam(lr=float(self.cfg["model"]["optimizer"]["learning_rate"]))
-        self.model.compile(
-            optimizer=self.optimizer,
-            loss=self.cfg["model"]["optimizer"]["loss"],
-            metrics=[
-                tf.keras.metrics.BinaryAccuracy(),
-                tf.keras.metrics.Precision(),
-                tf.keras.metrics.Recall(),
-            ],
-        )
+        if self.model_architecture != SupportedModels.transformers.value:
+            self.build(embedding_matrix)
+            self.optimizer = Adam(
+                lr=float(self.cfg["model"]["optimizer"]["learning_rate"])
+            )
+            self.model.compile(
+                optimizer=self.optimizer,
+                loss=self.cfg["model"]["optimizer"]["loss"],
+                metrics=[
+                    tf.keras.metrics.BinaryAccuracy(),
+                    tf.keras.metrics.Precision(),
+                    tf.keras.metrics.Recall(),
+                ],
+            )
+        elif self.model_architecture == SupportedModels.transformers.value:
+            self.build(embedding_matrix)
+            num_train_steps = (
+                len(self.text_train) // self.cfg["training"]["batch_size"]
+            ) * self.cfg["training"]["epochs"]
+            lr_scheduler = PolynomialDecay(
+                initial_learning_rate=self.cfg["model"]["optimizer"][
+                    "init_learning_rate"
+                ],
+                end_learning_rate=self.cfg["model"]["optimizer"]["init_learning_rate"],
+                decay_steps=num_train_steps,
+            )
+            self.optimizer = Adam(learning_rate=lr_scheduler)
+            loss = eval(self.cfg["model"]["optimizer"]["loss"])(
+                from_logits=self.cfg["model"]["optimizer"]["from_logits"]
+            )
+            self.model.compile(
+                optimizer=self.optimizer, loss=loss, metrics=["accuracy"]
+            )
+        else:
+            raise UnknownModel(UNKNOWN_MODEL_MSG)
+
         typer.secho(
             f"{ok}Model compiled (see self.model.summary() for details)",
             color=typer.colors.GREEN,
@@ -490,6 +546,7 @@ class ModelFitter(ModelCompiler):
 
     logdir = None
     filepath_best = None
+    save_best_only = None
     callbacks = []
 
     def __init__(self, config: DictConfig):
@@ -517,6 +574,7 @@ class ModelFitter(ModelCompiler):
                 )
             ]
         if self.cfg["training"]["callbacks"]["save_best_only"]["active"]:
+            self.save_best_only = True
             self.filepath_best = (
                 get_project_root() / Path(self.cfg["out"]) / Path("model-best")
             )
@@ -584,7 +642,7 @@ class Model(ModelFitter):
         self.filepath = (
             self.filepath_best
             if self.filepath_best
-            else get_project_root() / Path(self.cfg["out"])
+            else get_project_root() / Path(self.cfg["out"]) / Path("model-last")
         )
 
     def save(self):
@@ -595,7 +653,10 @@ class Model(ModelFitter):
                 color=typer.colors.RED,
             )
         else:
-            self.model.save(self.filepath)
+            if self.model_architecture == SupportedModels.transformers.value:
+                self.model.save_pretrained(self.filepath)
+            else:
+                self.model.save(self.filepath)
 
     def save_config(self):
         Path(self.filepath / Path("config.yaml")).open("w").write(
@@ -619,13 +680,15 @@ class Model(ModelFitter):
 @hydra.main(config_path="../configs")
 def train(cfg: DictConfig) -> None:
     """
-    Train and save mode
+    Train and save model
     """
     model = Model(config=cfg)
     model.fit()
+    if not model.save_best_only:
+        # no need to save the model itself if model_best=True, the checkpoint takes care of saving the best only
+        model.save()
     model.save_meta()
     model.save_config()
-    # no need to save the model itself, the checkpoint takes care of saving the best only
 
 
 if __name__ == "__main__":
