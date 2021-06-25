@@ -1,0 +1,36 @@
+# @package _global_
+data:
+  train: data/train_additivemanufacturing.jsonl
+  test: data/test_additivemanufacturing.jsonl
+
+model:
+  architecture: transformers
+  checkpoint: distilbert-base-uncased
+  optimizer:
+    init_learning_rate: 5e-5
+    end_learning_rate: 0.
+    loss: tf.keras.losses.SparseCategoricalCrossentropy
+    from_logits: True
+
+
+training:
+  epochs: 2
+  batch_size: 8
+  callbacks:
+    early_stopping:
+      active: False
+      monitor: val_loss
+      patience: 3
+    save_best_only:
+      active: False
+      monitor: val_loss
+      verbose: 0
+
+
+logger:
+    verbose: 0
+    tensorboard:
+      active: True
+      logdir:
+
+out:
