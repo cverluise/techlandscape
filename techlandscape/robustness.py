@@ -17,7 +17,6 @@ from techlandscape.model import TextVectorizer
 from glob import glob
 from transformers import TFAutoModelForSequenceClassification
 
-
 app = typer.Typer()
 
 
@@ -298,7 +297,10 @@ def get_prediction_analysis(models: str, data: str, destination: Path = None):
 
         pred = model.predict(text_vectorizer.x_test, batch_size=100)
         if cfg["model"]["architecture"] == SupportedModels.transformers.value:
-            pred = np.argmax(pred["logits"], axis=1)
+            score = tf.nn.softmax(pred)
+            # pred is n*2, each line is [logits_0, logits_1]. We transform to proba (score) using softmax
+            pred = score[:, 1].numpy()
+            # we keep only the proba of class 1
 
         if i == 0:
             out = pd.DataFrame(pred, columns=[model_])
