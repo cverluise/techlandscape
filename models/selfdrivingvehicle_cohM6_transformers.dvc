@@ -1,0 +1,5 @@
+outs:
+- md5: a7674c0e944da136b3fc4fc66e8ff51c.dir
+  size: 271399921
+  nfiles: 14
+  path: selfdrivingvehicle_cohM6_transformers

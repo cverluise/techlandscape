@@ -1,0 +1,5 @@
+outs:
+- md5: 3187c103d09ffdfc14e8900771cffb2e.dir
+  size: 270461154
+  nfiles: 14
+  path: genomeediting_CoeB3_transformers

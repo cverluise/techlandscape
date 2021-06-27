@@ -1,0 +1,5 @@
+outs:
+- md5: caf69093c1b8c026e2bf8789456f8ef5.dir
+  size: 271398533
+  nfiles: 14
+  path: computervision_CoeB3_transformers

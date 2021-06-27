@@ -1,0 +1,5 @@
+outs:
+- md5: a0a677b5fdc11c0664e527e6f6c6a3b5.dir
+  size: 270459864
+  nfiles: 14
+  path: genomeediting_nal1V_transformers

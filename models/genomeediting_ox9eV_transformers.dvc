@@ -1,0 +1,5 @@
+outs:
+- md5: a3ae06472075358ad9feb7cab0598128.dir
+  size: 270460241
+  nfiles: 14
+  path: genomeediting_ox9eV_transformers

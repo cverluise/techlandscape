@@ -1,0 +1,5 @@
+outs:
+- md5: f1adcbc4da22a0266537d447a2db863e.dir
+  size: 270459342
+  nfiles: 14
+  path: hydrogenstorage_nal1V_transformers

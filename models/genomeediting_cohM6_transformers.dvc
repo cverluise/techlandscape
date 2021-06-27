@@ -1,0 +1,5 @@
+outs:
+- md5: b4ac526fc7570e47316d406e38fcf2fc.dir
+  size: 270459997
+  nfiles: 14
+  path: genomeediting_cohM6_transformers

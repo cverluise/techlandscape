@@ -1,0 +1,5 @@
+outs:
+- md5: 1ac93326fa22aa592f07172b53a876d9.dir
+  size: 271403597
+  nfiles: 14
+  path: selfdrivingvehicle_nal1V_transformers

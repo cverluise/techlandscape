@@ -1,0 +1,5 @@
+outs:
+- md5: c29a73d6164ed353f1d59f783b3554a2.dir
+  size: 271400693
+  nfiles: 14
+  path: naturallanguageprocessing_CoeB3_transformers

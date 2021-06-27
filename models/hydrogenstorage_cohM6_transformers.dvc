@@ -1,0 +1,5 @@
+outs:
+- md5: 187ae4558f72b01b28e5b6be39af1c99.dir
+  size: 270462407
+  nfiles: 14
+  path: hydrogenstorage_cohM6_transformers

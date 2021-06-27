@@ -1,0 +1,5 @@
+outs:
+- md5: 2606b0e8e018508737f7d622d631e101.dir
+  size: 271406028
+  nfiles: 14
+  path: selfdrivingvehicle_CoeB3_transformers

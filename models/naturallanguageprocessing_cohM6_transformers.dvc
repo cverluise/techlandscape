@@ -1,0 +1,5 @@
+outs:
+- md5: 2f00b900f839c11cfed1be311035ae6e.dir
+  size: 271395934
+  nfiles: 14
+  path: naturallanguageprocessing_cohM6_transformers

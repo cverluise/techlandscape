@@ -1,0 +1,5 @@
+outs:
+- md5: f65f4ca6f4df88ca261fbb5ee8a9b776.dir
+  size: 271400134
+  nfiles: 14
+  path: computervision_cohM6_transformers

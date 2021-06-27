@@ -1,0 +1,5 @@
+outs:
+- md5: 77f78c7d37c8ea02fc4f7143fbb77578.dir
+  size: 271395795
+  nfiles: 14
+  path: computervision_ox9eV_transformers

@@ -1,0 +1,5 @@
+outs:
+- md5: 8a3fc36b6847f365e774710b5eaa0bf0.dir
+  size: 271398822
+  nfiles: 14
+  path: computervision_nal1V_transformers
