@@ -1,4 +1,4 @@
 [core]
     remote = gs
 ['remote "gs"']
-    url = gs://techdiffusion
+    url = gs://techdiffusion/
