@@ -70,21 +70,17 @@ cat lib/technology.txt | parallel --eta 'bq extract --destination_format NEWLINE
 gsutil -m cp "gs://tmp/expansion_*_sample.jsonl.gz" data/ 
 
 parallel --eta 'techlandscape robustness get-prediction-analysis "models/{1}_*_{2}/model-best" data/expansion_{1}_sample.jsonl --destination outs/' ::: $(cat lib/technology.txt) ::: $(cat lib/model.txt)
-techlandscape robustness wrap-prediction-analysis "outs/classification_*.csv" >> docs/ROBUSTNESS_MODEL.md
+parallel -j1 'techlandscape robustness wrap-prediction-analysis --group-by-technology "outs/classification_{1}_*.csv" >> docs/ROBUSTNESS_MODEL.md' ::: $(cat lib/technology.txt )
 parallel --eta -j1 'techlandscape robustness models-performance "models/{1}_*_{2}/model-best/meta.json" --markdown --title "{1} - {2}"' ::: $(cat lib/technology.txt) ::: $(cat lib/model.txt) >> docs/MODELS_PERFORMANCE.md 
 ```
 
-### Bert for patents
+### Transformers
 
-```
-# saved model
-curl 'https://storage.googleapis.com/patents-public-data-github/saved_model.zip' --output models/bert_for_patents_saved_model.zip
-unzip models/bert_for_patents_saved_model.zip
-mv temp_dir/raw_out/  models/bert_for_patents_saved_model
-
-# vocabulary
-curl 'https://storage.googleapis.com/patents-public-data-github/bert_for_patents_vocab_39k.txt' --output models/bert_for_patents_vocab_39k.txt
-
-# tokenization
-curl 'https://raw.githubusercontent.com/google-research/bert/master/tokenization.py' --output techlandscape/bert_tokenization.py  
+```shell
+gsutil -m rm -rf gs://techlandscape_tmp
+gsutil mb gs://techlandscape_tmp
+# prep data and models. Nb: could be imported via dvc but takes longer
+ls data | grep -v dvc | grep 'train_\|test_\|expansion_' | parallel -j10 --eta 'gsutil cp data/{} gs://techlandscape_tmp/data/'
+gsutil -m cp models/ gs://techlandscape_tmp/models/
+# Then run notebook
 ```
