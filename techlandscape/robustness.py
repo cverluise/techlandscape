@@ -474,7 +474,7 @@ def get_trf_performance(path: str,):
             meta.update(
                 {
                     "performance": {
-                        "binary_accuracy": meta.get("accuracy"),
+                        "binary_accuracy": meta["performance"]["accuracy"],
                         "precision": p[1],
                         "recall": r[1],
                     }
