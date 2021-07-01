@@ -469,7 +469,7 @@ def get_trf_performance(path: str,):
 
         p, r, _, _ = precision_recall_fscore_support(text_vectorizer.y_test, pred)
 
-        with open(Path(model_) / Path("meta.json"), "w+") as fin:
+        with open(Path(model_) / Path("meta.json"), "r") as fin:
             meta = json.loads(fin.read())
             meta.update(
                 {
@@ -480,7 +480,8 @@ def get_trf_performance(path: str,):
                     }
                 }
             )
-            fin.write(json.dumps(meta))
+            with open(Path(model_) / Path("meta.json"), "w") as fout:
+                fout.write(json.dumps(meta))
 
 
 if __name__ == "__main__":
