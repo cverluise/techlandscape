@@ -469,7 +469,7 @@ def get_trf_performance(path: str,):
 
         p, r, _, _ = precision_recall_fscore_support(text_vectorizer.y_test, pred)
 
-        with open(Path(model_) / Path("config.yaml"), "rw") as fin:
+        with open(Path(model_) / Path("config.yaml"), "r+") as fin:
             meta = json.loads(fin.read())
             meta.update(
                 {"accuracy": meta.get("binary_accuracy"), "precision": p, "recall": r}
