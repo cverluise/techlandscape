@@ -465,7 +465,7 @@ def get_trf_performance(path: str,):
         text_vectorizer.vectorize()
         pred = model.predict(text_vectorizer.x_test, batch_size=100)
         score = tf.nn.softmax(pred["logits"])
-        pred = score[:, 1].numpy()
+        pred = [0 if x < 0.5 else 1 for x in score[:, 1].numpy()]
 
         p, r, _, _ = precision_recall_fscore_support(text_vectorizer.y_test, pred)
 
