@@ -16,6 +16,7 @@ from techlandscape.enumerators import (
 from techlandscape.model import TextVectorizer
 from glob import glob
 from transformers import TFAutoModelForSequenceClassification
+from sklearn.metrics import precision_recall_fscore_support
 
 app = typer.Typer()
 
@@ -450,6 +451,30 @@ def models_performance(
         typer.echo(f"{out.round(2).to_markdown()}")
     else:
         out.to_csv(destination)
+
+
+@app.command()
+def get_trf_performance(path: str,):
+    models = glob(path)
+    for model_ in models:
+        cfg = get_config(Path(model_) / Path("config.yaml"))
+        assert cfg["model"]["architecture"] == SupportedModels.transformers.value
+
+        model = TFAutoModelForSequenceClassification.from_pretrained(model_)
+        text_vectorizer = TextVectorizer(cfg)
+        text_vectorizer.vectorize()
+        pred = model.predict(text_vectorizer.x_test, batch_size=100)
+        score = tf.nn.softmax(pred["logits"])
+        pred = score[:, 1].numpy()
+
+        p, r, _, _ = precision_recall_fscore_support(text_vectorizer.y_test, pred)
+
+        with open(Path(model_) / Path("config.yaml"), "rw") as fin:
+            meta = json.loads(fin.read())
+            meta.update(
+                {"accuracy": meta.get("binary_accuracy"), "precision": p, "recall": r}
+            )
+            fin.write(json.dumps(meta))
 
 
 if __name__ == "__main__":
