@@ -472,7 +472,11 @@ def get_trf_performance(path: str,):
         with open(Path(model_) / Path("meta.json"), "r+") as fin:
             meta = json.loads(fin.read())
             meta.update(
-                {"accuracy": meta.get("binary_accuracy"), "precision": p, "recall": r}
+                {
+                    "accuracy": meta.get("binary_accuracy"),
+                    "precision": p[1],
+                    "recall": r[1],
+                }
             )
             fin.write(json.dumps(meta))
 
