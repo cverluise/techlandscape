@@ -83,4 +83,11 @@ gsutil mb gs://techlandscape_tmp
 ls data | grep -v dvc | grep 'train_\|test_\|expansion_' | parallel -j10 --eta 'gsutil cp data/{} gs://techlandscape_tmp/data/'
 gsutil -m cp models/ gs://techlandscape_tmp/models/
 # Then run notebook
+
+# Get back performance enriched metrics
+for TECH in $(cat lib/technology.txt); do
+  for SAMPLE in $(cat lib/sample.txt); do
+    gsutil cp "gs://techlandscape_tmp/models/${TECH}_${SAMPLE}_transformers/model-last/meta.json" models/${TECH}_${SAMPLE}_transformers/model-last/meta.json
+  done;
+done;
 ```
