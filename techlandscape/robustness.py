@@ -314,16 +314,20 @@ def get_prediction_analysis(models: str, data: str, destination: Path = None):
 
 
 @app.command()
-def wrap_prediction_analysis(path: str, markdown: bool = True):
+def wrap_prediction_analysis(
+    path: str, group_by_technology: bool = False, markdown: bool = True
+):
     """
     Wrap prediction analysis
 
     Arguments:
         path: prediction analysis file path (wildcard enabled)
+        group_by_technology: whether to group by technology or not
         markdown: whether to output wrapped analysis as markdown or csv
 
-    !!! attention
-        csv not supported yet
+    !!! attention "Usage warning"
+        - when group_by_technology True, make sure to filter only files referring to the same technology
+        - csv not supported yet
 
     **Usage:**
         ```shell
@@ -334,7 +338,9 @@ def wrap_prediction_analysis(path: str, markdown: bool = True):
     get_architecture = lambda x: x.split("/")[1].split("_")[-1].split(".")[0]
     files = glob(path)
     files = sorted(files)
-    for file in files:
+    dispersion_out, consensus_out = None, None
+
+    for i, file in enumerate(files):
         technology = get_technology(file)
         architecture = get_architecture(file)
 
@@ -360,12 +366,46 @@ def wrap_prediction_analysis(path: str, markdown: bool = True):
         tmp.index.name = "nb_models"
         consensus = tmp.copy()
 
+        if group_by_technology:
+            dispersion = dispersion.rename(architecture).to_frame()
+            consensus = consensus.rename(columns={"cumshare_positives": architecture})[
+                architecture
+            ].to_frame()
+
+            dispersion_out = (
+                dispersion_out.merge(dispersion, right_index=True, left_index=True)
+                if dispersion_out is not None
+                else dispersion
+            )
+            consensus_out = (
+                consensus_out.merge(
+                    consensus, right_index=True, how="outer", left_index=True
+                )
+                if consensus_out is not None
+                else consensus
+            )
+
+        else:
+            if markdown:
+                typer.echo(f"\n## {technology} - {architecture}\n")
+                typer.echo("### Score dispersion\n")
+                typer.echo(dispersion.round(3).to_markdown() + "\n")
+                typer.echo("### Models consensus\n")
+                typer.echo(consensus.round(3).to_markdown())
+            else:
+                typer.secho(f"{not_ok}csv not supported yet", err=True)
+
+    if group_by_technology:
         if markdown:
-            typer.echo(f"\n## {technology} - {architecture}\n")
+            typer.echo(f"\n## {technology}\n")
             typer.echo("### Score dispersion\n")
-            typer.echo(dispersion.round(3).to_markdown() + "\n")
+            typer.echo(dispersion_out.round(3).to_markdown() + "\n")
             typer.echo("### Models consensus\n")
-            typer.echo(consensus.round(3).to_markdown())
+            typer.echo(
+                consensus_out.sort_values("nb_models", ascending=False)
+                .round(3)
+                .to_markdown()
+            )
         else:
             typer.secho(f"{not_ok}csv not supported yet", err=True)
 
