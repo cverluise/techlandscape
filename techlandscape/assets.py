@@ -26,6 +26,10 @@ def get_publications_family(
     !!! note
         It takes up to 2 minutes to complete
 
+    !!! warning
+        This table does not include ALL abstracts (due to ANY_VALUE considering NULL values as well).
+        If you need to get all abstracts available, build abstract family table using `get_abstract_family`.
+
     """
     query = f"""
         WITH
@@ -128,6 +132,73 @@ def get_publications_family(
         ON
           fam.family_id = gpr.family_id
       """
+    get_bq_job_done(query, destination_table, credentials, verbose=verbose)
+
+
+@app.command()
+@monitor
+def get_family_abstract(
+    destination_table: str, credentials: Path, verbose: bool = False
+):
+    """
+    Return a table at the family level. Specific attention is on making sure that alla families having at least one
+    non NULL abstract have indeed a non NULL abstract. Here we do not draw any value from the all patents in the
+    families, as is done, for the sake of simplicity, in `get_publications_family`. Instead, we first filter out patents
+    with a NULL or empty abstract, and then only, we group by
+
+    Arguments:
+        destination_table: the BQ destination table (`project.dataset.table`)
+        credentials: BQ credentials file path
+        verbose: verbosity
+
+    **Usage:**
+        ```shell
+        techlandscape assets get-family-abstract patentcity.techdiffusion.family_abstract credentials_bs.json
+        ```
+    """
+    query = """
+    WITH
+      family_list AS(
+      SELECT
+        family_id,
+        STRING_AGG(publication_number) AS publication_number
+      FROM
+        `patents-public-data.patents.publications`
+      GROUP BY
+        family_id ),
+      tmp AS (
+      SELECT
+        publication_number,
+        abstract
+      FROM
+        `patents-public-data.google_patents_research.publications` AS gpr
+      WHERE
+        abstract IS NOT NULL
+        AND abstract !=""),
+      family_with_abstract AS (
+      SELECT
+        p.family_id,
+        ANY_VALUE(abstract) AS abstract
+      FROM
+        tmp
+      LEFT JOIN
+        `patents-public-data.patents.publications` AS p
+      ON
+        p.publication_number=tmp.publication_number
+      GROUP BY
+        p.family_id )
+    SELECT
+      fl.family_id,
+      fl.publication_number,
+      fwa.abstract,
+      abstract IS NOT NULL
+      AND abstract !="" AS has_abstract
+    FROM
+      family_with_abstract AS fwa
+    RIGHT JOIN
+      family_list AS fl
+    ON
+      fwa.family_id = fl.family_id"""
     get_bq_job_done(query, destination_table, credentials, verbose=verbose)
 
 
