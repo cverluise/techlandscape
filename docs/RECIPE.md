@@ -71,7 +71,7 @@ gsutil -m cp "gs://tmp/expansion_*_sample.jsonl.gz" data/
 
 parallel --eta 'techlandscape robustness get-prediction-analysis "models/{1}_*_{2}/model-best" data/expansion_{1}_sample.jsonl --destination outs/' ::: $(cat lib/technology.txt) ::: $(cat lib/model.txt)
 parallel -j1 'techlandscape robustness wrap-prediction-analysis --group-by-technology "outs/classification_{1}_*.csv" >> docs/ROBUSTNESS_MODEL.md' ::: $(cat lib/technology.txt )
-parallel --eta -j1 'techlandscape robustness models-performance "models/{1}_*_{2}/model-best/meta.json" --markdown --title "{1} - {2}"' ::: $(cat lib/technology.txt) ::: $(cat lib/model.txt) >> docs/MODELS_PERFORMANCE.md 
+parallel --eta -j1 'techlandscape evaluate models-performance "models/{1}_*_{2}/model-best/meta.json" --markdown --title "{1} - {2}"' ::: $(cat lib/technology.txt) ::: $(cat lib/model.txt) >> docs/MODELS_PERFORMANCE.md 
 ```
 
 ### Transformers
