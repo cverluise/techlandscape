@@ -101,3 +101,7 @@ def trf_performance(path: str,):
             )
             with open(Path(model_) / Path("meta.json"), "w") as fout:
                 fout.write(json.dumps(meta))
+
+
+if __name__ == "__main__":
+    app()
