@@ -28,11 +28,12 @@ def models_performance(
 
     **Usage:**
         ```shell
-        techlandscape evaluate models-performance "models/additivemanufacturing_*_cnn/model-best/meta.json" --markdown --title "additivemanufacturing - cnn"
+        techlandscape evaluate models-performance "models/additivemanufacturing_*/*/meta.json" --markdown --title "additivemanufacturing"
         ```
     """
     files = glob(path)
-    get_name = lambda x: x.split("/")[1]
+    get_name = lambda x: Path(x).parent.parent.name
+    get_architecture = lambda n: n.split("_")[-1]
 
     for i, file in enumerate(files):
 
@@ -43,14 +44,25 @@ def models_performance(
             out = tmp.copy()
         else:
             out = out.merge(tmp, left_index=True, right_index=True)
+
     out = out.T
+    out["f1-score"] = out.eval("2*(precision*recall)*(precision+recall)**(-1)")
+    if len(glob(path)) > 1:
+        out["architecture"] = list(map(get_architecture, out.index))
+        out = out.groupby("architecture").describe().T
     out = out[sorted(out.columns)]
-    if len(files) > 1:
-        out = out.describe()
 
     if markdown:
-        typer.echo(f"\n### {title}\n")
-        typer.echo(f"{out.round(2).to_markdown()}")
+        out = out.reset_index().rename(
+            columns={"level_0": "metrics", "level_1": "moment"}
+        )
+        typer.echo(f"\n## {title}\n")
+        for metrics in out["metrics"].unique():
+            typer.echo(f"\n### {metrics}\n")
+            typer.echo(
+                f"{out.query('metrics==@metrics').iloc[:, 1:].set_index('moment').round(2).to_markdown()}"
+            )
+
     else:
         out.to_csv(destination)
 
