@@ -1,5 +1,11 @@
 # MODELS PERFORMANCE
 
+!!! note
+    - Looking at the median f1 for all model architectures, transformers appear to be the best performing architecture, sometimes by a large margin over its closest contender (10pp+). Nb: The f1-score is the main metrics here is due to imbalanced dataset.
+    - While CNN and MLP are most often on par with one another wrt f1, CNN models exhibit a higher median recall and a lower median precision than their MLP counterparts across all technologies.
+
+
+
 ## additivemanufacturing
 
 
