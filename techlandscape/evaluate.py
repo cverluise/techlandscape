@@ -116,12 +116,13 @@ def trf_performance(path: str,):
 
 
 @app.command()
-def most_representative_model(file: str):
+def most_representative_model(file: str, markdown: bool = True):
     """
     Return the most representative model.
 
     Arguments:
         file: classification file path
+        markdown: whether to print as md table components or not
 
     **Usage**:
         ```shell
@@ -133,8 +134,17 @@ def most_representative_model(file: str):
 
     """
     df = pd.read_csv(file, index_col=0)
-    mrm = df.corr().mean().sort_values(ascending=False).index[0]
-    typer.echo(mrm)
+    model, corr_mean = (
+        df.corr().mean().sort_values(ascending=False).reset_index().iloc[0].values
+    )
+    if markdown:
+        typer.echo(
+            "|".join(
+                str(Path(model).parent.name).split("_") + [str(round(corr_mean, 2))]
+            )
+        )
+    else:
+        typer.echo(",".join([model.lstrip("/"), str(corr_mean)]))
 
 
 if __name__ == "__main__":
