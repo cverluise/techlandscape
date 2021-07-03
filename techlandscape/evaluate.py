@@ -115,5 +115,27 @@ def trf_performance(path: str,):
                 fout.write(json.dumps(meta))
 
 
+@app.command()
+def most_representative_model(file: str):
+    """
+    Return the most representative model.
+
+    Arguments:
+        file: classification file path
+
+    **Usage**:
+        ```shell
+        techlandscape evaluate most-representative-model outs/classification_computervision_robustness_cnn.csv
+        ```
+
+    !!! note
+        Representativeness is based on the mean correlation between a models scores and the other models' scores.
+
+    """
+    df = pd.read_csv(file, index_col=0)
+    mrm = df.corr().mean().sort_values(ascending=False).index[0]
+    typer.echo(mrm)
+
+
 if __name__ == "__main__":
     app()
