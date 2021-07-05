@@ -1,14 +1,8 @@
 import typer
 from pathlib import Path
-from typing import List
 from techlandscape.decorators import monitor
-from techlandscape.utils import (
-    get_country_string_bq,
-    get_bq_client,
-    get_project_id,
-    get_bq_job_done,
-)
-from techlandscape.enumerators import PrimaryKey
+from techlandscape.utils import get_project_id, get_bq_job_done
+from techlandscape.enumerators import PrimaryKey, JoinHow
 
 app = typer.Typer()
 
@@ -99,8 +93,8 @@ def get_expansion(
 
     Arguments:
         primary_key: table primary key
-        table_ref: expansion table
-        destination_table: destination table
+        table_ref: expansion table (project.dataset.table)
+        destination_table: destination table (project.dataset.table)
         credentials: credentials file path
         sample_size: size of the sample (if None, then we extract all)
         verbose: verbosity
@@ -139,6 +133,54 @@ def get_expansion(
     ORDER BY RAND()  
     {sample_clause}
     """
+    get_bq_job_done(query, destination_table, credentials, verbose=verbose)
+
+
+@app.command()
+def join(
+    left_table: str,
+    right_table: str,
+    on: str,
+    destination_table: str,
+    credentials: Path,
+    how: JoinHow = "INNER",
+    right_vars: str = None,
+    verbose: bool = False,
+) -> None:
+    """
+    Return the join of `left_table` and `right_table`.
+
+    Arguments:
+        left_table: left table, rel to the join (project.dataset.table)
+        right_table: right table, rel to the join (project.dataset.table)
+        on: joining key
+        destination_table: BQ destination table (project.dataset.table)
+        credentials: credentials file path
+        how: join method
+        right_vars: comma separated var to keep from the right table
+        verbose: bool = False
+
+    **Usage:**
+        ```shell
+        techlandscape io join <left-table> <right-table> <on> <destination-table>
+        ```
+    """
+    right_vars_clause = (
+        ", ".join([f"right_table.{v}" for v in right_vars.split(",")])
+        if right_vars
+        else f"right_table.* EXCEPT({on})"
+    )
+
+    query = f"""
+    SELECT
+      left_table.*,
+      {right_vars_clause}
+    FROM
+      `{left_table}` AS left_table  # patentcity.techdiffusion.expansion_additivemanufacturing
+    {how.value} JOIN
+      `{right_table}` AS right_table  # patentcity.patents.family_abstract
+    ON
+      left_table.{on} = right_table.{on}"""
     get_bq_job_done(query, destination_table, credentials, verbose=verbose)
 
 

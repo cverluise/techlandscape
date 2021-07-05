@@ -35,3 +35,10 @@ class SupportedModels(Enum):
     mlp = "mlp"
     cnn = "cnn"
     transformers = "transformers"
+
+
+class JoinHow(Enum):
+    INNER = "INNER"
+    OUTER = "OUTER"
+    LEFT = "LEFT"
+    RIGHT = "RIGHT"
