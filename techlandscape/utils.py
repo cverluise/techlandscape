@@ -15,6 +15,7 @@ from techlandscape.decorators import timer
 from techlandscape.exception import SmallSeed, SMALL_SEED_MSG
 from techlandscape.enumerators import PrimaryKey, TechClass
 from smart_open import open
+from glob import glob
 
 app = typer.Typer()
 
@@ -462,6 +463,37 @@ def train_test_split(
 
 def get_project_root() -> Path:
     return Path(__file__).parent.parent
+
+
+@app.command()
+def inspect_jsonl(path: str):
+    """
+    Check that all json lines are readable and returns exception messages
+
+    Arguments:
+        path: data file path (wildcard enabled)
+
+    **Usage:**
+        ```shell
+        techlandscape utils inspect-jsonl "data_tmp/expansion_additivemanufacturing_*.jsonl.gz"
+        ```
+
+    !!! note "utf-8"
+        A simple way to fix this kind of json decoding error is to decode data using "utf-8"
+        [https://stackoverflow.com/questions/16508539/unicodedecodeerror-ascii-codec-cant-decode-byte-0xc2](https://stackoverflow.com/questions/16508539/unicodedecodeerror-ascii-codec-cant-decode-byte-0xc2)
+    """
+    files = glob(path)
+    for file in files:
+        with open(file, "r") as lines:
+            for i, line in enumerate(lines):
+                try:
+                    json.loads(line)
+                except json.decoder.JSONDecodeError:
+                    typer.secho(
+                        f"{not_ok}Unable to decode (json.decoder.JSONDecodeError) {file} line {i}",
+                        color=typer.colors.RED,
+                    )
+                    typer.secho(f"{line}", color=typer.colors.RED)
 
 
 if __name__ == "__main__":
