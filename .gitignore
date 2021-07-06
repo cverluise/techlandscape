@@ -3,9 +3,9 @@ credentials*
 
 #dev
 dev*.py 
-bin/ExtractCPCCounts.py
 outputs/
 site/*
+data_tmp/
 
 # Large files
 deleteme/*
