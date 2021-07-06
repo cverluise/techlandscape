@@ -144,7 +144,7 @@ def most_representative_model(file: str, markdown: bool = True):
             )
         )
     else:
-        typer.echo(",".join([model.lstrip("/"), str(corr_mean)]))
+        typer.echo(model.lstrip("/"))
 
 
 if __name__ == "__main__":
