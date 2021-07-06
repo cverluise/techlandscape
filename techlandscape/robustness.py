@@ -293,18 +293,18 @@ def get_prediction_analysis(models: str, data: str, destination: Path = None):
         text_vectorizer = TextVectorizer(cfg)
         text_vectorizer.vectorize()
 
-        pred = model.predict(text_vectorizer.x_test, batch_size=100)
+        preds = model.predict(text_vectorizer.x_test, batch_size=100)
         if cfg["model"]["architecture"] == SupportedModels.transformers.value:
-            score = tf.nn.softmax(pred["logits"])
+            score = tf.nn.softmax(preds["logits"])
             # pred is n*2, each line is [logits_0, logits_1]. We transform to proba (score) using softmax
-            pred = score[:, 1].numpy()
+            preds = score[:, 1].numpy()
             # we keep only the proba of class 1
 
         if i == 0:
-            out = pd.DataFrame(pred, columns=[model_])
+            out = pd.DataFrame(preds, columns=[model_])
         else:
             out = out.merge(
-                pd.DataFrame(pred, columns=[model_]), left_index=True, right_index=True
+                pd.DataFrame(preds, columns=[model_]), left_index=True, right_index=True
             )
         filename = f"classification_{technology}_robustness_{architecture}.csv"
         out.to_csv(Path(destination) / Path(filename))
