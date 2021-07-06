@@ -71,7 +71,10 @@ class DataLoader:
         def file_reader(path: Path):
             with open(path, "r") as lines:  # that way we support gz files
                 for line in lines:
-                    yield json.loads(line.decode("utf-8", "ignore"))
+                    try:
+                        yield json.loads(line)
+                    except json.decoder.JSONDecodeError:
+                        pass
 
         return [line.get(var, "") for line in file_reader(path)]
 
