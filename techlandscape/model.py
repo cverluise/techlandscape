@@ -22,6 +22,7 @@ from techlandscape.exception import UnknownModel, UNKNOWN_MODEL_MSG
 from techlandscape.enumerators import SupportedModels
 from omegaconf import DictConfig, OmegaConf
 from transformers import AutoTokenizer, TFAutoModelForSequenceClassification
+from smart_open import open
 import typer
 import hydra
 
@@ -67,9 +68,12 @@ class DataLoader:
 
     @staticmethod
     def _get_data(path: Path, var: str):
-        return [
-            json.loads(line)[var] for line in path.open("r").read().split("\n") if line
-        ]
+        def file_reader(path: Path):
+            with open(path, "r") as lines:  # that way we support gz files
+                for line in lines:
+                    yield json.loads(line)
+
+        return [line.get(var, "") for line in file_reader(path)]
 
     def load(self):
         """Load data. Expect a jsonl file where each row at least two fields: 'text' and 'is_seed'."""
@@ -86,7 +90,7 @@ class DataLoader:
             )
             try:
                 self.y_test = np.array(
-                    self._get_data(self.test_path, "is_seed")
+                    list(filter(lambda x: x, self._get_data(self.test_path, "is_seed")))
                 ).astype(int)
             except KeyError:
                 typer.secho(
