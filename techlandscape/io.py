@@ -145,6 +145,7 @@ def join(
     credentials: Path,
     how: JoinHow = "INNER",
     right_vars: str = None,
+    abstract2text: bool = False,
     verbose: bool = False,
 ) -> None:
     """
@@ -158,6 +159,7 @@ def join(
         credentials: credentials file path
         how: join method
         right_vars: comma separated var to keep from the right table
+        abstract2text: whether to rename abstract in `right_table` as text (supported only when right_vars null)
         verbose: bool = False
 
     **Usage:**
@@ -168,7 +170,11 @@ def join(
     right_vars_clause = (
         ", ".join([f"right_table.{v}" for v in right_vars.split(",")])
         if right_vars
-        else f"right_table.* EXCEPT({on})"
+        else (
+            f"right_table.* EXCEPT({on})"
+            if not abstract2text
+            else f"right_table.* EXCEPT({on}, abstract), right_table.abstract as text"
+        )
     )
 
     query = f"""
