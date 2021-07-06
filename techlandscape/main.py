@@ -8,6 +8,7 @@ from techlandscape import (
     utils,
     io,
     evaluate,
+    pruning,
 )
 import typer
 
@@ -22,6 +23,7 @@ app.add_typer(assets.app, name="assets")
 app.add_typer(utils.app, name="utils")
 app.add_typer(io.app, name="io")
 app.add_typer(evaluate.app, name="evaluate")
+app.add_typer(pruning.app, name="pruning")
 
 if __name__ == "__main__":
     app()
