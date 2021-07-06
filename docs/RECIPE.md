@@ -91,3 +91,22 @@ for TECH in $(cat lib/technology.txt); do
   done;
 done;
 ```
+
+### Pruning
+
+```shell
+# Extract expansion table
+parallel --eta 'techlandscape io join patentcity.techdiffusion.expansion_{1} patentcity.patents.family_abstract family_id patentcity.stage.expansion_{1} credentials_bq.json --abstract2text' ::: $(cat lib/technology.txt)
+gsutil -m rm "gs://tmp/expansion_*.jsonl.gz"
+parallel --eta 'bq extract --destination_format NEWLINE_DELIMITED_JSON --compression GZIP patentcity:stage.expansion_{1} "gs://tmp/expansion_{1}_*.jsonl.gz"' ::: $(cat lib/technology.txt)
+gsutil -m cp "gs://tmp/expansion_*.jsonl.gz" data_tmp/
+# check for encoding errors (opt)
+#techlandscape utils inpsect-jsonl "data_tmp/expansion_*.jsonl.gz"
+
+for MODEL in $(cat lib/models_selection.txt | grep -v transformers); 
+  do DEST=$(echo "$MODEL" | cut -d/ -f2) &&
+  TECH=$(echo "$DEST" | cut -d_ -f1) && 
+  echo ${DEST} && echo ${TECH} &&
+  techlandscape pruning get-score "data_tmp/expansion_${TECH}_*.jsonl.gz" ${MODEL} "data/${DEST}.jsonl"; 
+done;
+```
